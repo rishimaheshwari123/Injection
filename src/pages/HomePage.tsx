@@ -1,0 +1,657 @@
+import { motion } from 'framer-motion'
+import { ArrowRight, CheckCircle, Users, Award, Target, Heart, FlaskConical, Phone, Send, MapPin, Mail } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useState } from 'react'
+
+const HomePage = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Form submitted:', formData)
+    setFormData({ name: '', email: '', phone: '', message: '' })
+  }
+
+  const features = [
+    { 
+      icon: CheckCircle, 
+      title: 'Experienced Healthcare Researchers', 
+      description: 'Our team of qualified professionals brings years of experience in healthcare research and medical solutions.' 
+    },
+    { 
+      icon: Target, 
+      title: 'Innovative Medical Solutions', 
+      description: 'We develop cutting-edge healthcare technologies and research-driven solutions for better patient outcomes.' 
+    },
+    { 
+      icon: Users, 
+      title: 'Data-Driven Healthcare Strategies', 
+      description: 'Our evidence-based approach ensures effective healthcare strategies and improved medical practices.' 
+    },
+    { 
+      icon: Award, 
+      title: 'Commitment to Quality Healthcare', 
+      description: 'We maintain the highest standards in healthcare delivery, research, and medical consultancy services.' 
+    },
+  ]
+
+  return (
+    <div>
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://static.toiimg.com/thumb/msid-53004364,width-1280,height-720,resizemode-4/53004364.jpg" 
+            alt="Healthcare professionals" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/40 z-10"></div>
+        
+        {/* Content */}
+        <div className="relative z-20 container mx-auto px-4 text-center text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto"
+          >
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+            >
+              Advancing Healthcare through 
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-300">
+                Research & Innovation
+              </span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200 max-w-3xl mx-auto"
+            >
+              PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, 
+              and innovative health solutions to improve patient outcomes and medical advancements.
+            </motion.p>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            >
+              <Link
+                to="/services"
+                className="group bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3"
+              >
+                <span>Explore Services</span>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+              </Link>
+              <Link
+                to="/contact"
+                className="group border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-teal-600 transition-all duration-300 flex items-center space-x-3"
+              >
+                <span>Contact Us</span>
+                <Phone size={20} className="group-hover:scale-110 transition-transform duration-300" />
+              </Link>
+            </motion.div>
+          </motion.div>
+          
+          {/* Floating Elements */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.8 }}
+            className="absolute top-20 left-10 hidden lg:block"
+          >
+            <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Heart className="w-10 h-10 text-white" />
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 1 }}
+            className="absolute top-32 right-16 hidden lg:block"
+          >
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <FlaskConical className="w-8 h-8 text-white" />
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 1.2 }}
+            className="absolute bottom-32 left-20 hidden lg:block"
+          >
+            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Users className="w-12 h-12 text-white" />
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+          className="absolute hidden md:block bottom-8 left-1/2 transform -translate-x-1/2 z-20"
+        >
+          <div className="flex flex-col items-center text-white">
+            <span className="text-sm mb-2 opacity-80">Scroll Down</span>
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center"
+            >
+              <motion.div
+                animate={{ y: [0, 12, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-1 h-3 bg-white rounded-full mt-2"
+              />
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* About Section with Doctor Image */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">About PRLT Health Care</h2>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. is committed to improving healthcare 
+                through advanced research, medical consultation, and innovative healthcare solutions.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start space-x-4">
+                  <img 
+                    src="https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop" 
+                    alt="Home medical service" 
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Home Based Medical Service</h3>
+                    <p className="text-gray-600">Providing quality healthcare services at the comfort of your home</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-4">
+                  <img 
+                    src="https://images.pexels.com/photos/3938023/pexels-photo-3938023.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop" 
+                    alt="Research support" 
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Research Support by Sampling and Data</h3>
+                    <p className="text-gray-600">Comprehensive research support through sampling and data collection</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-4">
+                  <img 
+                    src="https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop" 
+                    alt="Training programs" 
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Training for Health Workers and Students</h3>
+                    <p className="text-gray-600">Professional training for health workers and UG/PG students</p>
+                  </div>
+                </div>
+              </div>
+              
+              <Link
+                to="/about"
+                className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
+              >
+                <span>Learn More</span>
+                <ArrowRight size={20} />
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="relative">
+                <img 
+                  src="https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop" 
+                  alt="Healthcare professional" 
+                  className="w-full h-96 object-cover rounded-2xl shadow-2xl"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+                
+                {/* Floating Stats */}
+                <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-teal-600">15+</div>
+                    <div className="text-sm text-gray-600">Years Experience</div>
+                  </div>
+                </div>
+                
+                <div className="absolute -top-6 -right-6 bg-white p-6 rounded-xl shadow-lg">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">500+</div>
+                    <div className="text-sm text-gray-600">Happy Patients</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Medical Banner Section */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=1280&h=720&fit=crop" 
+            alt="Medical background" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-teal-900/85"></div>
+        </div>
+        
+        <div className="relative z-10 container mx-auto px-4 text-center text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Your Health, Our Priority
+            </h2>
+            <p className="text-xl mb-8 text-teal-100">
+              We provide comprehensive healthcare solutions with cutting-edge research and 
+              compassionate care to ensure the best outcomes for our patients.
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-8 mt-12">
+              <div className="text-center">
+                <img 
+                  src="https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop" 
+                  alt="Expert doctors" 
+                  className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white/20"
+                />
+                <h3 className="text-xl font-semibold mb-2">Expert Doctors</h3>
+                <p className="text-teal-100">Qualified healthcare professionals</p>
+              </div>
+              
+              <div className="text-center">
+                <img 
+                  src="https://images.pexels.com/photos/3938023/pexels-photo-3938023.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop" 
+                  alt="Modern equipment" 
+                  className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white/20"
+                />
+                <h3 className="text-xl font-semibold mb-2">Modern Equipment</h3>
+                <p className="text-teal-100">State-of-the-art medical technology</p>
+              </div>
+              
+              <div className="text-center">
+                <img 
+                  src="https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop" 
+                  alt="Research excellence" 
+                  className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white/20"
+                />
+                <h3 className="text-xl font-semibold mb-2">Research Excellence</h3>
+                <p className="text-teal-100">Innovative medical research</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      
+
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Us</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              We are committed to excellence in healthcare research and innovation, 
+              providing comprehensive solutions for better health outcomes.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300"
+              >
+                <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+      {/* Doctor Banner Stripe */}
+      <section className="py-0 relative overflow-hidden">
+        <div className="relative h-64 md:h-80">
+          <img 
+            src="https://www.shutterstock.com/image-photo/best-doctor-dedicated-banner-600nw-2462760609.jpg" 
+            alt="Best Doctor Dedicated Banner" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-teal-800/60 to-blue-800/70"></div>
+          
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white max-w-4xl mx-auto px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <h2 className="text-3xl md:text-5xl font-bold mb-4">
+                  Dedicated to Your Health & Wellness
+                </h2>
+                <p className="text-lg md:text-xl text-blue-100 mb-6">
+                  Our team of expert healthcare professionals is committed to providing 
+                  exceptional medical care and innovative research solutions.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link
+                    to="/about"
+                    className="bg-white text-teal-600 px-8 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  >
+                    Meet Our Team
+                  </Link>
+                  <Link
+                    to="/services"
+                    className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-teal-600 transition-all duration-300"
+                  >
+                    Our Services
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+          
+          {/* Decorative Elements */}
+          <div className="absolute top-4 left-4 w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+            <Heart className="w-8 h-8 text-white" />
+          </div>
+          <div className="absolute bottom-4 right-4 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+            <FlaskConical className="w-6 h-6 text-white" />
+          </div>
+        </div>
+      </section>
+
+      {/* Services Preview with Images */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
+            <p className="text-xl text-gray-600">Comprehensive healthcare solutions tailored to your needs</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Healthcare Services",
+                description: "Post hospital care, home injections, IV drips, patient monitoring, and 24/7 care services.",
+                image: "https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+                items: ["Home Injections", "IV Drip Services", "Patient Monitoring", "24/7 Care"]
+              },
+              {
+                title: "Research Services",
+                description: "Field surveys, data collection, sample collection, and community awareness programs.",
+                image: "https://images.pexels.com/photos/3938023/pexels-photo-3938023.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+                items: ["Field Surveys", "Data Collection", "Sample Collection", "Community Programs"]
+              },
+              {
+                title: "Training & Placement",
+                description: "Hands-on training for BSC, MSC, DMLT, Nursing students with dissertation programs.",
+                image: "https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+                items: ["Lab Training", "Dissertation Support", "Student Placement", "Skill Development"]
+              }
+            ].map((service, index) => (
+              <motion.div
+                key={service.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+              >
+                <div className="relative">
+                  <img 
+                    src={service.image} 
+                    alt={service.title} 
+                    className="w-full  object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.title}</h3>
+                  <p className="text-gray-600 mb-4">{service.description}</p>
+                  <ul className="space-y-2">
+                    {service.items.map((item, idx) => (
+                      <li key={idx} className="flex items-center space-x-2 text-sm text-gray-700">
+                        <CheckCircle size={16} className="text-teal-500" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              to="/services"
+              className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
+            >
+              <span>View All Services</span>
+              <ArrowRight size={20} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Form Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Contact Info with Doctor Image */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">Get In Touch</h2>
+              <p className="text-lg text-gray-600 mb-8">
+                Ready to experience quality healthcare? Contact us today to learn more about our services 
+                or schedule a consultation with our expert team.
+              </p>
+              
+              <div className="space-y-6 mb-8">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Phone Number</h3>
+                    <p className="text-gray-600">+91 XXXXXXXXXX</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Email Address</h3>
+                    <p className="text-gray-600">info@prlthealth.com</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Office Address</h3>
+                    <p className="text-gray-600">PRLT Health Care and Research Solutions<br />Address Line, City, State</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Doctor Team Image */}
+              <div className="relative">
+                <img 
+                  src="https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=500&h=300&fit=crop" 
+                  alt="Medical team" 
+                  className="w-full h-64 object-cover rounded-xl shadow-lg"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-xl"></div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="text-lg font-semibold">Our Expert Team</h3>
+                  <p className="text-sm text-gray-200">Dedicated healthcare professionals</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Contact Form */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-gray-50 p-8 rounded-xl"
+            >
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                    placeholder="Enter your email address"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                    Message *
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300 resize-none"
+                    placeholder="Tell us about your requirements"
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                >
+                  <Send size={20} />
+                  <span>Send Message</span>
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+    
+    </div>
+  )
+}
+
+export default HomePage
