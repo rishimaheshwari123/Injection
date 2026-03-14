@@ -53,12 +53,6 @@ const ContactPage = () => {
     }
   ]
 
-  const businessHours = [
-    { day: "Monday - Friday", hours: "9:00 AM - 6:00 PM" },
-    { day: "Saturday", hours: "9:00 AM - 2:00 PM" },
-    { day: "Sunday", hours: "Emergency Services Only" },
-    { day: "Emergency Services", hours: "24/7 Available" }
-  ]
 
   return (
     <div>
