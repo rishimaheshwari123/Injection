@@ -2,12 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
+/* Prevent horizontal scroll */
+html,
 body {
   overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+
+::-webkit-scrollbar {
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
