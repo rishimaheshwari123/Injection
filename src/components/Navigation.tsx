@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, User, Briefcase, FlaskConical, Phone, Menu, X, Mail, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
+import { Home, User, Briefcase, FlaskConical, Phone, Menu, X, Mail, Facebook, Twitter, Linkedin, Instagram, BookOpen } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -12,6 +12,7 @@ const Navigation = () => {
     { path: '/about', label: 'About Us', icon: User },
     { path: '/services', label: 'Services', icon: Briefcase },
     { path: '/research', label: 'Research', icon: FlaskConical },
+    { path: '/blog', label: 'Blog', icon: BookOpen },
     // { path: '/contact', label: 'Contact', icon: Phone },
   ]
 

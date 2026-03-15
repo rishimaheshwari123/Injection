@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import ServicesPage from './pages/ServicesPage'
 import ResearchPage from './pages/ResearchPage'
+import BlogPage from './pages/BlogPage'
 import ContactPage from './pages/ContactPage'
 import Navigation from './components/Navigation'
 import Footer from './components/Footer'
@@ -16,6 +17,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/research" element={<ResearchPage />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/contact" element={<ContactPage />} />
       </Routes>
       <Footer />
