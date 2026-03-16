@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle, Users, Award, Target, Heart, FlaskConical, Phone, Send, MapPin, Mail } from 'lucide-react'
+import { ArrowRight, CheckCircle, Users, Award, Target, Heart, FlaskConical, Phone, Send, MapPin, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const HomePage = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +10,48 @@ const HomePage = () => {
     phone: '',
     message: ''
   })
+
+  // Slider state
+  const [currentSlide, setCurrentSlide] = useState(0)
+  
+  const slides = [
+    {
+      image: "https://static.toiimg.com/thumb/msid-53004364,width-1280,height-720,resizemode-4/53004364.jpg",
+      title: "Advancing Healthcare through Research & Innovation",
+      subtitle: "PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, and innovative health solutions to improve patient outcomes and medical advancements."
+    },
+    {
+      image: "https://t3.ftcdn.net/jpg/06/45/68/94/360_F_645689490_Fzwptjq0YLCW8JZpC6lASo1KJcAgzZPj.jpg",
+      title: "Expert Medical Care at Your Doorstep",
+      subtitle: "Experience professional healthcare services in the comfort of your home with our qualified medical professionals and state-of-the-art equipment."
+    },
+    {
+      image: "https://t4.ftcdn.net/jpg/02/70/36/25/360_F_270362596_kIpf2k7Q5PBjR5wWTp5qentfEeQnm5dM.jpg",
+      title: "Leading Medical Research & Training",
+      subtitle: "Join our comprehensive training programs and cutting-edge research initiatives that are shaping the future of healthcare and medical education."
+    }
+  ]
+
+  // Auto-scroll functionality
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    }, 5000) // Change slide every 5 seconds
+
+    return () => clearInterval(timer)
+  }, [slides.length])
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+  }
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index)
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -50,23 +92,31 @@ const HomePage = () => {
 
   return (
     <div>
-      {/* Hero Section */}
+      {/* Hero Slider Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+        {/* Slider Images */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://static.toiimg.com/thumb/msid-53004364,width-1280,height-720,resizemode-4/53004364.jpg" 
-            alt="Healthcare professionals" 
-            className="w-full h-full object-cover"
-          />
+          {slides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={slide.image} 
+                alt={`Healthcare slide ${index + 1}`} 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40"></div>
+            </div>
+          ))}
         </div>
-        
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40 z-10"></div>
         
         {/* Content */}
         <div className="relative z-20 container mx-auto px-4 text-center text-white">
           <motion.div
+            key={currentSlide}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -76,11 +126,11 @@ const HomePage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+              className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
             >
-              Advancing Healthcare through 
+              {slides[currentSlide].title.split(' ').slice(0, 3).join(' ')}
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-300">
-                Research & Innovation
+                {slides[currentSlide].title.split(' ').slice(3).join(' ')}
               </span>
             </motion.h1>
             
@@ -88,10 +138,9 @@ const HomePage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200 max-w-3xl mx-auto"
+              className="text-lg md:text-xl mb-8 leading-relaxed text-gray-200 max-w-3xl mx-auto"
             >
-              PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, 
-              and innovative health solutions to improve patient outcomes and medical advancements.
+              {slides[currentSlide].subtitle}
             </motion.p>
             
             <motion.div 
@@ -150,6 +199,53 @@ const HomePage = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
           </motion.div>
+        </div>
+        
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group md:block hidden"
+        >
+          <ChevronLeft size={24} className="group-hover:scale-110 transition-transform duration-300" />
+        </button>
+        
+        <button
+          onClick={nextSlide}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group md:block hidden"
+        >
+          <ChevronRight size={24} className="group-hover:scale-110 transition-transform duration-300" />
+        </button>
+        
+        {/* Mobile Navigation Arrows - Bottom Right */}
+        <div className="absolute bottom-20 right-4 z-30 flex space-x-2 md:hidden">
+          <button
+            onClick={prevSlide}
+            className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all duration-300 group"
+          >
+            <ChevronLeft size={20} className="group-hover:scale-110 transition-transform duration-300" />
+          </button>
+          
+          <button
+            onClick={nextSlide}
+            className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all duration-300 group"
+          >
+            <ChevronRight size={20} className="group-hover:scale-110 transition-transform duration-300" />
+          </button>
+        </div>
+        
+        {/* Slide Indicators */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlide 
+                  ? 'bg-white scale-125' 
+                  : 'bg-white/50 hover:bg-white/75'
+              }`}
+            />
+          ))}
         </div>
         
         {/* Scroll Indicator */}
