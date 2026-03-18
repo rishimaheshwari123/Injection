@@ -72,7 +72,7 @@ const BlogPage = () => {
     <div>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -90,7 +90,7 @@ const BlogPage = () => {
 
       {/* Category Filter */}
       {/* <section className="py-8 bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
             {categories.map((category, index) => (
               <motion.button
@@ -100,7 +100,7 @@ const BlogPage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
                   index === 0
-                    ? 'bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -113,7 +113,7 @@ const BlogPage = () => {
 
       {/* Featured Post */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -165,7 +165,7 @@ const BlogPage = () => {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
                     <User size={20} className="text-white" />
                   </div>
                   <div>
@@ -176,7 +176,7 @@ const BlogPage = () => {
                 
                 <Link
                   to={`/blog/${blogPosts[0].id}`}
-                  className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
+                  className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
                 >
                   <span>Read More</span>
                   <ArrowRight size={18} />
@@ -189,7 +189,7 @@ const BlogPage = () => {
 
       {/* Blog Grid */}
       <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -245,7 +245,7 @@ const BlogPage = () => {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
                         <User size={14} className="text-white" />
                       </div>
                       <span className="text-sm font-medium text-gray-700">{post.author}</span>
@@ -267,8 +267,8 @@ const BlogPage = () => {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-20 bg-gradient-to-r from-teal-600 to-blue-700">
-        <div className="container mx-auto px-4">
+      <section className="py-20 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

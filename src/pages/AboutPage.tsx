@@ -33,7 +33,7 @@ const AboutPage = () => {
     <div>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ const AboutPage = () => {
 
       {/* Company Overview */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -74,7 +74,7 @@ const AboutPage = () => {
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     className="flex items-start space-x-4"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center flex-shrink-0">
                       <value.icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -94,7 +94,7 @@ const AboutPage = () => {
             >
               <div className="bg-gradient-to-br from-teal-100 to-blue-100 rounded-2xl p-8 h-96 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-24 h-24 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="w-24 h-24 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-6">
                     <Heart className="w-12 h-12 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Healthcare Excellence</h3>
@@ -108,7 +108,7 @@ const AboutPage = () => {
 
       {/* Mission & Vision */}
       <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -116,7 +116,7 @@ const AboutPage = () => {
               transition={{ duration: 0.6 }}
               className="bg-white p-8 rounded-xl shadow-lg"
             >
-              <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mb-6">
                 <Target className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
@@ -133,7 +133,7 @@ const AboutPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="bg-white p-8 rounded-xl shadow-lg"
             >
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+              <div className="w-16 h-16  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mb-6">
                 <Eye className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
@@ -149,7 +149,7 @@ const AboutPage = () => {
 
       {/* Our Team */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -171,7 +171,7 @@ const AboutPage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="bg-gray-50 p-8 rounded-xl text-center hover:shadow-lg transition-all duration-300"
               >
-                <div className="w-24 h-24 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-24 h-24 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-6">
                   <Users className="w-12 h-12 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
@@ -186,7 +186,7 @@ const AboutPage = () => {
 
       {/* Our Facilities */}
       <section className="py-20 bg-gradient-to-br from-teal-50 to-blue-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -214,7 +214,7 @@ const AboutPage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
               >
-                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center mb-4">
                   <Award className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-semibold text-gray-900">{facility}</h3>

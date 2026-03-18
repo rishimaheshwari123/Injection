@@ -16,7 +16,7 @@ const HomePage = () => {
   
   const slides = [
     {
-      image: "https://static.toiimg.com/thumb/msid-53004364,width-1280,height-720,resizemode-4/53004364.jpg",
+      image: "https://img.freepik.com/free-photo/women-working-chemical-project-new-discovery_23-2148776759.jpg?semt=ais_hybrid&w=740&q=80",
       title: "Advancing Healthcare through Research & Innovation",
       subtitle: "PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, and innovative health solutions to improve patient outcomes and medical advancements."
     },
@@ -26,7 +26,7 @@ const HomePage = () => {
       subtitle: "Experience professional healthcare services in the comfort of your home with our qualified medical professionals and state-of-the-art equipment."
     },
     {
-      image: "https://t4.ftcdn.net/jpg/02/70/36/25/360_F_270362596_kIpf2k7Q5PBjR5wWTp5qentfEeQnm5dM.jpg",
+      image: "https://png.pngtree.com/thumb_back/fw800/background/20250828/pngtree-scientific-medical-laboratory-high-definition-close-up-photography-image_18542279.webp",
       title: "Leading Medical Research & Training",
       subtitle: "Join our comprehensive training programs and cutting-edge research initiatives that are shaping the future of healthcare and medical education."
     }
@@ -151,7 +151,7 @@ const HomePage = () => {
             >
               <Link
                 to="/services"
-                className="group bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3"
+                className="group bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3"
               >
                 <span>Explore Services</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -274,7 +274,7 @@ const HomePage = () => {
 
       {/* About Section with Doctor Image */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -290,7 +290,7 @@ const HomePage = () => {
               <div className="space-y-4 mb-8">
                 <div className="flex items-start space-x-4">
                   <img 
-                    src="https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop" 
+                    src="https://png.pngtree.com/thumb_back/fw800/background/20250828/pngtree-scientific-medical-laboratory-high-definition-close-up-photography-image_18542279.webp" 
                     alt="Home medical service" 
                     className="w-12 h-12 rounded-lg object-cover"
                   />
@@ -327,7 +327,7 @@ const HomePage = () => {
               
               <Link
                 to="/about"
-                className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
+                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
               >
                 <span>Learn More</span>
                 <ArrowRight size={20} />
@@ -342,7 +342,7 @@ const HomePage = () => {
             >
               <div className="relative">
                 <img 
-                  src="https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop" 
+                  src="https://png.pngtree.com/thumb_back/fw800/background/20250828/pngtree-scientific-medical-laboratory-high-definition-close-up-photography-image_18542279.webp" 
                   alt="Healthcare professional" 
                   className="w-full h-96 object-cover rounded-2xl shadow-2xl"
                 />
@@ -432,7 +432,7 @@ const HomePage = () => {
       
 
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -455,7 +455,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300"
               >
-                <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
@@ -521,7 +521,7 @@ const HomePage = () => {
 
       {/* Services Preview with Images */}
       <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -537,7 +537,7 @@ const HomePage = () => {
               {
                 title: "Healthcare Services",
                 description: "Post hospital care, home injections, IV drips, patient monitoring, and 24/7 care services.",
-                image: "https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+                image: "https://previews.123rf.com/images/oksix/oksix1409/oksix140900158/32038928-two-scientists-in-the-chemical-laboratory-are-doing-experiments.jpg",
                 items: ["Home Injections", "IV Drip Services", "Patient Monitoring", "24/7 Care"]
               },
               {
@@ -549,7 +549,7 @@ const HomePage = () => {
               {
                 title: "Training & Placement",
                 description: "Hands-on training for BSC, MSC, DMLT, Nursing students with dissertation programs.",
-                image: "https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+                image: "https://previews.123rf.com/images/totojang1977/totojang19771511/totojang1977151100061/48860685-flask-in-scientist-hand-with-laboratory-background.jpg",
                 items: ["Lab Training", "Dissertation Support", "Student Placement", "Skill Development"]
               }
             ].map((service, index) => (
@@ -588,7 +588,7 @@ const HomePage = () => {
           <div className="text-center mt-12">
             <Link
               to="/services"
-              className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
+              className=" bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-2"
             >
               <span>View All Services</span>
               <ArrowRight size={20} />
@@ -599,7 +599,7 @@ const HomePage = () => {
 
       {/* Contact Form Section */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Info with Doctor Image */}
             <motion.div
@@ -734,7 +734,7 @@ const HomePage = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                  className="w-full  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
                 >
                   <Send size={20} />
                   <span>Send Message</span>

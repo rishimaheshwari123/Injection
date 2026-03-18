@@ -4,12 +4,12 @@ import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Linkedin, Instagram } fr
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12">
+      <div className="w-[90vw] mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">P</span>
               </div>
               <div>

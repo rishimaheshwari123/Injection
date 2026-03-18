@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { FlaskConical, Users, Award, BarChart3, Microscope, FileText, Target } from 'lucide-react'
+import { FlaskConical, Users, Award, BarChart3, Microscope, Target } from 'lucide-react'
 
 const ResearchPage = () => {
   const researchAreas = [
@@ -46,27 +46,6 @@ const ResearchPage = () => {
     }
   ]
 
-  const publications = [
-    {
-      title: "Home-based Healthcare: A Comprehensive Review",
-      journal: "Journal of Healthcare Management",
-      year: "2023",
-      authors: "Dr. [Name] et al."
-    },
-    {
-      title: "Community Health Interventions in Rural Areas",
-      journal: "Public Health Research",
-      year: "2023",
-      authors: "Research Team PRLT"
-    },
-    {
-      title: "Laboratory Standards and Quality Control",
-      journal: "Medical Laboratory Science",
-      year: "2022",
-      authors: "Dr. [Name] et al."
-    }
-  ]
-
   const collaborations = [
     "Medical Colleges and Universities",
     "Government Health Departments",
@@ -79,7 +58,7 @@ const ResearchPage = () => {
     <div>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -97,7 +76,7 @@ const ResearchPage = () => {
 
       {/* Research Areas */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -119,7 +98,7 @@ const ResearchPage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300 border border-gray-100"
               >
-                <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-4">
                   <area.icon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">{area.title}</h3>
@@ -132,7 +111,7 @@ const ResearchPage = () => {
 
       {/* Current Projects */}
       <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -153,7 +132,7 @@ const ResearchPage = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center">
                     <Target className="w-6 h-6 text-white" />
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -175,54 +154,11 @@ const ResearchPage = () => {
         </div>
       </section>
 
-      {/* Publications */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Recent Publications</h2>
-            <p className="text-xl text-gray-600">Our research contributions to the scientific community</p>
-          </motion.div>
-
-          <div className="space-y-6 max-w-4xl mx-auto">
-            {publications.map((publication, index) => (
-              <motion.div
-                key={publication.title}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-gray-50 p-6 rounded-xl hover:shadow-lg transition-all duration-300"
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{publication.title}</h3>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <span className="font-medium">Journal:</span> {publication.journal}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <span className="font-medium">Authors:</span> {publication.authors}
-                    </p>
-                    <p className="text-gray-500 text-sm">
-                      <span className="font-medium">Year:</span> {publication.year}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+    
 
       {/* Collaborations */}
       <section className="py-20 bg-gradient-to-br from-teal-50 to-blue-50">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -244,7 +180,7 @@ const ResearchPage = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-center"
               >
-                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-semibold text-gray-900">{collaboration}</h3>
@@ -256,7 +192,7 @@ const ResearchPage = () => {
 
       {/* Innovation Highlights */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="w-[90vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -283,7 +219,7 @@ const ResearchPage = () => {
                   "Laboratory automation and quality control systems"
                 ].map((innovation, index) => (
                   <div key={index} className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full"></div>
                     <span className="text-gray-700">{innovation}</span>
                   </div>
                 ))}
@@ -298,7 +234,7 @@ const ResearchPage = () => {
             >
               <div className="bg-gradient-to-br from-teal-100 to-blue-100 rounded-2xl p-8 h-80 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-24 h-24 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="w-24 h-24 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-6">
                     <Award className="w-12 h-12 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Innovation Excellence</h3>
