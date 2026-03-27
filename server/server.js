@@ -6,6 +6,8 @@ import connectDB from './config/database.js';
 import swaggerSpec from './config/swagger.js';
 import userRoutes from './routes/userRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
+import serviceRoutes from './routes/serviceRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -30,8 +32,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // Routes
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/vendors', vendorRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/vendors', vendorRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -77,6 +77,31 @@ http://localhost:8080/api-docs
 - `PUT /api/vendors/:id/activate` - Activate and verify vendor account (Admin only)
 - `PUT /api/vendors/:id/deactivate` - Deactivate vendor account (Admin only)
 - `DELETE /api/vendors/:id` - Delete vendor (Admin only)
+
+### Booking Management
+- `POST /api/bookings/create` - Create new booking (User)
+- `GET /api/bookings/user/me` - Get user's all bookings (User)
+- `GET /api/bookings/available` - Get available bookings (Vendor)
+- `GET /api/bookings/vendor/me` - Get vendor's accepted bookings (Vendor)
+- `GET /api/bookings/all` - Get all bookings (Admin)
+- `GET /api/bookings/:id` - Get booking by ID
+- `PUT /api/bookings/:id/accept` - Vendor accepts booking (Vendor)
+- `PUT /api/bookings/:id/start` - Start service (Vendor)
+- `PUT /api/bookings/:id/complete` - Complete service (Vendor)
+- `PUT /api/bookings/:id/cancel` - Cancel booking (User)
+- `PUT /api/bookings/:id/status` - Update booking status (Admin)
+- `DELETE /api/bookings/:id` - Delete booking (Admin)
+
+### Service Management
+- `POST /api/services/create` - Create new service (Vendor)
+- `GET /api/services` - Get all services (Public)
+- `GET /api/services/:id` - Get service by ID (Public)
+- `GET /api/services/vendor/me` - Get vendor's all services (Vendor)
+- `GET /api/services/vendor/:vendorId` - Get services by vendor ID (Public)
+- `GET /api/services/category/:category` - Get services by category (Public)
+- `PUT /api/services/:id` - Update service (Vendor)
+- `PUT /api/services/:id/toggle-status` - Toggle service active status (Vendor)
+- `DELETE /api/services/:id` - Delete service (Vendor)
 ### Authentication
 
 - `POST /api/auth/register` - User registration (ENABLED - Default role: user)
