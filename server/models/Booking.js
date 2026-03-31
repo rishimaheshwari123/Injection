@@ -156,6 +156,15 @@ const bookingSchema = new mongoose.Schema({
   },
   cancellationReason: {
     type: String
+  },
+
+  // Report & Invoice
+  reportUrl: {
+    type: String,
+    default: null
+  },
+  reportGeneratedAt: {
+    type: Date
   }
 }, {
   timestamps: true

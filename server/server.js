@@ -8,6 +8,9 @@ import userRoutes from './routes/userRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
+import prescriptionRoutes from './routes/prescriptionRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -36,6 +39,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

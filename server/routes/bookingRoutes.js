@@ -151,7 +151,7 @@ router.get('/vendor/me', protect, vendorOnly, getVendorBookings);
 
 /**
  * @swagger
- * /api/bookings/all:
+ * /api/bookings/admin/all:
  *   get:
  *     summary: Get all bookings (Admin)
  *     tags: [Bookings]
@@ -170,7 +170,7 @@ router.get('/vendor/me', protect, vendorOnly, getVendorBookings);
  *       200:
  *         description: List of all bookings
  */
-router.get('/all', protect, adminOnly, getAllBookings);
+router.get('/admin/all', protect, adminOnly, getAllBookings);
 
 /**
  * @swagger

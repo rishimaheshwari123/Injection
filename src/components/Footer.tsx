@@ -86,7 +86,8 @@ const Footer = () => {
 
         <div className="text-center mt-4 text-gray-400 text-xs">
           <Link to="/privacy" className="hover:text-white transition-colors mr-4">Privacy Policy</Link>
-          <Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
+          <Link to="/terms" className="hover:text-white transition-colors mr-4">Terms & Conditions</Link>
+          <Link to="/login" className="hover:text-white transition-colors">Admin Login</Link>
         </div>
       </div>
     </footer>

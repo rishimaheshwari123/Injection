@@ -282,6 +282,36 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Toggle user status (activate/deactivate)
+// @route   PUT /api/users/:id/toggle-status
+// @access  Private/Admin
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User account ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Get current user
 // @route   GET /api/users/me
 // @access  Private

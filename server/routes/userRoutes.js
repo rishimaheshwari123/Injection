@@ -7,6 +7,7 @@ import {
   updateUserProfile,
   activateUser,
   deactivateUser,
+  toggleUserStatus,
   deleteUser,
   getMe
 } from '../controllers/userController.js';
@@ -216,6 +217,26 @@ router.put('/:id/activate', protect, adminOnly, activateUser);
  *         description: User deactivated successfully
  */
 router.put('/:id/deactivate', protect, adminOnly, deactivateUser);
+
+/**
+ * @swagger
+ * /api/users/{id}/toggle-status:
+ *   put:
+ *     summary: Toggle user status (activate/deactivate)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User status toggled successfully
+ */
+router.put('/:id/toggle-status', protect, adminOnly, toggleUserStatus);
 
 /**
  * @swagger
