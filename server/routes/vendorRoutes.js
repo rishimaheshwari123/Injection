@@ -24,12 +24,104 @@ const router = express.Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Vendor'
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - phone
+ *               - businessName
+ *               - businessType
+ *               - address
+ *               - city
+ *               - state
+ *               - pincode
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Vendor's full name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Vendor's email address
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 description: Password (minimum 6 characters)
+ *               phone:
+ *                 type: string
+ *                 pattern: '^[0-9]{10}$'
+ *                 description: 10-digit phone number
+ *               alternatePhone:
+ *                 type: string
+ *                 pattern: '^[0-9]{10}$'
+ *                 description: Alternate 10-digit phone number
+ *               businessName:
+ *                 type: string
+ *                 description: Name of the business
+ *               businessType:
+ *                 type: string
+ *                 enum: [Individual, Clinic, Hospital, Laboratory, Pharmacy, Other]
+ *                 description: Type of business
+ *               registrationNumber:
+ *                 type: string
+ *                 description: Business registration number
+ *               gstNumber:
+ *                 type: string
+ *                 pattern: '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$'
+ *                 description: GST number
+ *               servicesOffered:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [Home Injections, IV Drip Services, Wound Dressing, Day Care at Home, Patient Monitoring, Old Age Patient Care, 24 HR Patient Care, Field Survey Service, Data Collection Service, Field Sample Collection, Community Survey, Awareness Activities, Lab-based Training, BSC/MSC Training, DMLT Training, Nursing Training, Dissertation Program, Placement Services]
+ *                 description: Services offered by the vendor
+ *               qualifications:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     degree:
+ *                       type: string
+ *                     institution:
+ *                       type: string
+ *                     year:
+ *                       type: number
+ *                 description: Professional qualifications
+ *               experience:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Years of experience
+ *               specialization:
+ *                 type: string
+ *                 description: Area of specialization
+ *               address:
+ *                 type: string
+ *                 description: Business address
+ *               city:
+ *                 type: string
+ *                 description: City
+ *               state:
+ *                 type: string
+ *                 description: State
+ *               pincode:
+ *                 type: string
+ *                 pattern: '^[0-9]{6}$'
+ *                 description: 6-digit pincode
+ *               serviceAreas:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Areas where services are provided
+ *               bio:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Brief bio (max 500 characters)
  *     responses:
  *       201:
  *         description: Vendor registered successfully
  *       400:
- *         description: Vendor already exists
+ *         description: Vendor already exists or validation error
  */
 router.post('/register', vendorRegister);
 
