@@ -1,6 +1,6 @@
 import Booking from '../models/Booking.js';
 import PDFDocument from 'pdfkit';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
 
 // @desc    Generate report for booking
@@ -213,7 +213,7 @@ export const getReport = async (req, res) => {
 export const uploadReport = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { reportUrl } = req.body;
+    const { reportUrl, reportType, reportName } = req.body;
 
     const booking = await Booking.findById(bookingId);
 
@@ -235,10 +235,27 @@ export const uploadReport = async (req, res) => {
       });
     }
 
+    // Add report to reports array
+    const newReport = {
+      reportUrl,
+      reportType: reportType || 'general',
+      reportName: reportName || `Report ${booking.reports.length + 1}`,
+      addedBy: req.user?.name || req.vendor?.name || 'Admin',
+      addedAt: new Date()
+    };
+
+    booking.reports.push(newReport);
+    
+    // Update legacy fields for backward compatibility
     booking.reportUrl = reportUrl;
     booking.reportGeneratedAt = new Date();
-    booking.bookingStatus = 'completed';
-    booking.completedAt = new Date();
+    
+    // Update status to completed if not already
+    if (booking.bookingStatus !== 'completed') {
+      booking.bookingStatus = 'completed';
+      booking.completedAt = new Date();
+    }
+    
     await booking.save();
 
     res.status(200).json({

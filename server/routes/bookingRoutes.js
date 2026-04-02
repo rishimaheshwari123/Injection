@@ -11,7 +11,10 @@ import {
   cancelBooking,
   getAllBookings,
   updateBookingStatus,
-  deleteBooking
+  deleteBooking,
+  addNoteToBooking,
+  updatePrescription,
+  addPrescription
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -308,6 +311,64 @@ router.put('/:id/cancel', protect, cancelBooking);
  *         description: Status updated successfully
  */
 router.put('/:id/status', protect, adminOnly, updateBookingStatus);
+
+/**
+ * @swagger
+ * /api/bookings/{id}/notes:
+ *   post:
+ *     summary: Add note to booking (Admin)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Note added successfully
+ */
+router.post('/:id/notes', protect, adminOnly, addNoteToBooking);
+
+/**
+ * @swagger
+ * /api/bookings/{id}/prescription:
+ *   put:
+ *     summary: Update prescription for booking (Admin)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               prescriptionUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Prescription updated successfully
+ */
+router.put('/:id/prescription', protect, adminOnly, updatePrescription);
 
 /**
  * @swagger

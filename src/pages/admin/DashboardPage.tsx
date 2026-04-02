@@ -1,135 +1,301 @@
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Users, Building2, Package, Calendar } from 'lucide-react';
-import { RootState } from '../../store/store';
-import { userAPI, vendorAPI, serviceAPI, bookingAPI } from '../../services/api';
-import { setUsers } from '../../store/slices/userSlice';
-import { setVendors } from '../../store/slices/vendorSlice';
-import { setServices } from '../../store/slices/serviceSlice';
-import { setBookings } from '../../store/slices/bookingSlice';
+import { useEffect, useState } from 'react';
+import { Users, Building2, Package, Calendar, TrendingUp, FlaskConical, IndianRupee } from 'lucide-react';
+import { dashboardAPI } from '../../services/api';
+import { toast } from 'react-toastify';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 const DashboardPage = () => {
-  const dispatch = useDispatch();
-  const { users } = useSelector((state: RootState) => state.users);
-  const { vendors } = useSelector((state: RootState) => state.vendors);
-  const { services } = useSelector((state: RootState) => state.services);
-  const { bookings } = useSelector((state: RootState) => state.bookings);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardStats();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardStats = async () => {
+    setLoading(true);
     try {
-      const [usersRes, vendorsRes, servicesRes, bookingsRes] = await Promise.all([
-        userAPI.getAllUsers(),
-        vendorAPI.getAllVendors(),
-        serviceAPI.getAllServices(),
-        bookingAPI.getAllBookings(),
-      ]);
-
-      if (usersRes.data.success) dispatch(setUsers(usersRes.data.data));
-      if (vendorsRes.data.success) dispatch(setVendors(vendorsRes.data.data));
-      if (servicesRes.data.success) dispatch(setServices(servicesRes.data.data));
-      if (bookingsRes.data.success) dispatch(setBookings(bookingsRes.data.data));
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      const response = await dashboardAPI.getStats();
+      if (response.data.success) {
+        setStats(response.data.data);
+      }
+    } catch (error: any) {
+      toast.error('Failed to fetch dashboard statistics');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const stats = [
-    {
-      title: 'Total Users',
-      value: users.length,
-      icon: Users,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      title: 'Total Vendors',
-      value: vendors.length,
-      icon: Building2,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-    },
-    {
-      title: 'Total Services',
-      value: services.length,
-      icon: Package,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50',
-    },
-    {
-      title: 'Total Bookings',
-      value: bookings.length,
-      icon: Calendar,
-      color: 'from-orange-500 to-orange-600',
-      bgColor: 'bg-orange-50',
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#63D64F]"></div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Failed to load dashboard data</p>
+      </div>
+    );
+  }
+
+  // Prepare data for charts
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const monthlyData = stats.monthlyBookings.map((item: any) => ({
+    name: `${monthNames[item._id.month - 1]} ${item._id.year}`,
+    bookings: item.count,
+    revenue: item.revenue
+  }));
+
+  const bookingStatusData = stats.bookingsByStatus.map((item: any) => ({
+    name: item._id,
+    value: item.count
+  }));
+
+  const labStatusData = stats.labsByStatus.map((item: any) => ({
+    name: item._id,
+    value: item.count
+  }));
+
+  const COLORS = ['#63D64F', '#3DB9A6', '#FFA500', '#FF6B6B', '#4ECDC4', '#95E1D3'];
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard Overview</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
-                </div>
-                <div className={`${stat.bgColor} p-4 rounded-lg`}>
-                  <Icon className={`bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`} size={32} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <p className="text-gray-600 mt-1">Welcome to your admin dashboard</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Bookings */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Bookings</h2>
-          <div className="space-y-3">
-            {bookings.slice(0, 5).map((booking) => (
-              <div key={booking._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800">{booking.patientName}</p>
-                  <p className="text-sm text-gray-600">{booking.email}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                  booking.bookingStatus === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                  booking.bookingStatus === 'accepted' ? 'bg-purple-100 text-purple-700' :
-                  'bg-yellow-100 text-yellow-700'
-                }`}>
-                  {booking.bookingStatus}
-                </span>
-              </div>
-            ))}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm">Total Users</p>
+              <p className="text-3xl font-bold mt-2">{stats.counts.users}</p>
+            </div>
+            <Users size={40} className="opacity-80" />
           </div>
         </div>
 
-        {/* Pending Vendors */}
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-100 text-sm">Total Vendors</p>
+              <p className="text-3xl font-bold mt-2">{stats.counts.vendors}</p>
+            </div>
+            <Building2 size={40} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm">Total Services</p>
+              <p className="text-3xl font-bold mt-2">{stats.counts.services}</p>
+            </div>
+            <Package size={40} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-sm">Total Bookings</p>
+              <p className="text-3xl font-bold mt-2">{stats.counts.bookings}</p>
+            </div>
+            <Calendar size={40} className="opacity-80" />
+          </div>
+        </div>
+      </div>
+
+      {/* Revenue Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-100 text-sm">Booking Revenue</p>
+              <p className="text-3xl font-bold mt-2 flex items-center">
+                <IndianRupee size={28} />
+                {stats.revenue.toLocaleString('en-IN')}
+              </p>
+            </div>
+            <TrendingUp size={40} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-pink-100 text-sm">Lab Revenue</p>
+              <p className="text-3xl font-bold mt-2 flex items-center">
+                <IndianRupee size={28} />
+                {stats.labRevenue.toLocaleString('en-IN')}
+              </p>
+            </div>
+            <FlaskConical size={40} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 text-sm">Total Revenue</p>
+              <p className="text-3xl font-bold mt-2 flex items-center">
+                <IndianRupee size={28} />
+                {(stats.revenue + stats.labRevenue).toLocaleString('en-IN')}
+              </p>
+            </div>
+            <TrendingUp size={40} className="opacity-80" />
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Monthly Bookings & Revenue */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Pending Vendors</h2>
-          <div className="space-y-3">
-            {vendors.filter(v => v.verificationStatus === 'pending').slice(0, 5).map((vendor) => (
-              <div key={vendor._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800">{vendor.businessName}</p>
-                  <p className="text-sm text-gray-600">{vendor.email}</p>
-                </div>
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                  Pending
-                </span>
-              </div>
-            ))}
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Bookings & Revenue</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="bookings" stroke="#63D64F" strokeWidth={2} name="Bookings" />
+              <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3DB9A6" strokeWidth={2} name="Revenue (₹)" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Booking Status Distribution */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Booking Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={bookingStatusData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }: any) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {bookingStatusData.map((_entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Services */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Top 5 Services</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={stats.topServices}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="_id" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#63D64F" name="Bookings" />
+              <Bar dataKey="revenue" fill="#3DB9A6" name="Revenue (₹)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Lab Status Distribution */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Lab Partner Status</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={labStatusData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }: any) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {labStatusData.map((_entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Recent Bookings */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Bookings</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {stats.recentBookings.map((booking: any) => (
+                <tr key={booking._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-800">{booking.patientName}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-700' :
+                      booking.bookingStatus === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                      booking.bookingStatus === 'accepted' ? 'bg-purple-100 text-purple-700' :
+                      booking.bookingStatus === 'cancelled' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {booking.bookingStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-800">₹{booking.grandTotal.toLocaleString('en-IN')}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {new Date(booking.createdAt).toLocaleDateString('en-IN')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Lab Entries Card */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Lab Partner Entries</h3>
+            <p className="text-gray-600 text-sm mt-1">Total samples sent to lab partners</p>
+          </div>
+          <div className="text-right">
+            <p className="text-4xl font-bold text-gray-800">{stats.counts.labEntries}</p>
+            <p className="text-sm text-gray-600 mt-1">Total Entries</p>
           </div>
         </div>
       </div>

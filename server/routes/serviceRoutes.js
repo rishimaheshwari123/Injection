@@ -1,6 +1,9 @@
 import express from 'express';
 import {
   createService,
+  adminCreateService,
+  adminGetAllServices,
+  adminUpdateService,
   getAllServices,
   getServiceById,
   getVendorServices,
@@ -10,7 +13,7 @@ import {
   toggleServiceStatus,
   getServicesByCategory
 } from '../controllers/serviceController.js';
-import { protect, vendorOnly } from '../middleware/auth.js';
+import { protect, vendorOnly, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -50,6 +53,66 @@ const router = express.Router();
  *         requirements:
  *           type: string
  */
+
+/**
+ * @swagger
+ * /api/services/admin/create:
+ *   post:
+ *     summary: Create new service (Admin)
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Service'
+ *     responses:
+ *       201:
+ *         description: Service created successfully
+ */
+router.post('/admin/create', protect, adminOnly, adminCreateService);
+
+/**
+ * @swagger
+ * /api/services/admin/all:
+ *   get:
+ *     summary: Get all services (Admin - includes all vendors)
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all services
+ */
+router.get('/admin/all', protect, adminOnly, adminGetAllServices);
+
+/**
+ * @swagger
+ * /api/services/admin/{id}:
+ *   put:
+ *     summary: Update service (Admin)
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Service'
+ *     responses:
+ *       200:
+ *         description: Service updated successfully
+ */
+router.put('/admin/:id', protect, adminOnly, adminUpdateService);
 
 /**
  * @swagger

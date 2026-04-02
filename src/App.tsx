@@ -18,6 +18,14 @@ import UsersPage from './pages/admin/UsersPage'
 import VendorsPage from './pages/admin/VendorsPage'
 import ServicesAdminPage from './pages/admin/ServicesPage'
 import BookingsPage from './pages/admin/BookingsPage'
+import PrescriptionsPage from './pages/admin/PrescriptionsPage'
+import ReportsPage from './pages/admin/ReportsPage'
+import LabPartnersPage from './pages/admin/LabPartnersPage'
+import InsuranceClaimsPage from './pages/admin/InsuranceClaimsPage'
+import FAQsPage from './pages/admin/FAQsPage'
+import StaffPage from './pages/admin/StaffPage'
+import CouponsPage from './pages/admin/CouponsPage'
+import PermissionGuard from './components/PermissionGuard'
 
 function App() {
   return (
@@ -49,11 +57,18 @@ function App() {
           <AdminLayout />
         </ProtectedRoute>
       }>
-        <Route index element={<DashboardPage />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="vendors" element={<VendorsPage />} />
-        <Route path="services" element={<ServicesAdminPage />} />
-        <Route path="bookings" element={<BookingsPage />} />
+        <Route index element={<PermissionGuard permission="dashboard"><DashboardPage /></PermissionGuard>} />
+        <Route path="users" element={<PermissionGuard permission="users"><UsersPage /></PermissionGuard>} />
+        <Route path="vendors" element={<PermissionGuard permission="vendors"><VendorsPage /></PermissionGuard>} />
+        <Route path="services" element={<PermissionGuard permission="services"><ServicesAdminPage /></PermissionGuard>} />
+        <Route path="bookings" element={<PermissionGuard permission="bookings"><BookingsPage /></PermissionGuard>} />
+        <Route path="prescriptions" element={<PermissionGuard permission="prescriptions"><PrescriptionsPage /></PermissionGuard>} />
+        <Route path="reports" element={<PermissionGuard permission="reports"><ReportsPage /></PermissionGuard>} />
+        <Route path="lab-partners" element={<PermissionGuard permission="labPartners"><LabPartnersPage /></PermissionGuard>} />
+        <Route path="insurance-claims" element={<PermissionGuard permission="insuranceClaims"><InsuranceClaimsPage /></PermissionGuard>} />
+        <Route path="faqs" element={<PermissionGuard permission="faqs"><FAQsPage /></PermissionGuard>} />
+        <Route path="coupons" element={<PermissionGuard permission="coupons"><CouponsPage /></PermissionGuard>} />
+        <Route path="staff" element={<PermissionGuard permission="staff"><StaffPage /></PermissionGuard>} />
       </Route>
     </Routes>
   )

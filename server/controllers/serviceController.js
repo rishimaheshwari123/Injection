@@ -1,5 +1,39 @@
 import Service from '../models/Service.js';
 
+// @desc    Create new service (Admin)
+// @route   POST /api/services/admin/create
+// @access  Private/Admin
+export const adminCreateService = async (req, res) => {
+  try {
+    const serviceData = req.body;
+
+    // Validate vendorId is provided
+    if (!serviceData.vendorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vendor ID is required'
+      });
+    }
+
+    // Create service
+    const service = await Service.create(serviceData);
+
+    // Populate vendor details
+    await service.populate('vendorId', 'name businessName phone email');
+
+    res.status(201).json({
+      success: true,
+      message: 'Service created successfully',
+      data: service
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Create new service
 // @route   POST /api/services/create
 // @access  Private/Vendor
@@ -38,6 +72,47 @@ export const createService = async (req, res) => {
       success: true,
       message: 'Service created successfully',
       data: service
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get all services (Admin - shows all services regardless of vendor status)
+// @route   GET /api/services/admin/all
+// @access  Private/Admin
+export const adminGetAllServices = async (req, res) => {
+  try {
+    const { category, vendorId, isActive } = req.query;
+    
+    let query = {};
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    if (vendorId) {
+      query.vendorId = vendorId;
+    }
+    
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    const services = await Service.find(query)
+      .populate({
+        path: 'vendorId',
+        select: 'name businessName phone email city state rating isActive isVerified verificationStatus'
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: services.length,
+      data: services
     });
   } catch (error) {
     res.status(500).json({
@@ -156,6 +231,40 @@ export const getServicesByVendorId = async (req, res) => {
       success: true,
       count: services.length,
       data: services
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update service (Admin)
+// @route   PUT /api/services/admin/:id
+// @access  Private/Admin
+export const adminUpdateService = async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found'
+      });
+    }
+
+    // Update service
+    const updatedService = await Service.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('vendorId', 'name businessName phone email city state rating isActive isVerified verificationStatus');
+
+    res.status(200).json({
+      success: true,
+      message: 'Service updated successfully',
+      data: updatedService
     });
   } catch (error) {
     res.status(500).json({

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Search, Package, Download } from 'lucide-react';
-import { serviceAPI } from '../../services/api';
+import { Search, Package, Download, Plus, X, Edit, Loader2 } from 'lucide-react';
+import { serviceAPI, vendorAPI } from '../../services/api';
 import { setServices, setLoading } from '../../store/slices/serviceSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toast } from 'react-toastify';
@@ -10,10 +10,49 @@ const ServicesPage = () => {
   const dispatch = useAppDispatch();
   const { services, loading } = useAppSelector((state) => state.services);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingService, setEditingService] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState('');
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    serviceName: '',
+    description: '',
+    category: '',
+    basePrice: '',
+    duration: '45',
+    serviceType: 'At Home',
+    vendorId: '',
+    requirements: ''
+  });
 
   useEffect(() => {
     fetchServices();
+    fetchVendors();
   }, []);
+
+  const fetchVendors = async () => {
+    try {
+      const response = await vendorAPI.getAllVendors();
+      console.log('Vendors API Response:', response.data);
+      if (response.data.success) {
+        console.log('All Vendors:', response.data.data);
+        // Show all vendors for now to debug
+        setVendors(response.data.data);
+        
+        // Filter only verified and active vendors
+        const verifiedVendors = response.data.data.filter(
+          (v: any) => v.isVerified && v.isActive && v.verificationStatus === 'verified'
+        );
+        console.log('Verified Vendors:', verifiedVendors);
+        console.log('Total vendors:', response.data.data.length, 'Verified:', verifiedVendors.length);
+      }
+    } catch (error: any) {
+      console.error('Error fetching vendors:', error);
+      toast.error('Failed to fetch vendors');
+    }
+  };
 
   const fetchServices = async () => {
     dispatch(setLoading(true));
@@ -63,24 +102,148 @@ const ServicesPage = () => {
     }
   };
 
-  const filteredServices = services.filter((service: any) =>
-    service.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.vendorId?.businessName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.vendorId) {
+      toast.error('Please select a vendor');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await serviceAPI.createService({
+        ...formData,
+        basePrice: Number(formData.basePrice),
+        duration: Number(formData.duration)
+      });
+
+      if (response.data.success) {
+        toast.success('Service created successfully!');
+        setShowCreateModal(false);
+        setFormData({
+          serviceName: '',
+          description: '',
+          category: '',
+          basePrice: '',
+          duration: '45',
+          serviceType: 'At Home',
+          vendorId: '',
+          requirements: ''
+        });
+        fetchServices();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create service');
+      console.error('Error creating service:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditClick = (service: any) => {
+    setEditingService(service);
+    setFormData({
+      serviceName: service.serviceName,
+      description: service.description,
+      category: service.category,
+      basePrice: service.basePrice.toString(),
+      duration: service.duration.toString(),
+      serviceType: service.serviceType,
+      vendorId: service.vendorId?._id || '',
+      requirements: service.requirements || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.vendorId) {
+      toast.error('Please select a vendor');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await serviceAPI.updateService(editingService._id, {
+        ...formData,
+        basePrice: Number(formData.basePrice),
+        duration: Number(formData.duration)
+      });
+
+      if (response.data.success) {
+        toast.success('Service updated successfully!');
+        setShowEditModal(false);
+        setEditingService(null);
+        setFormData({
+          serviceName: '',
+          description: '',
+          category: '',
+          basePrice: '',
+          duration: '45',
+          serviceType: 'At Home',
+          vendorId: '',
+          requirements: ''
+        });
+        fetchServices();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update service');
+      console.error('Error updating service:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const categories = [
+    'Home Injections',
+    'IV Drip Services',
+    'Wound Dressing',
+    'Day Care at Home',
+    'Patient Monitoring',
+    'Old Age Patient Care',
+    '24 HR Patient Care',
+    'Field Survey Service',
+    'Data Collection Service',
+    'Field Sample Collection',
+    'Community Survey',
+    'Awareness Activities',
+    'Lab-based Training',
+    'BSC/MSC Training',
+    'DMLT Training',
+    'Nursing Training',
+    'Dissertation Program',
+    'Placement Services',
+    'Blood Collection',
+    'BP/Sugar Monitoring',
+    'ECG at Home',
+    'Catheter Care',
+    'Physiotherapy Session',
+    'Other'
+  ];
+
+  const filteredServices = services.filter((service: any) => {
+    const matchesSearch = service.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vendorId?.businessName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesVendor = selectedVendor === '' || service.vendorId?._id === selectedVendor;
+    
+    return matchesSearch && matchesVendor;
+  });
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      {/* First Row - Title, Search, Export */}
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold text-gray-800">Services Management</h1>
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleExportToExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all"
-          >
-            <Download size={20} />
-            Export to Excel
-          </button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -88,10 +251,45 @@ const ServicesPage = () => {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none w-64"
             />
           </div>
+          <button
+            onClick={handleExportToExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            <Download size={20} />
+            Export to Excel
+          </button>
         </div>
+      </div>
+
+      {/* Second Row - Create Service and Vendor Filter */}
+      <div className="flex items-center justify-end gap-4 mb-6">
+        <select
+          value={selectedVendor}
+          onChange={(e) => setSelectedVendor(e.target.value)}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+        >
+          <option value="">All Vendors</option>
+          {vendors.map((vendor) => (
+            <option key={vendor._id} value={vendor._id}>
+              {vendor.businessName}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => {
+            setShowCreateModal(true);
+            if (vendors.length === 0) {
+              fetchVendors();
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all"
+        >
+          <Plus size={20} />
+          Create Service
+        </button>
       </div>
 
       {loading ? (
@@ -106,11 +304,20 @@ const ServicesPage = () => {
                 <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] p-3 rounded-lg">
                   <Package className="text-white" size={24} />
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  service.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {service.isActive ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditClick(service)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit Service"
+                  >
+                    <Edit size={18} />
+                  </button>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    service.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {service.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
               </div>
 
               <h3 className="text-lg font-bold text-gray-800 mb-2">{service.serviceName}</h3>
@@ -148,6 +355,374 @@ const ServicesPage = () => {
         <div className="text-center py-12">
           <Package className="mx-auto text-gray-400 mb-4" size={48} />
           <p className="text-gray-600">No services found</p>
+        </div>
+      )}
+
+      {/* Create Service Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">Create New Service</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                disabled={submitting}
+                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateService} className="p-6 space-y-4">
+              {/* Vendor Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Vendor <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="vendorId"
+                  value={formData.vendorId}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="">Choose a vendor ({vendors.length} available)</option>
+                  {vendors.map((vendor) => (
+                    <option key={vendor._id} value={vendor._id}>
+                      {vendor.businessName} - {vendor.name} ({vendor.city}) 
+                      {!vendor.isVerified && ' [Not Verified]'}
+                      {!vendor.isActive && ' [Inactive]'}
+                    </option>
+                  ))}
+                </select>
+                {vendors.length === 0 && (
+                  <p className="text-sm text-red-500 mt-1">No vendors found. Please create vendors first.</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">Admin can create services for any vendor</p>
+              </div>
+
+              {/* Service Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="serviceName"
+                  value={formData.serviceName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Home Blood Collection"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  placeholder="Describe the service..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none resize-none"
+                />
+              </div>
+
+              {/* Base Price and Duration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Base Price (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="basePrice"
+                    value={formData.basePrice}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    placeholder="500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    min="1"
+                    placeholder="45"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Service Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Type
+                </label>
+                <select
+                  name="serviceType"
+                  value={formData.serviceType}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="At Home">At Home</option>
+                  <option value="At Clinic">At Clinic</option>
+                  <option value="Both">Both</option>
+                </select>
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Requirements (Optional)
+                </label>
+                <textarea
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                  rows={2}
+                  placeholder="Any special requirements or preparations needed..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none resize-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={submitting}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {submitting && <Loader2 size={18} className="animate-spin" />}
+                  {submitting ? 'Creating...' : 'Create Service'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Service Modal */}
+      {showEditModal && editingService && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">Edit Service</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingService(null);
+                }}
+                disabled={submitting}
+                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateService} className="p-6 space-y-4">
+              {/* Vendor Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Vendor <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="vendorId"
+                  value={formData.vendorId}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="">Choose a vendor ({vendors.length} available)</option>
+                  {vendors.map((vendor) => (
+                    <option key={vendor._id} value={vendor._id}>
+                      {vendor.businessName} - {vendor.name} ({vendor.city}) 
+                      {!vendor.isVerified && ' [Not Verified]'}
+                      {!vendor.isActive && ' [Inactive]'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Service Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="serviceName"
+                  value={formData.serviceName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Home Blood Collection"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  placeholder="Describe the service..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none resize-none"
+                />
+              </div>
+
+              {/* Base Price and Duration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Base Price (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="basePrice"
+                    value={formData.basePrice}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    placeholder="500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    min="1"
+                    placeholder="45"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Service Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Type
+                </label>
+                <select
+                  name="serviceType"
+                  value={formData.serviceType}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                >
+                  <option value="At Home">At Home</option>
+                  <option value="At Clinic">At Clinic</option>
+                  <option value="Both">Both</option>
+                </select>
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Requirements (Optional)
+                </label>
+                <textarea
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                  rows={2}
+                  placeholder="Any special requirements or preparations needed..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none resize-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingService(null);
+                  }}
+                  disabled={submitting}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {submitting && <Loader2 size={18} className="animate-spin" />}
+                  {submitting ? 'Updating...' : 'Update Service'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -47,10 +47,102 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
   },
+  alternateMobile: {
+    type: String
+  },
+  currentLocation: {
+    type: String,
+    trim: true
+  },
+  
+  // Insurance Information
+  hasInsurance: {
+    type: Boolean,
+    default: false
+  },
+  insuranceType: {
+    type: String,
+    enum: ['Primary', 'Secondary'],
+    default: 'Primary'
+  },
+  insurancePolicyNumber: {
+    type: String,
+    trim: true
+  },
+  insuranceProvider: {
+    type: String,
+    trim: true
+  },
+  insuranceExpiryDate: {
+    type: Date
+  },
+  
+  // Medical Information
+  bloodGroup: {
+    type: String,
+    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'],
+    default: 'Unknown'
+  },
+  allergies: [{
+    type: String,
+    trim: true
+  }],
+  chronicDiseases: [{
+    type: String,
+    trim: true
+  }],
+  currentMedications: [{
+    type: String,
+    trim: true
+  }],
+  
+  // Emergency Contact
+  emergencyContactName: {
+    type: String,
+    trim: true
+  },
+  emergencyContactPhone: {
+    type: String
+  },
+  emergencyContactRelation: {
+    type: String,
+    trim: true
+  },
+  
+  // Additional Information
+  additionalNotes: {
+    type: String,
+    trim: true
+  },
+  preferredLanguage: {
+    type: String,
+    enum: ['English', 'Hindi', 'Bengali', 'Telugu', 'Marathi', 'Tamil', 'Gujarati', 'Kannada', 'Other'],
+    default: 'English'
+  },
+  
+  // Account Status
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'staff'],
     default: 'user'
+  },
+  isStaff: {
+    type: Boolean,
+    default: false
+  },
+  permissions: {
+    dashboard: { type: Boolean, default: false },
+    users: { type: Boolean, default: false },
+    vendors: { type: Boolean, default: false },
+    services: { type: Boolean, default: false },
+    bookings: { type: Boolean, default: false },
+    prescriptions: { type: Boolean, default: false },
+    reports: { type: Boolean, default: false },
+    labPartners: { type: Boolean, default: false },
+    insuranceClaims: { type: Boolean, default: false },
+    faqs: { type: Boolean, default: false },
+    coupons: { type: Boolean, default: false },
+    staff: { type: Boolean, default: false }
   },
   isActive: {
     type: Boolean,
@@ -59,6 +151,9 @@ const userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
     default: null
+  },
+  lastLoginAt: {
+    type: Date
   }
 }, {
   timestamps: true

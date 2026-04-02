@@ -10,16 +10,16 @@ export const createBooking = async (req, res) => {
     // Get userId from JWT token
     const userId = req.user._id;
 
-    // Create booking
+    // Create booking with vendorId from request body
     const booking = await Booking.create({
       ...bookingData,
       userId,
-      vendorId: null,
       bookingStatus: 'pending'
     });
 
-    // Populate user details
+    // Populate user and vendor details
     await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
 
     res.status(201).json({
       success: true,
@@ -429,4 +429,135 @@ export const deleteBooking = async (req, res) => {
       message: error.message
     });
   }
+};
+
+
+// @desc    Add note to booking
+// @route   POST /api/bookings/:id/notes
+// @access  Private/Admin
+export const addNoteToBooking = async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || text.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Note text is required'
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Add new note
+    booking.notes.push({
+      text: text.trim(),
+      addedBy: req.user?.name || 'Admin',
+      addedAt: new Date()
+    });
+
+    await booking.save();
+
+    // Populate and return updated booking
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Note added successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Add prescription to booking
+// @route   POST /api/bookings/:id/prescription
+// @access  Private/Admin
+export const addPrescription = async (req, res) => {
+  try {
+    const { prescriptionData, prescriptionType } = req.body;
+    
+    if (!prescriptionData || !prescriptionType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Prescription data and type are required'
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Create new prescription object
+    const newPrescription = {
+      type: prescriptionType,
+      addedBy: req.user?.name || 'Admin',
+      addedAt: new Date()
+    };
+
+    // Add fields based on type
+    if (prescriptionType === 'form') {
+      Object.assign(newPrescription, {
+        doctorName: prescriptionData.doctorName || '',
+        doctorRegistration: prescriptionData.doctorRegistration || '',
+        hospitalName: prescriptionData.hospitalName || '',
+        patientComplaints: prescriptionData.patientComplaints || '',
+        diagnosis: prescriptionData.diagnosis || '',
+        medications: prescriptionData.medications || [],
+        labTests: prescriptionData.labTests || '',
+        specialInstructions: prescriptionData.specialInstructions || '',
+        followUpDate: prescriptionData.followUpDate || null,
+        imageUrl: null,
+        supportingImageUrl: prescriptionData.supportingImageUrl || null
+      });
+    } else if (prescriptionType === 'image') {
+      Object.assign(newPrescription, {
+        imageUrl: prescriptionData.imageUrl || '',
+        supportingImageUrl: null
+      });
+    }
+
+    // Add to prescriptions array
+    booking.prescriptions.push(newPrescription);
+    await booking.save();
+
+    // Populate and return updated booking
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Prescription added successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update prescription for booking (Legacy - now adds to array)
+// @route   PUT /api/bookings/:id/prescription
+// @access  Private/Admin
+export const updatePrescription = async (req, res) => {
+  // Just call addPrescription for backward compatibility
+  return addPrescription(req, res);
 };

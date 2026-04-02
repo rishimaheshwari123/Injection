@@ -1,6 +1,6 @@
 import Booking from '../models/Booking.js';
 import PDFDocument from 'pdfkit';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
 
 // @desc    Generate invoice for booking

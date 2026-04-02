@@ -9,7 +9,9 @@ import {
   deactivateUser,
   toggleUserStatus,
   deleteUser,
-  getMe
+  getMe,
+  createUserByAdmin,
+  updateUserByAdmin
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -177,6 +179,55 @@ router.get('/:id', protect, adminOnly, getUserById);
  *         description: Profile updated successfully
  */
 router.put('/profile', protect, updateUserProfile);
+
+/**
+ * @swagger
+ * /api/users/admin/create:
+ *   post:
+ *     summary: Create user/patient by admin
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - phone
+ *               - gender
+ *               - age
+ *               - address
+ *               - pincode
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ */
+router.post('/admin/create', protect, adminOnly, createUserByAdmin);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Update user/patient by admin
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ */
+router.put('/:id', protect, adminOnly, updateUserByAdmin);
 
 /**
  * @swagger

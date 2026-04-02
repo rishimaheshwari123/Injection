@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import fileUpload from 'express-fileupload';
 import swaggerUi from 'swagger-ui-express';
 import connectDB from './config/database.js';
 import swaggerSpec from './config/swagger.js';
@@ -11,6 +12,11 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import prescriptionRoutes from './routes/prescriptionRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
+import labPartnerRoutes from './routes/labPartnerRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import insuranceClaimRoutes from './routes/insuranceClaim.js';
+import faqRoutes from './routes/faq.js';
+import couponRoutes from './routes/coupon.js';
 
 // Load env vars
 dotenv.config();
@@ -25,8 +31,18 @@ app.use(cors({
   origin: '*',
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase payload limit for image uploads (base64 encoded images can be large)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// File upload middleware
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: './tmp/',
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size
+  abortOnLimit: true,
+  responseOnLimit: 'File size limit exceeded (max 10MB)',
+  createParentPath: true
+}));
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -42,6 +58,11 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/lab-partners', labPartnerRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/insurance', insuranceClaimRoutes);
+app.use('/api/faqs', faqRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

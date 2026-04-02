@@ -1,5 +1,5 @@
 import Booking from '../models/Booking.js';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
 // @desc    Upload prescription for booking
 // @route   POST /api/prescriptions/upload/:bookingId
@@ -133,17 +133,27 @@ export const deletePrescription = async (req, res) => {
 // @access  Private/User
 export const uploadImageToCloudinary = async (req, res) => {
   try {
-    const { image } = req.body; // base64 image
-
-    if (!image) {
+    // Check if file was uploaded
+    if (!req.files || !req.files.image) {
       return res.status(400).json({
         success: false,
-        message: 'Image is required'
+        message: 'No image file uploaded'
       });
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(image, {
+    const imageFile = req.files.image;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+    if (!allowedTypes.includes(imageFile.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type. Only JPG, PNG, GIF, and PDF are allowed'
+      });
+    }
+
+    // Upload to Cloudinary using file path
+    const result = await cloudinary.uploader.upload(imageFile.tempFilePath, {
       folder: process.env.FOLDER_NAME || 'prescriptions',
       resource_type: 'auto'
     });
@@ -157,9 +167,10 @@ export const uploadImageToCloudinary = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Upload error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message || 'Failed to upload image'
     });
   }
 };

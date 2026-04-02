@@ -48,8 +48,26 @@ const userSlice = createSlice({
         user.isActive = action.payload.isActive;
       }
     },
+    addUser: (state, action: PayloadAction<User>) => {
+      console.log('Redux addUser called with:', action.payload);
+      console.log('Current users count:', state.users.length);
+      state.users.unshift(action.payload);
+      console.log('New users count:', state.users.length);
+    },
+    updateUser: (state, action: PayloadAction<User>) => {
+      console.log('Redux updateUser called with:', action.payload);
+      const index = state.users.findIndex(u => u._id === action.payload._id);
+      console.log('User found at index:', index);
+      if (index !== -1) {
+        state.users[index] = action.payload;
+        console.log('User updated at index:', index);
+      }
+    },
+    removeUser: (state, action: PayloadAction<string>) => {
+      state.users = state.users.filter(u => u._id !== action.payload);
+    },
   },
 });
 
-export const { setUsers, setLoading, setError, updateUserStatus } = userSlice.actions;
+export const { setUsers, setLoading, setError, updateUserStatus, addUser, updateUser, removeUser } = userSlice.actions;
 export default userSlice.reducer;

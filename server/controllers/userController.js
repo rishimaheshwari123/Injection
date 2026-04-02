@@ -159,7 +159,7 @@ export const getUserById = async (req, res) => {
 // @access  Private
 export const updateUserProfile = async (req, res) => {
   try {
-    const { name, phone, gender, age, address, pincode, profileImage } = req.body;
+    const updateData = req.body;
 
     const user = await User.findById(req.user._id);
 
@@ -170,20 +170,110 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Update fields
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (gender) user.gender = gender;
-    if (age) user.age = age;
-    if (address) user.address = address;
-    if (pincode) user.pincode = pincode;
-    if (profileImage) user.profileImage = profileImage;
+    // Update all allowed fields
+    const allowedFields = [
+      'name', 'phone', 'gender', 'age', 'address', 'pincode', 
+      'alternateMobile', 'currentLocation', 'hasInsurance', 
+      'insurancePolicyNumber', 'insuranceProvider', 'insuranceExpiryDate',
+      'bloodGroup', 'allergies', 'chronicDiseases', 'currentMedications',
+      'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
+      'additionalNotes', 'preferredLanguage', 'profileImage'
+    ];
+
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        user[field] = updateData[field];
+      }
+    });
 
     await user.save();
 
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Create user/patient (Admin)
+// @route   POST /api/users/admin/create
+// @access  Private/Admin
+export const createUserByAdmin = async (req, res) => {
+  try {
+    const userData = req.body;
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: userData.email });
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
+    }
+
+    // Create user with all provided data
+    const user = await User.create(userData);
+
+    res.status(201).json({
+      success: true,
+      message: 'User/Patient created successfully',
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update user/patient by admin
+// @route   PUT /api/users/:id
+// @access  Private/Admin
+export const updateUserByAdmin = async (req, res) => {
+  try {
+    const updateData = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update all fields except password (use separate endpoint for password)
+    const allowedFields = [
+      'name', 'email', 'phone', 'gender', 'age', 'address', 'pincode',
+      'alternateMobile', 'currentLocation', 'hasInsurance',
+      'insurancePolicyNumber', 'insuranceProvider', 'insuranceExpiryDate',
+      'bloodGroup', 'allergies', 'chronicDiseases', 'currentMedications',
+      'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
+      'additionalNotes', 'preferredLanguage', 'profileImage', 'role', 'isActive', 'isStaff'
+    ];
+
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        user[field] = updateData[field];
+      }
+    });
+
+    // Handle permissions separately as it's a nested object
+    if (updateData.permissions) {
+      user.permissions = updateData.permissions;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User/Patient updated successfully',
       data: user
     });
   } catch (error) {

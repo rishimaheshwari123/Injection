@@ -285,3 +285,72 @@ export const deleteVendor = async (req, res) => {
     });
   }
 };
+
+// @desc    Create vendor by admin
+// @route   POST /api/vendors/admin/create
+// @access  Private/Admin
+export const createVendorByAdmin = async (req, res) => {
+  try {
+    const vendorData = req.body;
+
+    // Check if vendor already exists
+    const vendorExists = await Vendor.findOne({ email: vendorData.email });
+    if (vendorExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vendor already exists with this email'
+      });
+    }
+
+    // Create vendor with all provided data (admin can set isActive and isVerified)
+    const vendor = await Vendor.create(vendorData);
+
+    res.status(201).json({
+      success: true,
+      message: 'Vendor created successfully',
+      data: vendor
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update vendor by admin
+// @route   PUT /api/vendors/:id
+// @access  Private/Admin
+export const updateVendorByAdmin = async (req, res) => {
+  try {
+    const updateData = req.body;
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    // Update all fields except password
+    Object.keys(updateData).forEach(key => {
+      if (key !== 'password' && updateData[key] !== undefined) {
+        vendor[key] = updateData[key];
+      }
+    });
+
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Vendor updated successfully',
+      data: vendor
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

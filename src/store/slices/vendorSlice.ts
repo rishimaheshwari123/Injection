@@ -55,8 +55,28 @@ const vendorSlice = createSlice({
         vendor.verificationStatus = action.payload.isActive ? 'verified' : 'pending';
       }
     },
+    addVendor: (state, action: PayloadAction<Vendor>) => {
+      console.log('Redux addVendor called with:', action.payload);
+      console.log('Current vendors count:', state.vendors.length);
+      state.vendors.unshift(action.payload);
+      console.log('New vendors count:', state.vendors.length);
+    },
+    updateVendor: (state, action: PayloadAction<Vendor>) => {
+      console.log('Redux updateVendor called with:', action.payload);
+      const index = state.vendors.findIndex(v => v._id === action.payload._id);
+      console.log('Vendor found at index:', index);
+      if (index !== -1) {
+        state.vendors[index] = action.payload;
+        console.log('Vendor updated at index:', index);
+      }
+    },
+    removeVendor: (state, action: PayloadAction<string>) => {
+      console.log('Redux removeVendor called with ID:', action.payload);
+      state.vendors = state.vendors.filter(v => v._id !== action.payload);
+      console.log('Vendors after removal:', state.vendors.length);
+    },
   },
 });
 
-export const { setVendors, setLoading, setError, updateVendorStatus } = vendorSlice.actions;
+export const { setVendors, setLoading, setError, updateVendorStatus, addVendor, updateVendor, removeVendor } = vendorSlice.actions;
 export default vendorSlice.reducer;

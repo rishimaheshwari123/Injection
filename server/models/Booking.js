@@ -70,10 +70,87 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  prescriptionDocument: {
-    type: String, // Cloudinary URL
-    default: null
-  },
+  
+  // Prescription Information (Array - Multiple prescriptions allowed)
+  prescriptions: [{
+    type: {
+      type: String,
+      enum: ['form', 'image'],
+      required: true
+    },
+    // Doctor Information
+    doctorName: {
+      type: String,
+      trim: true
+    },
+    doctorRegistration: {
+      type: String,
+      trim: true
+    },
+    hospitalName: {
+      type: String,
+      trim: true
+    },
+    // Clinical Details
+    patientComplaints: {
+      type: String,
+      trim: true
+    },
+    diagnosis: {
+      type: String,
+      trim: true
+    },
+    // Medications
+    medications: [{
+      name: {
+        type: String,
+        trim: true
+      },
+      dosage: {
+        type: String,
+        trim: true
+      },
+      frequency: {
+        type: String,
+        trim: true
+      },
+      duration: {
+        type: String,
+        trim: true
+      }
+    }],
+    // Additional
+    labTests: {
+      type: String,
+      trim: true
+    },
+    specialInstructions: {
+      type: String,
+      trim: true
+    },
+    followUpDate: {
+      type: Date
+    },
+    // Image URLs
+    imageUrl: {
+      type: String, // Cloudinary URL for prescription image
+      default: null
+    },
+    supportingImageUrl: {
+      type: String, // Supporting document when form is used
+      default: null
+    },
+    // Metadata
+    addedBy: {
+      type: String,
+      default: 'Admin'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
   hasInsurance: {
     type: Boolean,
     default: false
@@ -158,14 +235,56 @@ const bookingSchema = new mongoose.Schema({
     type: String
   },
 
-  // Report & Invoice
+  // Reports (Multiple reports allowed)
+  reports: [{
+    reportUrl: {
+      type: String,
+      required: true
+    },
+    reportType: {
+      type: String,
+      enum: ['lab', 'imaging', 'general', 'other'],
+      default: 'general'
+    },
+    reportName: {
+      type: String,
+      trim: true
+    },
+    addedBy: {
+      type: String,
+      default: 'Admin'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+  // Legacy field (kept for backward compatibility)
   reportUrl: {
     type: String,
     default: null
   },
   reportGeneratedAt: {
     type: Date
-  }
+  },
+  
+  // Notes (Multiple notes with timestamp)
+  notes: [{
+    text: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    addedBy: {
+      type: String,
+      default: 'Admin'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });

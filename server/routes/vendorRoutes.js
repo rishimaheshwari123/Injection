@@ -7,7 +7,9 @@ import {
   updateVendorProfile,
   activateVendor,
   deactivateVendor,
-  deleteVendor
+  deleteVendor,
+  updateVendorByAdmin,
+  createVendorByAdmin
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -124,6 +126,20 @@ const router = express.Router();
  *         description: Vendor already exists or validation error
  */
 router.post('/register', vendorRegister);
+
+/**
+ * @swagger
+ * /api/vendors/admin/create:
+ *   post:
+ *     summary: Create vendor by admin
+ *     tags: [Vendors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Vendor created successfully
+ */
+router.post('/admin/create', protect, adminOnly, createVendorByAdmin);
 
 /**
  * @swagger
@@ -285,5 +301,25 @@ router.put('/:id/deactivate', protect, adminOnly, deactivateVendor);
  *         description: Vendor deleted successfully
  */
 router.delete('/:id', protect, adminOnly, deleteVendor);
+
+/**
+ * @swagger
+ * /api/vendors/{id}:
+ *   put:
+ *     summary: Update vendor by admin
+ *     tags: [Vendors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Vendor updated successfully
+ */
+router.put('/:id', protect, adminOnly, updateVendorByAdmin);
 
 export default router;

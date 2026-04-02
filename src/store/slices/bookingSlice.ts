@@ -54,6 +54,15 @@ const bookingSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    addBooking: (state, action: PayloadAction<Booking>) => {
+      state.bookings.unshift(action.payload);
+    },
+    updateBooking: (state, action: PayloadAction<Booking>) => {
+      const index = state.bookings.findIndex(b => b._id === action.payload._id);
+      if (index !== -1) {
+        state.bookings[index] = action.payload;
+      }
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
@@ -64,5 +73,5 @@ const bookingSlice = createSlice({
   },
 });
 
-export const { setBookings, setLoading, setError } = bookingSlice.actions;
+export const { setBookings, addBooking, updateBooking, setLoading, setError } = bookingSlice.actions;
 export default bookingSlice.reducer;

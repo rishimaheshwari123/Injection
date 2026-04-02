@@ -36,10 +36,12 @@ export const authAPI = {
 export const userAPI = {
   getAllUsers: () => api.get(API_ENDPOINTS.USERS.BASE),
   getUserById: (id: string) => api.get(API_ENDPOINTS.USERS.BY_ID(id)),
+  createUser: (userData: any) => api.post('/users/admin/create', userData),
   updateUser: (id: string, data: any) => api.put(API_ENDPOINTS.USERS.BY_ID(id), data),
   toggleUserStatus: (id: string) => api.put(API_ENDPOINTS.USERS.TOGGLE_STATUS(id)),
   activateUser: (id: string) => api.put(API_ENDPOINTS.USERS.ACTIVATE(id)),
   deactivateUser: (id: string) => api.put(API_ENDPOINTS.USERS.DEACTIVATE(id)),
+  deleteUser: (id: string) => api.delete(API_ENDPOINTS.USERS.BY_ID(id)),
   updateProfile: (data: any) => api.put(API_ENDPOINTS.USERS.UPDATE_PROFILE, data),
   getMe: () => api.get(API_ENDPOINTS.USERS.ME),
 };
@@ -51,17 +53,21 @@ export const vendorAPI = {
     api.post(API_ENDPOINTS.VENDORS.LOGIN, { email, password }),
   getAllVendors: () => api.get(API_ENDPOINTS.VENDORS.BASE),
   getVendorById: (id: string) => api.get(API_ENDPOINTS.VENDORS.BY_ID(id)),
+  createVendor: (vendorData: any) => api.post('/vendors/admin/create', vendorData),
+  updateVendor: (id: string, data: any) => api.put(API_ENDPOINTS.VENDORS.BY_ID(id), data),
   activateVendor: (id: string) => api.put(API_ENDPOINTS.VENDORS.ACTIVATE(id)),
   deactivateVendor: (id: string) => api.put(API_ENDPOINTS.VENDORS.DEACTIVATE(id)),
+  deleteVendor: (id: string) => api.delete(API_ENDPOINTS.VENDORS.BY_ID(id)),
   updateProfile: (data: any) => api.put(API_ENDPOINTS.VENDORS.UPDATE_PROFILE, data),
 };
 
 // Service APIs
 export const serviceAPI = {
-  getAllServices: () => api.get(API_ENDPOINTS.SERVICES.BASE),
+  getAllServices: () => api.get('/services/admin/all'),
   getServiceById: (id: string) => api.get(API_ENDPOINTS.SERVICES.BY_ID(id)),
   getVendorServices: () => api.get(API_ENDPOINTS.SERVICES.BY_VENDOR),
-  createService: (serviceData: any) => api.post(API_ENDPOINTS.SERVICES.CREATE, serviceData),
+  createService: (serviceData: any) => api.post('/services/admin/create', serviceData),
+  updateService: (id: string, serviceData: any) => api.put(`/services/admin/${id}`, serviceData),
 };
 
 // Booking APIs
@@ -79,11 +85,23 @@ export const bookingAPI = {
     api.put(API_ENDPOINTS.BOOKINGS.CANCEL(id), { reason }),
   updateBookingStatus: (id: string, status: string) => 
     api.put(API_ENDPOINTS.BOOKINGS.UPDATE_STATUS(id), { status }),
+  addBookingNote: (id: string, text: string) => 
+    api.post(`/bookings/${id}/notes`, { text }),
+  updatePrescription: (id: string, prescriptionData: any, prescriptionType: string) => 
+    api.put(`/bookings/${id}/prescription`, { prescriptionData, prescriptionType }),
 };
 
 // Prescription APIs
 export const prescriptionAPI = {
-  uploadImage: (image: string) => api.post('/prescriptions/upload-image', { image }),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/prescriptions/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   uploadPrescription: (bookingId: string, prescriptionUrl: string) => 
     api.post(`/prescriptions/upload/${bookingId}`, { prescriptionUrl }),
   getPrescription: (bookingId: string) => api.get(`/prescriptions/${bookingId}`),
@@ -94,8 +112,8 @@ export const prescriptionAPI = {
 export const reportAPI = {
   generateReport: (bookingId: string, data: any) => 
     api.post(`/reports/generate/${bookingId}`, data),
-  uploadReport: (bookingId: string, reportUrl: string) => 
-    api.post(`/reports/upload/${bookingId}`, { reportUrl }),
+  uploadReport: (bookingId: string, reportUrl: string, reportType?: string, reportName?: string) => 
+    api.post(`/reports/upload/${bookingId}`, { reportUrl, reportType, reportName }),
   getReport: (bookingId: string) => api.get(`/reports/${bookingId}`),
   getAllReports: () => api.get('/reports/admin/all'),
 };
@@ -105,6 +123,31 @@ export const invoiceAPI = {
   generateInvoice: (bookingId: string) => 
     api.get(`/invoices/${bookingId}`, { responseType: 'blob' }),
   getInvoiceUrl: (bookingId: string) => api.get(`/invoices/url/${bookingId}`),
+};
+
+// Lab Partner APIs
+export const labPartnerAPI = {
+  getAllLabPartners: () => api.get('/lab-partners'),
+  getLabPartnerById: (id: string) => api.get(`/lab-partners/${id}`),
+  createLabPartner: (data: any) => api.post('/lab-partners', data),
+  updateLabPartner: (id: string, data: any) => api.put(`/lab-partners/${id}`, data),
+  deleteLabPartner: (id: string) => api.delete(`/lab-partners/${id}`),
+  uploadResult: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('result', file);
+    return api.post(`/lab-partners/${id}/upload-result`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  updateStatus: (id: string, status: string) => 
+    api.put(`/lab-partners/${id}/status`, { status }),
+};
+
+// Dashboard APIs
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
 };
 
 export default api;
