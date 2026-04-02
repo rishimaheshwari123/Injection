@@ -1,7 +1,8 @@
 // API Configuration
 // Backend URL - Change this when deploying to production
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:8080/api',
+  // BASE_URL: 'http://localhost:8080/api',
+  BASE_URL: 'https://injection-grq4.onrender.com/api',
   TIMEOUT: 30000, // 30 seconds
 };
 
