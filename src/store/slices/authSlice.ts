@@ -6,6 +6,21 @@ interface User {
   email: string;
   role: string;
   phone?: string;
+  isStaff?: boolean;
+  permissions?: {
+    dashboard: boolean;
+    users: boolean;
+    vendors: boolean;
+    services: boolean;
+    bookings: boolean;
+    prescriptions: boolean;
+    reports: boolean;
+    labPartners: boolean;
+    insuranceClaims: boolean;
+    faqs: boolean;
+    coupons: boolean;
+    staff: boolean;
+  };
 }
 
 interface AuthState {

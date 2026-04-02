@@ -42,7 +42,7 @@ const AdminLayout = () => {
       return true;
     }
     // Check staff permissions
-    return user?.isStaff && user?.permissions?.[permission];
+    return user?.isStaff && user?.permissions?.[permission as keyof typeof user.permissions];
   };
 
   return (

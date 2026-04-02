@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Plus, X, Upload, FileText } from 'lucide-react';
 
 interface Medication {

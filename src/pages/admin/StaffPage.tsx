@@ -82,7 +82,7 @@ export default function StaffPage() {
     try {
       if (editingStaff) {
         // Remove password field if empty during edit
-        const updateData = { ...formData };
+        const updateData: any = { ...formData };
         if (!updateData.password) {
           delete updateData.password;
         }
@@ -131,6 +131,7 @@ export default function StaffPage() {
           labPartners: false,
           insuranceClaims: false,
           faqs: false,
+          coupons: false,
           staff: false
         }
       });
@@ -181,6 +182,7 @@ export default function StaffPage() {
         labPartners: false,
         insuranceClaims: false,
         faqs: false,
+        coupons: false,
         staff: false
       }
     });
