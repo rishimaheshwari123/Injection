@@ -19,6 +19,9 @@ interface User {
     insuranceClaims: boolean;
     faqs: boolean;
     coupons: boolean;
+    supportTickets: boolean;
+    contactInquiries: boolean;
+    advertisements: boolean;
     staff: boolean;
   };
 }

@@ -1,8 +1,12 @@
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Globe, Send } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+import axios from 'axios'
+import { API_CONFIG } from '../config/api.config'
 
 const ContactPage = () => {
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,12 +22,21 @@ const ContactPage = () => {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log('Form submitted:', formData)
-    // Reset form
-    setFormData({ name: '', email: '', phone: '', message: '' })
+    setSubmitting(true)
+    
+    try {
+      const response = await axios.post(`${API_CONFIG.BASE_URL}/contact/inquiries`, formData)
+      toast.success(`Inquiry submitted! Reference #${response.data.inquiry.inquiryNumber}`)
+      // Reset form
+      setFormData({ name: '', email: '', phone: '', message: '' })
+    } catch (error: any) {
+      console.error('Error submitting inquiry:', error)
+      toast.error(error.response?.data?.message || 'Failed to submit inquiry')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const contactInfo = [
@@ -189,10 +202,20 @@ const ContactPage = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                  disabled={submitting}
+                  className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send size={20} />
-                  <span>Send Message</span>
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      <span>Send Message</span>
+                    </>
+                  )}
                 </button>
               </form>
             </motion.div>

@@ -216,7 +216,7 @@ const InsuranceClaimsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-[78vw]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Insurance Claims Management</h1>
         <button
@@ -259,51 +259,49 @@ const InsuranceClaimsPage: React.FC = () => {
       </div>
 
       {/* Claims Table */}
-      <div className="bg-white rounded-lg shadow">
-        {loading ? (
+<div className="bg-white rounded-lg shadow max-w-[78vw] w-full overflow-x-auto">      {loading ? (
           <div className="p-8 text-center">Loading claims...</div>
         ) : claims.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No claims found</div>
         ) : (
-          <div className="">
-            <table className="w-full min-w-max">
+          <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Claim #</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Patient</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Created By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Claim #</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created By</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {claims.map((claim) => (
                   <tr key={claim._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{claim.claimNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{claim.claimNumber}</td>
+                    <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{claim.patientName}</div>
                       <div className="text-sm text-gray-500">{claim.contactNumber}</div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{claim.userId?.name || 'N/A'}</div>
                       <div className="text-sm text-gray-500">{claim.userId?.email || ''}</div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{claim.claimType}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{claim.claimAmount.toLocaleString()}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm text-gray-900">{claim.claimType}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">₹{claim.claimAmount.toLocaleString()}</td>
+                    <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(claim.status)}`}>
                         {claim.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{claim.createdBy}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-900">{claim.createdBy}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
                       {new Date(claim.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm relative">
+                    <td className="px-6 py-4 text-sm relative">
                       <button
                         onClick={() => toggleDropdown(claim._id)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -343,7 +341,6 @@ const InsuranceClaimsPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
         )}
       </div>
 

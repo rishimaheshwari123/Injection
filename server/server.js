@@ -17,6 +17,10 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import insuranceClaimRoutes from './routes/insuranceClaim.js';
 import faqRoutes from './routes/faq.js';
 import couponRoutes from './routes/coupon.js';
+import supportTicketRoutes from './routes/supportTicket.js';
+import contactInquiryRoutes from './routes/contactInquiry.js';
+import advertisementRoutes from './routes/advertisement.js';
+import jobRoutes from './routes/job.js';
 
 // Load env vars
 dotenv.config();
@@ -63,6 +67,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/insurance', insuranceClaimRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/support', supportTicketRoutes);
+app.use('/api/contact', contactInquiryRoutes);
+app.use('/api/advertisements', advertisementRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

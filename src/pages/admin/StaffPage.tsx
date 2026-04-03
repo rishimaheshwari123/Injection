@@ -22,6 +22,9 @@ interface Staff {
     insuranceClaims: boolean;
     faqs: boolean;
     coupons: boolean;
+    supportTickets: boolean;
+    contactInquiries: boolean;
+    advertisements: boolean;
     staff: boolean;
   };
 }
@@ -55,6 +58,9 @@ export default function StaffPage() {
       insuranceClaims: false,
       faqs: false,
       coupons: false,
+      supportTickets: false,
+      contactInquiries: false,
+      advertisements: false,
       staff: false
     }
   });
@@ -132,6 +138,9 @@ export default function StaffPage() {
           insuranceClaims: false,
           faqs: false,
           coupons: false,
+          supportTickets: false,
+          contactInquiries: false,
+          advertisements: false,
           staff: false
         }
       });
@@ -183,6 +192,9 @@ export default function StaffPage() {
         insuranceClaims: false,
         faqs: false,
         coupons: false,
+        supportTickets: false,
+        contactInquiries: false,
+        advertisements: false,
         staff: false
       }
     });
@@ -213,6 +225,9 @@ export default function StaffPage() {
         insuranceClaims: value,
         faqs: value,
         coupons: value,
+        supportTickets: value,
+        contactInquiries: value,
+        advertisements: value,
         staff: value
       }
     });

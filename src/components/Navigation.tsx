@@ -13,6 +13,7 @@ const Navigation = () => {
     { path: '/about', label: 'About Us', icon: User },
     { path: '/research', label: 'Research', icon: FlaskConical },
     { path: '/blog', label: 'Blog', icon: BookOpen },
+    { path: '/support', label: 'Support', icon: Phone },
   ]
 
   const serviceItems = [

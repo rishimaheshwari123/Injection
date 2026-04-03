@@ -25,7 +25,22 @@ import InsuranceClaimsPage from './pages/admin/InsuranceClaimsPage'
 import FAQsPage from './pages/admin/FAQsPage'
 import StaffPage from './pages/admin/StaffPage'
 import CouponsPage from './pages/admin/CouponsPage'
+import SupportTicketsPage from './pages/admin/SupportTicketsPage'
+import ContactInquiriesPage from './pages/admin/ContactInquiriesPage'
+import AdvertisementsPage from './pages/admin/AdvertisementsPage'
+import JobsPage from './pages/admin/JobsPage'
+import JobApplicationsPage from './pages/admin/JobApplicationsPage'
+import SupportPage from './pages/SupportPage'
 import PermissionGuard from './components/PermissionGuard'
+
+// Layout wrapper for public pages
+const PublicLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-white">
+    <Navigation />
+    {children}
+    <Footer />
+  </div>
+)
 
 function App() {
   return (
@@ -33,23 +48,17 @@ function App() {
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       
-      <Route path="/" element={
-        <div className="min-h-screen bg-white">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/services/healthcare" element={<HealthcareServicesPage />} />
-            <Route path="/services/research" element={<ResearchServicesPage />} />
-            <Route path="/services/training" element={<TrainingPlacementPage />} />
-            <Route path="/research" element={<ResearchPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-          </Routes>
-          <Footer />
-        </div>
-      } />
+      {/* Public Routes with Navigation and Footer */}
+      <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+      <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+      <Route path="/services" element={<PublicLayout><ServicesPage /></PublicLayout>} />
+      <Route path="/services/healthcare" element={<PublicLayout><HealthcareServicesPage /></PublicLayout>} />
+      <Route path="/services/research" element={<PublicLayout><ResearchServicesPage /></PublicLayout>} />
+      <Route path="/services/training" element={<PublicLayout><TrainingPlacementPage /></PublicLayout>} />
+      <Route path="/research" element={<PublicLayout><ResearchPage /></PublicLayout>} />
+      <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+      <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+      <Route path="/support" element={<PublicLayout><SupportPage /></PublicLayout>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={
@@ -69,6 +78,12 @@ function App() {
         <Route path="faqs" element={<PermissionGuard permission="faqs"><FAQsPage /></PermissionGuard>} />
         <Route path="coupons" element={<PermissionGuard permission="coupons"><CouponsPage /></PermissionGuard>} />
         <Route path="staff" element={<PermissionGuard permission="staff"><StaffPage /></PermissionGuard>} />
+        <Route path="support-tickets" element={<PermissionGuard permission="supportTickets"><SupportTicketsPage /></PermissionGuard>} />
+        <Route path="contact-inquiries" element={<PermissionGuard permission="contactInquiries"><ContactInquiriesPage /></PermissionGuard>} />
+        <Route path="advertisements" element={<PermissionGuard permission="advertisements"><AdvertisementsPage /></PermissionGuard>} />
+        <Route path="jobs" element={<PermissionGuard permission="dashboard"><JobsPage /></PermissionGuard>} />
+        <Route path="job-applications" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
+        <Route path="job-applications/:jobId" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
       </Route>
     </Routes>
   )

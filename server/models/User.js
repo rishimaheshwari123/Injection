@@ -142,6 +142,9 @@ const userSchema = new mongoose.Schema({
     insuranceClaims: { type: Boolean, default: false },
     faqs: { type: Boolean, default: false },
     coupons: { type: Boolean, default: false },
+    supportTickets: { type: Boolean, default: false },
+    contactInquiries: { type: Boolean, default: false },
+    advertisements: { type: Boolean, default: false },
     staff: { type: Boolean, default: false }
   },
   isActive: {
