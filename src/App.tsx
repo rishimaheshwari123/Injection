@@ -7,6 +7,7 @@ import ResearchServicesPage from './pages/ResearchServicesPage'
 import TrainingPlacementPage from './pages/TrainingPlacementPage'
 import ResearchPage from './pages/ResearchPage'
 import BlogPage from './pages/BlogPage'
+import BlogDetailPage from './pages/BlogDetailPage'
 import ContactPage from './pages/ContactPage'
 import LoginPage from './pages/LoginPage'
 import Navigation from './components/Navigation'
@@ -30,6 +31,7 @@ import ContactInquiriesPage from './pages/admin/ContactInquiriesPage'
 import AdvertisementsPage from './pages/admin/AdvertisementsPage'
 import JobsPage from './pages/admin/JobsPage'
 import JobApplicationsPage from './pages/admin/JobApplicationsPage'
+import BlogsPage from './pages/admin/BlogsPage'
 import SupportPage from './pages/SupportPage'
 import PermissionGuard from './components/PermissionGuard'
 
@@ -57,6 +59,7 @@ function App() {
       <Route path="/services/training" element={<PublicLayout><TrainingPlacementPage /></PublicLayout>} />
       <Route path="/research" element={<PublicLayout><ResearchPage /></PublicLayout>} />
       <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+      <Route path="/blog/:slug" element={<PublicLayout><BlogDetailPage /></PublicLayout>} />
       <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
       <Route path="/support" element={<PublicLayout><SupportPage /></PublicLayout>} />
 
@@ -84,6 +87,7 @@ function App() {
         <Route path="jobs" element={<PermissionGuard permission="dashboard"><JobsPage /></PermissionGuard>} />
         <Route path="job-applications" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
         <Route path="job-applications/:jobId" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
+        <Route path="blogs" element={<PermissionGuard permission="dashboard"><BlogsPage /></PermissionGuard>} />
       </Route>
     </Routes>
   )

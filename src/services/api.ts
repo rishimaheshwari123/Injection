@@ -150,4 +150,29 @@ export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
 };
 
+// Blog APIs
+export const blogAPI = {
+  getAllBlogs: (params?: any) => api.get(API_ENDPOINTS.BLOGS.BASE, { params }),
+  adminGetAllBlogs: (params?: any) => api.get(API_ENDPOINTS.BLOGS.ADMIN_ALL, { params }),
+  getBlogById: (id: string) => api.get(API_ENDPOINTS.BLOGS.BY_ID(id)),
+  getBlogBySlug: (slug: string) => api.get(API_ENDPOINTS.BLOGS.BY_SLUG(slug)),
+  getBlogsByCategory: (category: string) => api.get(API_ENDPOINTS.BLOGS.BY_CATEGORY(category)),
+  searchBlogs: (query: string) => api.get(API_ENDPOINTS.BLOGS.SEARCH, { params: { q: query } }),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/blogs/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  createBlog: (blogData: any) => api.post(API_ENDPOINTS.BLOGS.BASE, blogData),
+  updateBlog: (id: string, blogData: any) => api.put(API_ENDPOINTS.BLOGS.BY_ID(id), blogData),
+  deleteBlog: (id: string) => api.delete(API_ENDPOINTS.BLOGS.BY_ID(id)),
+  toggleBlogStatus: (id: string) => api.put(API_ENDPOINTS.BLOGS.TOGGLE_STATUS(id)),
+  toggleFeaturedStatus: (id: string) => api.put(API_ENDPOINTS.BLOGS.TOGGLE_FEATURED(id)),
+  likeBlog: (id: string) => api.put(API_ENDPOINTS.BLOGS.LIKE(id)),
+};
+
 export default api;

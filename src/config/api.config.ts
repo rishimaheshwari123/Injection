@@ -59,4 +59,17 @@ export const API_ENDPOINTS = {
     CANCEL: (id: string) => `/bookings/${id}/cancel`,
     UPDATE_STATUS: (id: string) => `/bookings/${id}/status`,
   },
+  
+  // Blogs
+  BLOGS: {
+    BASE: '/blogs',
+    ADMIN_ALL: '/blogs/admin/all',
+    BY_ID: (id: string) => `/blogs/${id}`,
+    BY_SLUG: (slug: string) => `/blogs/slug/${slug}`,
+    BY_CATEGORY: (category: string) => `/blogs/category/${category}`,
+    SEARCH: '/blogs/search',
+    LIKE: (id: string) => `/blogs/${id}/like`,
+    TOGGLE_STATUS: (id: string) => `/blogs/${id}/toggle-status`,
+    TOGGLE_FEATURED: (id: string) => `/blogs/${id}/toggle-featured`,
+  },
 };

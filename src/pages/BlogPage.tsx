@@ -1,72 +1,63 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion'
 import { Calendar, User, ArrowRight, Tag, Clock } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { blogAPI } from '../services/api';
+
+interface Blog {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string[];
+  featuredImage: string;
+  views: number;
+  likes: number;
+  readingTime: number;
+  publishedAt: string;
+  author: {
+    name: string;
+  };
+  authorName: string;
+}
 
 const BlogPage = () => {
-  const blogPosts = [
-    {
-      id: 1,
-      title: "The Future of Home Healthcare Services",
-      excerpt: "Explore how home healthcare is revolutionizing patient care and recovery with personalized medical attention in the comfort of your home.",
-      image: "https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Healthcare",
-      author: "Dr. Rajesh Kumar",
-      date: "March 10, 2024",
-      readTime: "5 min read"
-    },
-    {
-      id: 2,
-      title: "Advances in Medical Research: What You Need to Know",
-      excerpt: "Discover the latest breakthroughs in medical research and how they're shaping the future of healthcare treatment and diagnosis.",
-      image: "https://images.pexels.com/photos/3938023/pexels-photo-3938023.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Research",
-      author: "Dr. Priya Sharma",
-      date: "March 8, 2024",
-      readTime: "7 min read"
-    },
-    {
-      id: 3,
-      title: "Training the Next Generation of Healthcare Professionals",
-      excerpt: "Learn about our comprehensive training programs designed to equip students with practical skills and knowledge for successful healthcare careers.",
-      image: "https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Education",
-      author: "Prof. Amit Patel",
-      date: "March 5, 2024",
-      readTime: "6 min read"
-    },
-    {
-      id: 4,
-      title: "Understanding Post-Hospital Care: A Complete Guide",
-      excerpt: "A comprehensive guide to post-hospital care services, including home nursing, medication management, and recovery monitoring.",
-      image: "https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Healthcare",
-      author: "Dr. Anjali Verma",
-      date: "March 3, 2024",
-      readTime: "8 min read"
-    },
-    {
-      id: 5,
-      title: "The Role of Data Collection in Healthcare Research",
-      excerpt: "Understanding how systematic data collection and analysis contribute to groundbreaking medical discoveries and improved patient outcomes.",
-      image: "https://images.pexels.com/photos/3938023/pexels-photo-3938023.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Research",
-      author: "Dr. Suresh Reddy",
-      date: "February 28, 2024",
-      readTime: "6 min read"
-    },
-    {
-      id: 6,
-      title: "Laboratory Safety and Quality Control Standards",
-      excerpt: "Essential guidelines and best practices for maintaining laboratory safety and ensuring quality control in medical testing facilities.",
-      image: "https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop",
-      category: "Education",
-      author: "Dr. Meera Singh",
-      date: "February 25, 2024",
-      readTime: "5 min read"
-    }
-  ]
+  const navigate = useNavigate();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // const categories = ["All", "Healthcare", "Research", "Education"]
+  const categories = ["All", "Healthcare", "Research", "Training", "Technology", "News"];
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await blogAPI.getAllBlogs({ limit: 50 });
+      setBlogs(response.data.data);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const filteredBlogs = selectedCategory === 'All' 
+    ? blogs 
+    : blogs.filter(blog => blog.category === selectedCategory);
 
   return (
     <div>
@@ -89,7 +80,7 @@ const BlogPage = () => {
       </section>
 
       {/* Category Filter */}
-      {/* <section className="py-8 bg-white border-b border-gray-200">
+      <section className="py-8 bg-white border-b border-gray-200">
         <div className="w-[90vw] mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
             {categories.map((category, index) => (
@@ -98,8 +89,9 @@ const BlogPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
+                onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
-                  index === 0
+                  selectedCategory === category
                     ? 'bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -109,162 +101,102 @@ const BlogPage = () => {
             ))}
           </div>
         </div>
-      </section> */}
-
-      {/* Featured Post */}
-      <section className="py-20 bg-white">
-        <div className="w-[90vw] mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-12"
-          >
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Article</h2>
-            <p className="text-gray-600">Our most popular and impactful content</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid lg:grid-cols-2 gap-8 bg-gray-50 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300"
-          >
-            <div className="relative h-96 lg:h-auto">
-              <img 
-                src={blogPosts[0].image} 
-                alt={blogPosts[0].title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-4 left-4">
-                <span className="bg-teal-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-                  {blogPosts[0].category}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-8 lg:p-12 flex flex-col justify-center">
-              <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar size={16} />
-                  <span>{blogPosts[0].date}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock size={16} />
-                  <span>{blogPosts[0].readTime}</span>
-                </div>
-              </div>
-              
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                {blogPosts[0].title}
-              </h3>
-              
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                {blogPosts[0].excerpt}
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
-                    <User size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{blogPosts[0].author}</p>
-                    <p className="text-sm text-gray-500">Medical Expert</p>
-                  </div>
-                </div>
-                
-                <Link
-                  to={`/blog/${blogPosts[0].id}`}
-                  className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
-                >
-                  <span>Read More</span>
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        </div>
       </section>
 
-      {/* Blog Grid */}
-      <section className="py-20 bg-gray-50">
-        <div className="w-[90vw] mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-12"
-          >
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Latest Articles</h2>
-            <p className="text-gray-600">Explore our recent healthcare insights and updates</p>
-          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.slice(1).map((post, index) => (
-              <motion.article
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group"
-              >
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white/90 backdrop-blur-sm text-teal-600 px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
-                      <Tag size={12} />
-                      <span>{post.category}</span>
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
-                    <div className="flex items-center space-x-1">
-                      <Calendar size={14} />
-                      <span>{post.date}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock size={14} />
-                      <span>{post.readTime}</span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-teal-600 transition-colors duration-300">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
-                        <User size={14} className="text-white" />
+      {/* Latest Articles - From Database */}
+      {loading ? (
+        <div className="py-20 text-center bg-gray-50">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+          <p className="mt-4 text-gray-600">Loading blogs...</p>
+        </div>
+      ) : filteredBlogs.length === 0 ? (
+        <div className="py-20 text-center bg-gray-50">
+          <p className="text-gray-600 text-lg">No blogs found</p>
+        </div>
+      ) : (
+        <section className="py-20 bg-gray-50">
+          <div className="w-[90vw] mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-12"
+            >
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Latest Articles</h2>
+              <p className="text-gray-600">Explore our recent healthcare insights and updates</p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredBlogs.map((post, index) => (
+                <motion.article
+                  key={post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  onClick={() => navigate(`/blog/${post.slug}`)}
+                  className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                >
+                  <div className="relative overflow-hidden">
+                    {post.featuredImage ? (
+                      <img 
+                        src={post.featuredImage} 
+                        alt={post.title}
+                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                        <span className="text-white text-4xl font-bold">{post.title.charAt(0)}</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">{post.author}</span>
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-white/90 backdrop-blur-sm text-teal-600 px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                        <Tag size={12} />
+                        <span>{post.category}</span>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center space-x-1">
+                        <Calendar size={14} />
+                        <span>{formatDate(post.publishedAt)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Clock size={14} />
+                        <span>{post.readingTime} min read</span>
+                      </div>
                     </div>
                     
-                    <Link
-                      to={`/blog/${post.id}`}
-                      className="text-teal-600 font-medium text-sm hover:text-teal-700 flex items-center space-x-1 group-hover:translate-x-1 transition-transform duration-300"
-                    >
-                      <span>Read More</span>
-                      <ArrowRight size={16} />
-                    </Link>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-teal-600 transition-colors duration-300">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">
+                      {post.excerpt || post.content.substring(0, 150) + '...'}
+                    </p>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
+                          <User size={14} className="text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">{post.authorName || post.author?.name}</span>
+                      </div>
+                      
+                      <div className="text-teal-600 font-medium text-sm hover:text-teal-700 flex items-center space-x-1 group-hover:translate-x-1 transition-transform duration-300">
+                        <span>Read More</span>
+                        <ArrowRight size={16} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.article>
-            ))}
+                </motion.article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Newsletter Section */}
       <section className="py-20 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]">
