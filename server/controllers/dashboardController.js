@@ -4,6 +4,140 @@ import Service from '../models/Service.js';
 import Booking from '../models/Booking.js';
 import LabPartner from '../models/LabPartner.js';
 
+// @desc    Get user dashboard statistics
+// @route   GET /api/dashboard/user/stats
+// @access  Private/User
+export const getUserDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get user's total bookings
+    const totalBookings = await Booking.countDocuments({ userId });
+
+    // Booking status breakdown for user
+    const bookingsByStatus = await Booking.aggregate([
+      {
+        $match: { userId }
+      },
+      {
+        $group: {
+          _id: '$bookingStatus',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // User's total spending
+    const spendingData = await Booking.aggregate([
+      {
+        $match: {
+          userId,
+          bookingStatus: { $in: ['completed', 'in-progress', 'accepted'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSpent: { $sum: '$grandTotal' }
+        }
+      }
+    ]);
+
+    // User's recent bookings
+    const recentBookings = await Booking.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('vendorId', 'businessName name phone')
+      .select('patientName bookingStatus grandTotal preferredTimeSlot createdAt selectedServices');
+
+    // User's upcoming bookings (pending or accepted)
+    const upcomingBookings = await Booking.find({
+      userId,
+      bookingStatus: { $in: ['pending', 'accepted'] }
+    })
+      .sort({ createdAt: -1 })
+      .populate('vendorId', 'businessName name phone')
+      .select('patientName bookingStatus grandTotal preferredTimeSlot createdAt selectedServices');
+
+    // User's completed bookings count
+    const completedBookings = await Booking.countDocuments({
+      userId,
+      bookingStatus: 'completed'
+    });
+
+    // User's cancelled bookings count
+    const cancelledBookings = await Booking.countDocuments({
+      userId,
+      bookingStatus: 'cancelled'
+    });
+
+    // User's most used services
+    const mostUsedServices = await Booking.aggregate([
+      { $match: { userId } },
+      { $unwind: '$selectedServices' },
+      {
+        $group: {
+          _id: '$selectedServices.serviceName',
+          count: { $sum: 1 },
+          totalSpent: { $sum: '$selectedServices.price' }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Monthly booking trend (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlyBookings = await Booking.aggregate([
+      {
+        $match: {
+          userId,
+          createdAt: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 },
+          spent: { $sum: '$grandTotal' }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        summary: {
+          totalBookings,
+          completedBookings,
+          cancelledBookings,
+          upcomingBookingsCount: upcomingBookings.length,
+          totalSpent: spendingData[0]?.totalSpent || 0
+        },
+        bookingsByStatus,
+        recentBookings,
+        upcomingBookings,
+        mostUsedServices,
+        monthlyBookings
+      }
+    });
+  } catch (error) {
+    console.error('User dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Get dashboard statistics
 // @route   GET /api/dashboard/stats
 // @access  Private/Admin

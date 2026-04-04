@@ -182,6 +182,7 @@ router.post('/login', vendorLogin);
  *         description: List of all vendors
  */
 router.get('/', protect, adminOnly, getAllVendors);
+router.get('/getAll',getAllVendors);
 
 /**
  * @swagger
