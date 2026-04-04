@@ -11,3 +11,7 @@ coverage
 .vscode
 .idea
 tmp/
+
+
+#Remove swagger output json
+config/swagger-output.json

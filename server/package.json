@@ -5,8 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "swagger" : "node config/swagger.js",
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "npm run swagger && nodemon server.js",
     "create-admin": "node scripts/createAdmin.js",
     "cleanup": "node scripts/cleanupCollections.js"
   },
@@ -30,6 +31,7 @@
     "multer": "^1.4.5-lts.1",
     "pdfkit": "^0.18.0",
     "streamifier": "^0.1.1",
+    "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
   },

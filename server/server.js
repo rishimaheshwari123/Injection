@@ -4,7 +4,6 @@ import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import swaggerUi from 'swagger-ui-express';
 import connectDB from './config/database.js';
-import swaggerSpec from './config/swagger.js';
 import userRoutes from './routes/userRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
@@ -22,6 +21,7 @@ import contactInquiryRoutes from './routes/contactInquiry.js';
 import advertisementRoutes from './routes/advertisement.js';
 import jobRoutes from './routes/job.js';
 import blogRoutes from './routes/blogRoutes.js';
+import fs from 'fs';
 
 // Load env vars
 dotenv.config();
@@ -50,10 +50,28 @@ app.use(fileUpload({
 }));
 
 // Swagger Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Healthcare API Documentation'
-}));
+if (process.env.NODE_ENV !== 'production') {
+
+  const swaggerOutput = JSON.parse(
+    fs.readFileSync(new URL('./config/swagger-output.json', import.meta.url))
+  );
+
+  app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerOutput, {
+      explorer: true,
+      swaggerOptions: {
+        persistAuthorization: true,   // keeps JWT across page refreshes
+        displayRequestDuration: true, // shows response time in UI
+        filter: true,                 // enables tag/endpoint search bar
+        tryItOutEnabled: true,        // "Try it out" open by default
+      },
+      customSiteTitle: 'Injection API Docs',
+    })
+  );
+  console.log(`Swagger UI  → http://localhost:${process.env.PORT || 5000}/api-docs`);
+}
 
 // Routes
 app.use('/api/users', userRoutes);
