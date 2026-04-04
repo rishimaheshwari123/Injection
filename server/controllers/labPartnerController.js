@@ -53,8 +53,129 @@ export const getLabPartnerById = async (req, res) => {
 // @access  Private/Admin
 export const createLabPartner = async (req, res) => {
   try {
+    // Destructure and validate fields from request body
+    const {
+      // Lab Information
+      labName,
+      labAddress,
+      labContact,
+      labEmail,
+      
+      // Patient Information
+      patientName,
+      patientAge,
+      patientGender,
+      patientContact,
+      
+      // Sample/Test Information
+      testType,
+      sampleType,
+      sampleCollectionDate,
+      sampleSentDate,
+      
+      // Status and Results
+      status,
+      expectedResultDate,
+      actualResultDate,
+      resultReceived,
+      resultUrl,
+      
+      // Additional Information
+      remarks,
+      urgency,
+      cost
+    } = req.body;
+
+    // Validate required fields
+    if (!labName || !labAddress || !labContact) {
+      return res.status(400).json({
+        success: false,
+        message: 'Lab name, address, and contact are required'
+      });
+    }
+
+    if (!patientName || !patientAge || !patientGender || !patientContact) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient name, age, gender, and contact are required'
+      });
+    }
+
+    if (!testType || !sampleType || !sampleCollectionDate || !sampleSentDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Test type, sample type, collection date, and sent date are required'
+      });
+    }
+
+    // Validate patient gender
+    const validGenders = ['Male', 'Female', 'Other'];
+    if (!validGenders.includes(patientGender)) {
+      return res.status(400).json({
+        success: false,
+        message: `Patient gender must be one of: ${validGenders.join(', ')}`
+      });
+    }
+
+    // Validate status if provided
+    const validStatuses = ['Sent to Lab', 'In Progress', 'Completed', 'Cancelled'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Validate urgency if provided
+    const validUrgencies = ['Normal', 'Urgent', 'Critical'];
+    if (urgency && !validUrgencies.includes(urgency)) {
+      return res.status(400).json({
+        success: false,
+        message: `Urgency must be one of: ${validUrgencies.join(', ')}`
+      });
+    }
+
+    // Validate patient age
+    if (patientAge < 0 || patientAge > 150) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient age must be between 0 and 150'
+      });
+    }
+
+    // Create lab partner entry with validated data
     const labPartner = await LabPartner.create({
-      ...req.body,
+      // Lab Information
+      labName,
+      labAddress,
+      labContact,
+      labEmail,
+      
+      // Patient Information
+      patientName,
+      patientAge,
+      patientGender,
+      patientContact,
+      
+      // Sample/Test Information
+      testType,
+      sampleType,
+      sampleCollectionDate: new Date(sampleCollectionDate),
+      sampleSentDate: new Date(sampleSentDate),
+      
+      // Status and Results
+      status: status || 'Sent to Lab',
+      expectedResultDate: expectedResultDate ? new Date(expectedResultDate) : undefined,
+      actualResultDate: actualResultDate ? new Date(actualResultDate) : undefined,
+      resultReceived: resultReceived || false,
+      resultUrl: resultUrl || null,
+      
+      // Additional Information
+      remarks: remarks || '',
+      urgency: urgency || 'Normal',
+      cost: cost || 0,
+      
+      // Tracking
       createdBy: req.user?.name || 'Admin'
     });
 
@@ -76,6 +197,39 @@ export const createLabPartner = async (req, res) => {
 // @access  Private/Admin
 export const updateLabPartner = async (req, res) => {
   try {
+    // Destructure fields from request body
+    const {
+      // Lab Information
+      labName,
+      labAddress,
+      labContact,
+      labEmail,
+      
+      // Patient Information
+      patientName,
+      patientAge,
+      patientGender,
+      patientContact,
+      
+      // Sample/Test Information
+      testType,
+      sampleType,
+      sampleCollectionDate,
+      sampleSentDate,
+      
+      // Status and Results
+      status,
+      expectedResultDate,
+      actualResultDate,
+      resultReceived,
+      resultUrl,
+      
+      // Additional Information
+      remarks,
+      urgency,
+      cost
+    } = req.body;
+
     const labPartner = await LabPartner.findById(req.params.id);
 
     if (!labPartner) {
@@ -85,10 +239,66 @@ export const updateLabPartner = async (req, res) => {
       });
     }
 
-    // Update fields
-    Object.keys(req.body).forEach(key => {
-      labPartner[key] = req.body[key];
-    });
+    // Validate patient gender if provided
+    const validGenders = ['Male', 'Female', 'Other'];
+    if (patientGender && !validGenders.includes(patientGender)) {
+      return res.status(400).json({
+        success: false,
+        message: `Patient gender must be one of: ${validGenders.join(', ')}`
+      });
+    }
+
+    // Validate status if provided
+    const validStatuses = ['Sent to Lab', 'In Progress', 'Completed', 'Cancelled'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Validate urgency if provided
+    const validUrgencies = ['Normal', 'Urgent', 'Critical'];
+    if (urgency && !validUrgencies.includes(urgency)) {
+      return res.status(400).json({
+        success: false,
+        message: `Urgency must be one of: ${validUrgencies.join(', ')}`
+      });
+    }
+
+    // Validate patient age if provided
+    if (patientAge !== undefined && (patientAge < 0 || patientAge > 150)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient age must be between 0 and 150'
+      });
+    }
+
+    // Update fields only if provided
+    if (labName !== undefined) labPartner.labName = labName;
+    if (labAddress !== undefined) labPartner.labAddress = labAddress;
+    if (labContact !== undefined) labPartner.labContact = labContact;
+    if (labEmail !== undefined) labPartner.labEmail = labEmail;
+    
+    if (patientName !== undefined) labPartner.patientName = patientName;
+    if (patientAge !== undefined) labPartner.patientAge = patientAge;
+    if (patientGender !== undefined) labPartner.patientGender = patientGender;
+    if (patientContact !== undefined) labPartner.patientContact = patientContact;
+    
+    if (testType !== undefined) labPartner.testType = testType;
+    if (sampleType !== undefined) labPartner.sampleType = sampleType;
+    if (sampleCollectionDate !== undefined) labPartner.sampleCollectionDate = new Date(sampleCollectionDate);
+    if (sampleSentDate !== undefined) labPartner.sampleSentDate = new Date(sampleSentDate);
+    
+    if (status !== undefined) labPartner.status = status;
+    if (expectedResultDate !== undefined) labPartner.expectedResultDate = new Date(expectedResultDate);
+    if (actualResultDate !== undefined) labPartner.actualResultDate = new Date(actualResultDate);
+    if (resultReceived !== undefined) labPartner.resultReceived = resultReceived;
+    if (resultUrl !== undefined) labPartner.resultUrl = resultUrl;
+    
+    if (remarks !== undefined) labPartner.remarks = remarks;
+    if (urgency !== undefined) labPartner.urgency = urgency;
+    if (cost !== undefined) labPartner.cost = cost;
 
     await labPartner.save();
 

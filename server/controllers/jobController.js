@@ -74,12 +74,69 @@ export const getJob = async (req, res) => {
 // Create job (admin)
 export const createJob = async (req, res) => {
   try {
-    const jobData = {
-      ...req.body,
+    // Destructure and validate fields from request body
+    const {
+      title,
+      description,
+      location,
+      jobType,
+      experience,
+      salary,
+      qualifications,
+      responsibilities,
+      skills,
+      deadline,
+      isActive
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !location || !jobType || !experience) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, description, location, job type, and experience are required'
+      });
+    }
+
+    if (!qualifications || !responsibilities || !skills || !deadline) {
+      return res.status(400).json({
+        success: false,
+        message: 'Qualifications, responsibilities, skills, and deadline are required'
+      });
+    }
+
+    // Validate job type
+    const validJobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
+    if (!validJobTypes.includes(jobType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Job type must be one of: ${validJobTypes.join(', ')}`
+      });
+    }
+
+    // Validate deadline is in the future
+    const deadlineDate = new Date(deadline);
+    if (deadlineDate < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Deadline must be a future date'
+      });
+    }
+
+    // Create job with validated data
+    const job = await JobPost.create({
+      title,
+      description,
+      location,
+      jobType,
+      experience,
+      salary,
+      qualifications,
+      responsibilities,
+      skills,
+      deadline: deadlineDate,
+      isActive: isActive !== undefined ? isActive : true,
       postedBy: req.user._id
-    };
-    
-    const job = await JobPost.create(jobData);
+    });
     
     res.status(201).json({
       success: true,
@@ -99,11 +156,22 @@ export const createJob = async (req, res) => {
 // Update job (admin)
 export const updateJob = async (req, res) => {
   try {
-    const job = await JobPost.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    // Destructure fields from request body
+    const {
+      title,
+      description,
+      location,
+      jobType,
+      experience,
+      salary,
+      qualifications,
+      responsibilities,
+      skills,
+      deadline,
+      isActive
+    } = req.body;
+
+    const job = await JobPost.findById(req.params.id);
     
     if (!job) {
       return res.status(404).json({
@@ -111,6 +179,41 @@ export const updateJob = async (req, res) => {
         message: 'Job not found'
       });
     }
+
+    // Validate job type if provided
+    const validJobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
+    if (jobType && !validJobTypes.includes(jobType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Job type must be one of: ${validJobTypes.join(', ')}`
+      });
+    }
+
+    // Validate deadline if provided
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      if (deadlineDate < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Deadline must be a future date'
+        });
+      }
+    }
+
+    // Update fields only if provided
+    if (title !== undefined) job.title = title;
+    if (description !== undefined) job.description = description;
+    if (location !== undefined) job.location = location;
+    if (jobType !== undefined) job.jobType = jobType;
+    if (experience !== undefined) job.experience = experience;
+    if (salary !== undefined) job.salary = salary;
+    if (qualifications !== undefined) job.qualifications = qualifications;
+    if (responsibilities !== undefined) job.responsibilities = responsibilities;
+    if (skills !== undefined) job.skills = skills;
+    if (deadline !== undefined) job.deadline = new Date(deadline);
+    if (isActive !== undefined) job.isActive = isActive;
+
+    await job.save();
     
     res.status(200).json({
       success: true,

@@ -5,21 +5,123 @@ import Booking from '../models/Booking.js';
 // @access  Private/User
 export const createBooking = async (req, res) => {
   try {
-    const bookingData = req.body;
+    // Destructure and validate fields from request body
+    const {
+      // Patient Information
+      patientName,
+      age,
+      sex,
+      address,
+      pincode,
+      currentLocation,
+      alternateMobile,
+      email,
+      
+      // Selected Services
+      selectedServices,
+      
+      // Additional Information
+      additionalRequirements,
+      
+      // Insurance
+      hasInsurance,
+      insurancePolicyNumber,
+      
+      // Pricing
+      subtotal,
+      gstAmount,
+      grandTotal,
+      
+      // Preferences
+      freeComplimentaryService,
+      preferredTimeSlot,
+      staffPreference,
+      serviceLocation,
+      estimatedDuration,
+      
+      // Vendor Reference
+      vendorId
+    } = req.body;
 
     // Get userId from JWT token
     const userId = req.user._id;
 
-    // Create booking with vendorId from request body
+    // Validate required fields
+    if (!patientName || !age || !sex || !address || !pincode || !currentLocation || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required patient information'
+      });
+    }
+
+    if (!selectedServices || selectedServices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one service must be selected'
+      });
+    }
+
+    if (!preferredTimeSlot) {
+      return res.status(400).json({
+        success: false,
+        message: 'Preferred time slot is required'
+      });
+    }
+
+    if (subtotal === undefined || gstAmount === undefined || grandTotal === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pricing information is required'
+      });
+    }
+
+    // Create booking with validated data
     const booking = await Booking.create({
-      ...bookingData,
+      // Patient Information
+      patientName,
+      age,
+      sex,
+      address,
+      pincode,
+      currentLocation,
+      alternateMobile,
+      email,
+      
+      // Selected Services
+      selectedServices,
+      
+      // Additional Information
+      additionalRequirements,
+      
+      // Insurance
+      hasInsurance: hasInsurance || false,
+      insurancePolicyNumber,
+      
+      // Pricing
+      subtotal,
+      gstAmount,
+      grandTotal,
+      
+      // Preferences
+      freeComplimentaryService: freeComplimentaryService || 'None',
+      preferredTimeSlot,
+      staffPreference: staffPreference || 'Any Available',
+      serviceLocation: serviceLocation || 'At Home',
+      estimatedDuration: estimatedDuration || 45,
+      
+      // References
       userId,
+      vendorId: vendorId || null,
+      
+      // Status
       bookingStatus: 'pending'
     });
 
     // Populate user and vendor details
     await booking.populate('userId', 'name email phone');
-    await booking.populate('vendorId', 'name businessName phone email');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
 
     res.status(201).json({
       success: true,

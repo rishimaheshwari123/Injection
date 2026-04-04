@@ -74,28 +74,92 @@ export const createBlog = async (req, res) => {
       });
     }
 
-    const blogData = req.body;
-    
-    // Set author from authenticated user
-    blogData.author = req.user._id;
-    blogData.authorName = req.user.name;
-    
+    // Destructure and validate fields from request body
+    const {
+      // Blog Information
+      title,
+      slug,
+      content,
+      excerpt,
+      
+      // Media
+      featuredImage,
+      images,
+      
+      // Categorization
+      category,
+      tags,
+      
+      // SEO
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      
+      // Status
+      status,
+      isFeatured,
+      
+      // Publishing
+      publishedAt
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !content || !category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, content, and category are required'
+      });
+    }
+
     // Generate slug if not provided
-    if (!blogData.slug && blogData.title) {
-      blogData.slug = blogData.title
+    let blogSlug = slug;
+    if (!blogSlug && title) {
+      blogSlug = title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
     }
-    
+
     // Check if slug already exists
-    const existingBlog = await Blog.findOne({ slug: blogData.slug });
+    const existingBlog = await Blog.findOne({ slug: blogSlug });
     if (existingBlog) {
       // Add timestamp to make slug unique
-      blogData.slug = `${blogData.slug}-${Date.now()}`;
+      blogSlug = `${blogSlug}-${Date.now()}`;
     }
-    
-    const blog = await Blog.create(blogData);
+
+    // Create blog with validated data
+    const blog = await Blog.create({
+      // Blog Information
+      title,
+      slug: blogSlug,
+      content,
+      excerpt,
+      
+      // Media
+      featuredImage: featuredImage || null,
+      images: images || [],
+      
+      // Categorization
+      category,
+      tags: tags || [],
+      
+      // Author (from authenticated user)
+      author: req.user._id,
+      authorName: req.user.name,
+      
+      // SEO
+      metaTitle,
+      metaDescription,
+      metaKeywords: metaKeywords || [],
+      
+      // Status
+      status: status || 'draft',
+      isActive: true,
+      isFeatured: isFeatured || false,
+      
+      // Publishing
+      publishedAt: publishedAt || null
+    });
     
     await blog.populate('author', 'name email');
     
@@ -275,10 +339,40 @@ export const updateBlog = async (req, res) => {
         message: 'Not authorized to update this blog'
       });
     }
+
+    // Destructure fields from request body
+    const {
+      // Blog Information
+      title,
+      slug,
+      content,
+      excerpt,
+      
+      // Media
+      featuredImage,
+      images,
+      
+      // Categorization
+      category,
+      tags,
+      
+      // SEO
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      
+      // Status
+      status,
+      isActive,
+      isFeatured,
+      
+      // Publishing
+      publishedAt
+    } = req.body;
     
     // If slug is being updated, check for uniqueness
-    if (req.body.slug && req.body.slug !== blog.slug) {
-      const existingBlog = await Blog.findOne({ slug: req.body.slug });
+    if (slug && slug !== blog.slug) {
+      const existingBlog = await Blog.findOne({ slug });
       if (existingBlog) {
         return res.status(400).json({
           success: false,
@@ -286,17 +380,36 @@ export const updateBlog = async (req, res) => {
         });
       }
     }
+
+    // Update fields only if provided
+    if (title !== undefined) blog.title = title;
+    if (slug !== undefined) blog.slug = slug;
+    if (content !== undefined) blog.content = content;
+    if (excerpt !== undefined) blog.excerpt = excerpt;
     
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('author', 'name email');
+    if (featuredImage !== undefined) blog.featuredImage = featuredImage;
+    if (images !== undefined) blog.images = images;
+    
+    if (category !== undefined) blog.category = category;
+    if (tags !== undefined) blog.tags = tags;
+    
+    if (metaTitle !== undefined) blog.metaTitle = metaTitle;
+    if (metaDescription !== undefined) blog.metaDescription = metaDescription;
+    if (metaKeywords !== undefined) blog.metaKeywords = metaKeywords;
+    
+    if (status !== undefined) blog.status = status;
+    if (isActive !== undefined) blog.isActive = isActive;
+    if (isFeatured !== undefined) blog.isFeatured = isFeatured;
+    
+    if (publishedAt !== undefined) blog.publishedAt = publishedAt;
+
+    await blog.save();
+    await blog.populate('author', 'name email');
     
     res.status(200).json({
       success: true,
       message: 'Blog updated successfully',
-      data: updatedBlog
+      data: blog
     });
   } catch (error) {
     res.status(500).json({

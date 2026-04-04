@@ -36,8 +36,37 @@ export const getFAQById = async (req, res) => {
 // Create FAQ
 export const createFAQ = async (req, res) => {
   try {
-    const faq = new FAQ(req.body);
-    await faq.save();
+    // Destructure and validate fields from request body
+    const {
+      question,
+      answer,
+      category,
+      isActive
+    } = req.body;
+
+    // Validate required fields
+    if (!question || !answer) {
+      return res.status(400).json({ 
+        message: 'Question and answer are required' 
+      });
+    }
+
+    // Validate category if provided
+    const validCategories = ['general', 'services', 'booking', 'payment', 'insurance', 'other'];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({ 
+        message: `Category must be one of: ${validCategories.join(', ')}` 
+      });
+    }
+
+    // Create FAQ with validated data
+    const faq = await FAQ.create({
+      question,
+      answer,
+      category: category || 'general',
+      isActive: isActive !== undefined ? isActive : true
+    });
+
     res.status(201).json(faq);
   } catch (error) {
     res.status(400).json({ message: 'Error creating FAQ', error: error.message });
@@ -47,14 +76,34 @@ export const createFAQ = async (req, res) => {
 // Update FAQ
 export const updateFAQ = async (req, res) => {
   try {
-    const faq = await FAQ.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    // Destructure fields from request body
+    const {
+      question,
+      answer,
+      category,
+      isActive
+    } = req.body;
+
+    const faq = await FAQ.findById(req.params.id);
     if (!faq) {
       return res.status(404).json({ message: 'FAQ not found' });
     }
+
+    // Validate category if provided
+    const validCategories = ['general', 'services', 'booking', 'payment', 'insurance', 'other'];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({ 
+        message: `Category must be one of: ${validCategories.join(', ')}` 
+      });
+    }
+
+    // Update fields only if provided
+    if (question !== undefined) faq.question = question;
+    if (answer !== undefined) faq.answer = answer;
+    if (category !== undefined) faq.category = category;
+    if (isActive !== undefined) faq.isActive = isActive;
+
+    await faq.save();
     res.json(faq);
   } catch (error) {
     res.status(400).json({ message: 'Error updating FAQ', error: error.message });

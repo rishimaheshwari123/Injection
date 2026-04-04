@@ -5,18 +5,88 @@ import Service from '../models/Service.js';
 // @access  Private/Admin
 export const adminCreateService = async (req, res) => {
   try {
-    const serviceData = req.body;
+    // Destructure and validate fields from request body
+    const {
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration,
+      serviceType,
+      vendorId,
+      isActive,
+      icon,
+      image,
+      tags,
+      requirements
+    } = req.body;
+
+    // Validate required fields
+    if (!serviceName || !description || !category || basePrice === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service name, description, category, and base price are required'
+      });
+    }
 
     // Validate vendorId is provided
-    if (!serviceData.vendorId) {
+    if (!vendorId) {
       return res.status(400).json({
         success: false,
         message: 'Vendor ID is required'
       });
     }
 
-    // Create service
-    const service = await Service.create(serviceData);
+    // Validate category
+    const validCategories = [
+      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
+      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
+      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
+      'Community Survey', 'Awareness Activities', 'Lab-based Training',
+      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
+      'Dissertation Program', 'Placement Services', 'Blood Collection',
+      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
+      'Physiotherapy Session', 'Other'
+    ];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid category'
+      });
+    }
+
+    // Validate service type
+    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
+    if (serviceType && !validServiceTypes.includes(serviceType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
+      });
+    }
+
+    // Validate base price
+    if (basePrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base price cannot be negative'
+      });
+    }
+
+    // Create service with validated data
+    const service = await Service.create({
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration: duration || 45,
+      serviceType: serviceType || 'At Home',
+      vendorId,
+      isActive: isActive !== undefined ? isActive : true,
+      icon: icon || null,
+      image: image || null,
+      tags: tags || [],
+      requirements
+    });
 
     // Populate vendor details
     await service.populate('vendorId', 'name businessName phone email');
@@ -39,10 +109,24 @@ export const adminCreateService = async (req, res) => {
 // @access  Private/Vendor
 export const createService = async (req, res) => {
   try {
-    const serviceData = req.body;
+    // Destructure and validate fields from request body
+    const {
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration,
+      serviceType,
+      vendorId,
+      isActive,
+      icon,
+      image,
+      tags,
+      requirements
+    } = req.body;
 
-    // Get vendorId from JWT token
-    const vendorId = req.vendor._id;
+    // Use vendorId from req.body if provided, otherwise from JWT token
+    const finalVendorId = vendorId || req.vendor._id;
 
     // Check if vendor is verified and active
     if (!req.vendor.isActive) {
@@ -59,10 +143,63 @@ export const createService = async (req, res) => {
       });
     }
 
-    // Create service
+    // Validate required fields
+    if (!serviceName || !description || !category || basePrice === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service name, description, category, and base price are required'
+      });
+    }
+
+    // Validate category
+    const validCategories = [
+      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
+      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
+      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
+      'Community Survey', 'Awareness Activities', 'Lab-based Training',
+      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
+      'Dissertation Program', 'Placement Services', 'Blood Collection',
+      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
+      'Physiotherapy Session', 'Other'
+    ];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid category'
+      });
+    }
+
+    // Validate service type
+    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
+    if (serviceType && !validServiceTypes.includes(serviceType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
+      });
+    }
+
+    // Validate base price
+    if (basePrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base price cannot be negative'
+      });
+    }
+
+    // Create service with validated data
     const service = await Service.create({
-      ...serviceData,
-      vendorId
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration: duration || 45,
+      serviceType: serviceType || 'At Home',
+      vendorId: finalVendorId,
+      isActive: isActive !== undefined ? isActive : true,
+      icon: icon || null,
+      image: image || null,
+      tags: tags || [],
+      requirements
     });
 
     // Populate vendor details
@@ -221,6 +358,22 @@ export const getServicesByVendorId = async (req, res) => {
 // @access  Private/Admin
 export const adminUpdateService = async (req, res) => {
   try {
+    // Destructure fields from request body
+    const {
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration,
+      serviceType,
+      vendorId,
+      isActive,
+      icon,
+      image,
+      tags,
+      requirements
+    } = req.body;
+
     const service = await Service.findById(req.params.id);
 
     if (!service) {
@@ -230,17 +383,62 @@ export const adminUpdateService = async (req, res) => {
       });
     }
 
-    // Update service
-    const updatedService = await Service.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('vendorId', 'name businessName phone email city state rating isActive isVerified verificationStatus');
+    // Validate category if provided
+    const validCategories = [
+      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
+      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
+      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
+      'Community Survey', 'Awareness Activities', 'Lab-based Training',
+      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
+      'Dissertation Program', 'Placement Services', 'Blood Collection',
+      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
+      'Physiotherapy Session', 'Other'
+    ];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid category'
+      });
+    }
+
+    // Validate service type if provided
+    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
+    if (serviceType && !validServiceTypes.includes(serviceType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
+      });
+    }
+
+    // Validate base price if provided
+    if (basePrice !== undefined && basePrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base price cannot be negative'
+      });
+    }
+
+    // Update fields only if provided
+    if (serviceName !== undefined) service.serviceName = serviceName;
+    if (description !== undefined) service.description = description;
+    if (category !== undefined) service.category = category;
+    if (basePrice !== undefined) service.basePrice = basePrice;
+    if (duration !== undefined) service.duration = duration;
+    if (serviceType !== undefined) service.serviceType = serviceType;
+    if (vendorId !== undefined) service.vendorId = vendorId;
+    if (isActive !== undefined) service.isActive = isActive;
+    if (icon !== undefined) service.icon = icon;
+    if (image !== undefined) service.image = image;
+    if (tags !== undefined) service.tags = tags;
+    if (requirements !== undefined) service.requirements = requirements;
+
+    await service.save();
+    await service.populate('vendorId', 'name businessName phone email city state rating isActive isVerified verificationStatus');
 
     res.status(200).json({
       success: true,
       message: 'Service updated successfully',
-      data: updatedService
+      data: service
     });
   } catch (error) {
     res.status(500).json({
@@ -255,6 +453,21 @@ export const adminUpdateService = async (req, res) => {
 // @access  Private/Vendor
 export const updateService = async (req, res) => {
   try {
+    // Destructure fields from request body
+    const {
+      serviceName,
+      description,
+      category,
+      basePrice,
+      duration,
+      serviceType,
+      isActive,
+      icon,
+      image,
+      tags,
+      requirements
+    } = req.body;
+
     const service = await Service.findById(req.params.id);
 
     if (!service) {
@@ -272,17 +485,60 @@ export const updateService = async (req, res) => {
       });
     }
 
-    // Update service
-    const updatedService = await Service.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    // Validate category if provided
+    const validCategories = [
+      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
+      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
+      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
+      'Community Survey', 'Awareness Activities', 'Lab-based Training',
+      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
+      'Dissertation Program', 'Placement Services', 'Blood Collection',
+      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
+      'Physiotherapy Session', 'Other'
+    ];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid category'
+      });
+    }
+
+    // Validate service type if provided
+    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
+    if (serviceType && !validServiceTypes.includes(serviceType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
+      });
+    }
+
+    // Validate base price if provided
+    if (basePrice !== undefined && basePrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base price cannot be negative'
+      });
+    }
+
+    // Update fields only if provided
+    if (serviceName !== undefined) service.serviceName = serviceName;
+    if (description !== undefined) service.description = description;
+    if (category !== undefined) service.category = category;
+    if (basePrice !== undefined) service.basePrice = basePrice;
+    if (duration !== undefined) service.duration = duration;
+    if (serviceType !== undefined) service.serviceType = serviceType;
+    if (isActive !== undefined) service.isActive = isActive;
+    if (icon !== undefined) service.icon = icon;
+    if (image !== undefined) service.image = image;
+    if (tags !== undefined) service.tags = tags;
+    if (requirements !== undefined) service.requirements = requirements;
+
+    await service.save();
 
     res.status(200).json({
       success: true,
       message: 'Service updated successfully',
-      data: updatedService
+      data: service
     });
   } catch (error) {
     res.status(500).json({
