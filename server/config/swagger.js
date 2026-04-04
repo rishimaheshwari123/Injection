@@ -85,8 +85,7 @@ function assignTagsFromPaths(outputFile) {
 
 const outputFile = './config/swagger-output.json';
 const routes = [
-  '../server.js',
-  '../routes/*.js'
+  '../server.js'
 ];
 
 
