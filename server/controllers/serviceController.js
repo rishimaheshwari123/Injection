@@ -127,38 +127,14 @@ export const adminGetAllServices = async (req, res) => {
 // @access  Public
 export const getAllServices = async (req, res) => {
   try {
-    const { category, vendorId, isActive } = req.query;
-    
-    let query = { isActive: true }; // Only show active services by default
-    
-    if (category) {
-      query.category = category;
-    }
-    
-    if (vendorId) {
-      query.vendorId = vendorId;
-    }
-    
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
-    }
-
-    const services = await Service.find(query)
-      .populate({
-        path: 'vendorId',
-        match: { isActive: true, isVerified: true, verificationStatus: 'verified' }, // Only verified vendors
-        select: 'name businessName phone email city state rating'
-      })
-      .sort({ createdAt: -1 });
-
-    // Filter out services where vendor is null (not verified)
-    const filteredServices = services.filter(service => service.vendorId !== null);
+    const services = await Service.find().sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      count: filteredServices.length,
-      data: filteredServices
+      count: services.length,
+      data: services
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
