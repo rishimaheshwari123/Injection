@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "swagger" : "node config/swagger.js",
+    "swagger": "node config/swagger.js",
     "start": "node server.js",
     "dev": "npm run swagger && nodemon server.js",
     "create-admin": "node scripts/createAdmin.js",
