@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "swagger": "node config/swagger.js",
-    "start": "node server.js",
+    "start": "npm run swagger && node server.js",
     "dev": "npm run swagger && nodemon server.js",
     "create-admin": "node scripts/createAdmin.js",
     "cleanup": "node scripts/cleanupCollections.js"

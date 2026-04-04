@@ -49,28 +49,34 @@ app.use(fileUpload({
   createParentPath: true
 }));
 
-// Swagger Documentation
-if (process.env.NODE_ENV !== 'production') {
+// Swagger Documentation - Only in development
+try {
+  if (fs.existsSync('./config/swagger-output.json')) {
+    const swaggerOutput = JSON.parse(
+      fs.readFileSync('./config/swagger-output.json', 'utf8')
+    );
 
-  const swaggerOutput = JSON.parse(
-    fs.readFileSync(new URL('./config/swagger-output.json', import.meta.url))
-  );
-
-  app.use(
-    '/api-docs',
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerOutput, {
-      explorer: true,
-      swaggerOptions: {
-        persistAuthorization: true,   // keeps JWT across page refreshes
-        displayRequestDuration: true, // shows response time in UI
-        filter: true,                 // enables tag/endpoint search bar
-        tryItOutEnabled: true,        // "Try it out" open by default
-      },
-      customSiteTitle: 'Injection API Docs',
-    })
-  );
-  console.log(`Swagger UI  → http://localhost:${process.env.PORT || 5000}/api-docs`);
+    app.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerOutput, {
+        explorer: true,
+        swaggerOptions: {
+          persistAuthorization: true,
+          displayRequestDuration: true,
+          filter: true,
+          tryItOutEnabled: true,
+        },
+        customSiteTitle: 'Injection API Docs',
+        customCss: '.swagger-ui .topbar { display: none }',
+      })
+    );
+    console.log('Swagger documentation available at /api-docs');
+  } else {
+    console.log('Swagger documentation not available (swagger-output.json not found)');
+  }
+} catch (error) {
+  console.log('Swagger documentation disabled:', error.message);
 }
 
 // Routes
