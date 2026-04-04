@@ -17,82 +17,8 @@ import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
-/**
- * @swagger
- * /api/users/register:
- *   post:
- *     summary: Register new user or admin
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *               - phone
- *               - gender
- *               - age
- *               - address
- *               - pincode
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               phone:
- *                 type: string
- *               gender:
- *                 type: string
- *                 enum: [Male, Female, Other]
- *               age:
- *                 type: number
- *               address:
- *                 type: string
- *               pincode:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [user, admin]
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: User already exists
- */
 router.post('/register', userRegister);
 
-/**
- * @swagger
- * /api/users/login:
- *   post:
- *     summary: Login user or admin
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *       401:
- *         description: Invalid credentials
- */
 router.post('/login', userLogin);
 
 /**
