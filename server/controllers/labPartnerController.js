@@ -60,6 +60,7 @@ export const createLabPartner = async (req, res) => {
       labAddress,
       labContact,
       labEmail,
+      partnerType,
       
       // Patient Information
       patientName,
@@ -150,6 +151,7 @@ export const createLabPartner = async (req, res) => {
       labAddress,
       labContact,
       labEmail,
+      partnerType: partnerType || 'Laboratory',
       
       // Patient Information
       patientName,
@@ -204,6 +206,7 @@ export const updateLabPartner = async (req, res) => {
       labAddress,
       labContact,
       labEmail,
+      partnerType,
       
       // Patient Information
       patientName,
@@ -266,6 +269,15 @@ export const updateLabPartner = async (req, res) => {
       });
     }
 
+    // Validate partner type if provided
+    const validPartnerTypes = ['Laboratory', 'Hospital', 'Diagnostic Center', 'Clinic', 'Other'];
+    if (partnerType && !validPartnerTypes.includes(partnerType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Partner type must be one of: ${validPartnerTypes.join(', ')}`
+      });
+    }
+
     // Validate patient age if provided
     if (patientAge !== undefined && (patientAge < 0 || patientAge > 150)) {
       return res.status(400).json({
@@ -279,6 +291,7 @@ export const updateLabPartner = async (req, res) => {
     if (labAddress !== undefined) labPartner.labAddress = labAddress;
     if (labContact !== undefined) labPartner.labContact = labContact;
     if (labEmail !== undefined) labPartner.labEmail = labEmail;
+    if (partnerType !== undefined) labPartner.partnerType = partnerType;
     
     if (patientName !== undefined) labPartner.patientName = patientName;
     if (patientAge !== undefined) labPartner.patientAge = patientAge;
@@ -291,8 +304,16 @@ export const updateLabPartner = async (req, res) => {
     if (sampleSentDate !== undefined) labPartner.sampleSentDate = new Date(sampleSentDate);
     
     if (status !== undefined) labPartner.status = status;
-    if (expectedResultDate !== undefined) labPartner.expectedResultDate = new Date(expectedResultDate);
-    if (actualResultDate !== undefined) labPartner.actualResultDate = new Date(actualResultDate);
+    if (expectedResultDate !== undefined && expectedResultDate !== '') {
+      labPartner.expectedResultDate = new Date(expectedResultDate);
+    } else if (expectedResultDate === '') {
+      labPartner.expectedResultDate = undefined;
+    }
+    if (actualResultDate !== undefined && actualResultDate !== '') {
+      labPartner.actualResultDate = new Date(actualResultDate);
+    } else if (actualResultDate === '') {
+      labPartner.actualResultDate = undefined;
+    }
     if (resultReceived !== undefined) labPartner.resultReceived = resultReceived;
     if (resultUrl !== undefined) labPartner.resultUrl = resultUrl;
     

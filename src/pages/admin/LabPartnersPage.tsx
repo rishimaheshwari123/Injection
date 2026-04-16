@@ -8,6 +8,7 @@ const LabPartnersPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -24,6 +25,7 @@ const LabPartnersPage = () => {
     labAddress: '',
     labContact: '',
     labEmail: '',
+    partnerType: 'Laboratory',
     patientName: '',
     patientAge: '',
     patientGender: 'Male',
@@ -71,6 +73,7 @@ const LabPartnersPage = () => {
       labAddress: '',
       labContact: '',
       labEmail: '',
+      partnerType: 'Laboratory',
       patientName: '',
       patientAge: '',
       patientGender: 'Male',
@@ -98,15 +101,15 @@ const LabPartnersPage = () => {
         const response = await labPartnerAPI.updateLabPartner(editingEntry._id, formData);
         if (response.data.success) {
           toast.success('Lab partner entry updated successfully!');
-          await fetchLabPartners();
           resetForm();
+          await fetchLabPartners();
         }
       } else {
         const response = await labPartnerAPI.createLabPartner(formData);
         if (response.data.success) {
           toast.success('Lab partner entry created successfully!');
-          await fetchLabPartners();
           resetForm();
+          await fetchLabPartners();
         }
       }
     } catch (error: any) {
@@ -123,6 +126,7 @@ const LabPartnersPage = () => {
       labAddress: entry.labAddress,
       labContact: entry.labContact,
       labEmail: entry.labEmail || '',
+      partnerType: entry.partnerType || 'Laboratory',
       patientName: entry.patientName,
       patientAge: entry.patientAge.toString(),
       patientGender: entry.patientGender,
@@ -205,10 +209,13 @@ const LabPartnersPage = () => {
       entry.labName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.testType.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesFilter = 
+    const matchesStatus = 
       filterStatus === 'all' ? true : entry.status === filterStatus;
     
-    return matchesSearch && matchesFilter;
+    const matchesType = 
+      filterType === 'all' ? true : (entry.partnerType || 'Laboratory') === filterType;
+    
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   const formatDate = (dateString: string) => {
@@ -275,6 +282,18 @@ const LabPartnersPage = () => {
           <option value="Completed">Completed</option>
           <option value="Cancelled">Cancelled</option>
         </select>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+        >
+          <option value="all">All Types</option>
+          <option value="Laboratory">Laboratory</option>
+          <option value="Hospital">Hospital</option>
+          <option value="Diagnostic Center">Diagnostic Center</option>
+          <option value="Clinic">Clinic</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
 
       {/* Stats Cards */}
@@ -315,6 +334,7 @@ const LabPartnersPage = () => {
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Patient</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Lab Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Partner Type</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Test Type</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Sent Date</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -334,6 +354,11 @@ const LabPartnersPage = () => {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-gray-700">{entry.labName}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                      {entry.partnerType || 'Laboratory'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-gray-700">{entry.testType}</p>
@@ -501,6 +526,24 @@ const LabPartnersPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Partner Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="partnerType"
+                      value={formData.partnerType}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                    >
+                      <option value="Laboratory">Laboratory</option>
+                      <option value="Hospital">Hospital</option>
+                      <option value="Diagnostic Center">Diagnostic Center</option>
+                      <option value="Clinic">Clinic</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -853,6 +896,10 @@ const LabPartnersPage = () => {
                   <div>
                     <span className="text-blue-700 font-medium">Lab Name:</span>
                     <span className="ml-2 text-blue-900">{viewingEntry.labName}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-700 font-medium">Partner Type:</span>
+                    <span className="ml-2 text-blue-900">{viewingEntry.partnerType || 'Laboratory'}</span>
                   </div>
                   <div>
                     <span className="text-blue-700 font-medium">Contact:</span>

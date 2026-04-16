@@ -20,6 +20,11 @@ const labPartnerSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  partnerType: {
+    type: String,
+    enum: ['Laboratory', 'Hospital', 'Diagnostic Center', 'Clinic', 'Other'],
+    default: 'Laboratory'
+  },
   
   // Patient Information
   patientName: {
