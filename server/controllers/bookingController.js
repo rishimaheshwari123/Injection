@@ -1,4 +1,15 @@
 import Booking from '../models/Booking.js';
+import Coupon from '../models/Coupon.js';
+
+// Helper function to generate unique coupon code
+const generateCouponCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = 'BOOK';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
 
 // @desc    Create new booking
 // @route   POST /api/bookings/create
@@ -121,6 +132,43 @@ export const createBooking = async (req, res) => {
     await booking.populate('userId', 'name email phone');
     if (booking.vendorId) {
       await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    // Auto-create a 10% discount coupon for the user's next booking
+    try {
+      let couponCode;
+      let isUnique = false;
+      
+      // Generate unique coupon code
+      while (!isUnique) {
+        couponCode = generateCouponCode();
+        const existingCoupon = await Coupon.findOne({ code: couponCode });
+        if (!existingCoupon) {
+          isUnique = true;
+        }
+      }
+      
+      // Set expiry date to 30 days from now
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      
+      const newCoupon = await Coupon.create({
+        name: `Booking Reward - ${booking.patientName}`,
+        code: couponCode,
+        description: `10% discount coupon for your next booking. Valid for 30 days.`,
+        discountType: 'percentage',
+        discountValue: 10,
+        isActive: true,
+        userId: userId,
+        bookingId: booking._id,
+        isUsed: false,
+        expiresAt: expiryDate
+      });
+      
+      console.log(`Auto-created coupon ${couponCode} for user ${userId}`);
+    } catch (couponError) {
+      console.error('Error creating auto-coupon:', couponError);
+      // Don't fail the booking if coupon creation fails
     }
 
     res.status(201).json({

@@ -183,3 +183,149 @@ export const verifyCoupon = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// Get user's coupons
+export const getUserCoupons = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const coupons = await Coupon.find({
+      userId: userId,
+      isActive: true,
+      isUsed: false,
+      $or: [
+        { expiresAt: { $gt: new Date() } },
+        { expiresAt: null }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      count: coupons.length,
+      data: coupons
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Apply coupon to booking
+export const applyCoupon = async (req, res) => {
+  try {
+    const { bookingId, couponCode } = req.body;
+    const userId = req.user._id;
+    
+    if (!bookingId || !couponCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking ID and coupon code are required'
+      });
+    }
+    
+    // Find the booking
+    const Booking = (await import('../models/Booking.js')).default;
+    const booking = await Booking.findById(bookingId);
+    
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+    
+    // Check if user owns the booking
+    if (booking.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to apply coupon to this booking'
+      });
+    }
+    
+    // Check if coupon already applied
+    if (booking.appliedCoupon && booking.appliedCoupon.couponId) {
+      return res.status(400).json({
+        success: false,
+        message: 'A coupon has already been applied to this booking'
+      });
+    }
+    
+    // Find the coupon
+    const coupon = await Coupon.findOne({
+      code: couponCode.toUpperCase(),
+      isActive: true,
+      isUsed: false
+    });
+    
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid or inactive coupon code'
+      });
+    }
+    
+    // Check if coupon belongs to user
+    if (coupon.userId && coupon.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'This coupon does not belong to you'
+      });
+    }
+    
+    // Check if coupon is expired
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This coupon has expired'
+      });
+    }
+    
+    // Calculate discount
+    let discountAmount = 0;
+    if (coupon.discountType === 'percentage') {
+      discountAmount = (booking.grandTotal * coupon.discountValue) / 100;
+    } else {
+      discountAmount = coupon.discountValue;
+    }
+    
+    // Ensure discount doesn't exceed grand total
+    if (discountAmount > booking.grandTotal) {
+      discountAmount = booking.grandTotal;
+    }
+    
+    const finalAmount = booking.grandTotal - discountAmount;
+    
+    // Update booking with coupon
+    booking.appliedCoupon = {
+      couponId: coupon._id,
+      couponCode: coupon.code,
+      discountAmount: discountAmount
+    };
+    booking.finalAmount = finalAmount;
+    await booking.save();
+    
+    // Mark coupon as used
+    coupon.isUsed = true;
+    coupon.usedAt = new Date();
+    await coupon.save();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Coupon applied successfully',
+      data: {
+        booking: booking,
+        discount: discountAmount,
+        finalAmount: finalAmount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};

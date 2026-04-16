@@ -176,6 +176,27 @@ const bookingSchema = new mongoose.Schema({
     required: [true, 'Grand total is required'],
     min: 0
   },
+  
+  // Coupon Information
+  appliedCoupon: {
+    couponId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Coupon',
+      default: null
+    },
+    couponCode: {
+      type: String,
+      default: null
+    },
+    discountAmount: {
+      type: Number,
+      default: 0
+    }
+  },
+  finalAmount: {
+    type: Number,
+    default: null
+  },
 
   // Preferences
   freeComplimentaryService: {

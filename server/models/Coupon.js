@@ -31,6 +31,28 @@ const couponSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Booking',
+    default: null
+  },
+  isUsed: {
+    type: Boolean,
+    default: false
+  },
+  usedAt: {
+    type: Date,
+    default: null
+  },
+  expiresAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

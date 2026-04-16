@@ -5,7 +5,9 @@ import {
   createCoupon,
   updateCoupon,
   deleteCoupon,
-  verifyCoupon
+  verifyCoupon,
+  getUserCoupons,
+  applyCoupon
 } from '../controllers/couponController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -13,6 +15,10 @@ const router = express.Router();
 
 // Public route
 router.get('/verify/:code', verifyCoupon);
+
+// User routes
+router.get('/user/my-coupons', protect, getUserCoupons);
+router.post('/apply', protect, applyCoupon);
 
 // Admin routes
 router.get('/', protect, adminOnly, getAllCoupons);
