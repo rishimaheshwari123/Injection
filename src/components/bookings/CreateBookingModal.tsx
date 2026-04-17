@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Loader2, FileText, Plus } from 'lucide-react';
+import { X, Loader2, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface CreateBookingModalProps {
@@ -16,7 +16,6 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
   const [bookingType, setBookingType] = useState<'self' | 'others'>('self');
   const [selectedUser, setSelectedUser] = useState('');
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
-  const [prescriptionPreview, setPrescriptionPreview] = useState<string>('');
   const [prescriptionData, setPrescriptionData] = useState({
     doctorName: '',
     doctorRegistration: '',
@@ -92,55 +91,6 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
     return { subtotal, grandTotal };
   };
 
-  const handlePrescriptionDataChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setPrescriptionData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleMedicationChange = (index: number, field: string, value: string) => {
-    const updatedMedications = [...prescriptionData.medications];
-    updatedMedications[index] = { ...updatedMedications[index], [field]: value };
-    setPrescriptionData(prev => ({ ...prev, medications: updatedMedications }));
-  };
-
-  const addMedication = () => {
-    setPrescriptionData(prev => ({
-      ...prev,
-      medications: [...prev.medications, { name: '', dosage: '', frequency: '', duration: '' }]
-    }));
-  };
-
-  const removeMedication = (index: number) => {
-    setPrescriptionData(prev => ({
-      ...prev,
-      medications: prev.medications.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handlePrescriptionFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
-      if (!validTypes.includes(file.type)) {
-        toast.error('Please upload an image (JPG, PNG, GIF) or PDF file');
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size should be less than 5MB');
-        return;
-      }
-      
-      setPrescriptionFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPrescriptionPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -197,7 +147,6 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
       setBookingType('self');
       setSelectedUser('');
       setPrescriptionFile(null);
-      setPrescriptionPreview('');
       setPrescriptionData({
         doctorName: '',
         doctorRegistration: '',
