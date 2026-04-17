@@ -484,6 +484,71 @@ export const cancelBooking = async (req, res) => {
   }
 };
 
+// @desc    Reschedule booking
+// @route   PUT /api/bookings/:id/reschedule
+// @access  Private/User/Admin
+export const rescheduleBooking = async (req, res) => {
+  try {
+    const { newDate, newTime, reason } = req.body;
+    
+    if (!newDate || !newTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'New date and time are required'
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if booking can be rescheduled
+    if (booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot reschedule completed or cancelled booking'
+      });
+    }
+
+    // Store old time slot for history
+    const oldTimeSlot = booking.preferredTimeSlot;
+    
+    // Update time slot
+    booking.preferredTimeSlot = `${newDate} ${newTime}`;
+    booking.rescheduledAt = new Date();
+    booking.rescheduleReason = reason || 'Rescheduled by user';
+    
+    // Add note about reschedule
+    booking.notes.push({
+      text: `Booking rescheduled from "${oldTimeSlot}" to "${booking.preferredTimeSlot}". Reason: ${reason || 'Not specified'}`,
+      addedBy: req.user?.name || 'Admin',
+      addedAt: new Date()
+    });
+
+    await booking.save();
+
+    // Populate and return updated booking
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking rescheduled successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Get all bookings (Admin)
 // @route   GET /api/bookings/all
 // @access  Private/Admin

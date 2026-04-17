@@ -9,6 +9,7 @@ import {
   startService,
   completeService,
   cancelBooking,
+  rescheduleBooking,
   getAllBookings,
   updateBookingStatus,
   deleteBooking,
@@ -282,6 +283,43 @@ router.put('/:id/complete', protect, vendorOnly, completeService);
  *         description: Booking cancelled successfully
  */
 router.put('/:id/cancel', protect, cancelBooking);
+
+/**
+ * @swagger
+ * /api/bookings/{id}/reschedule:
+ *   put:
+ *     summary: Reschedule booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newDate
+ *               - newTime
+ *             properties:
+ *               newDate:
+ *                 type: string
+ *                 format: date
+ *               newTime:
+ *                 type: string
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Booking rescheduled successfully
+ */
+router.put('/:id/reschedule', protect, rescheduleBooking);
 
 /**
  * @swagger
