@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
+import logo from '../assets/logo.jpeg'
 
 const Footer = () => {
   return (
@@ -8,15 +9,17 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">P</span>
-              </div>
+            <Link to="/" className="flex items-center space-x-3">
+              <img 
+                src={logo} 
+                alt="PRLT Health Care Logo" 
+                className="w-10 h-10 rounded-lg object-cover"
+              />
               <div>
                 <h3 className="font-bold text-lg">PRLT Health Care</h3>
                 <p className="text-sm text-gray-400">Research Solutions</p>
               </div>
-            </div>
+            </Link>
             <p className="text-gray-400 text-sm">
               Advancing healthcare through research-driven solutions and improving quality of life.
             </p>

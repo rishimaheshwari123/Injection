@@ -12,6 +12,7 @@ import ContactPage from './pages/ContactPage'
 import LoginPage from './pages/LoginPage'
 import Navigation from './components/Navigation'
 import Footer from './components/Footer'
+import ScrollToTop from './components/ScrollToTop'
 import AdminLayout from './components/AdminLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardPage from './pages/admin/DashboardPage'
@@ -46,50 +47,53 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 
 function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Public Routes with Navigation and Footer */}
-      <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
-      <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
-      <Route path="/services" element={<PublicLayout><ServicesPage /></PublicLayout>} />
-      <Route path="/services/healthcare" element={<PublicLayout><HealthcareServicesPage /></PublicLayout>} />
-      <Route path="/services/research" element={<PublicLayout><ResearchServicesPage /></PublicLayout>} />
-      <Route path="/services/training" element={<PublicLayout><TrainingPlacementPage /></PublicLayout>} />
-      <Route path="/research" element={<PublicLayout><ResearchPage /></PublicLayout>} />
-      <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
-      <Route path="/blog/:slug" element={<PublicLayout><BlogDetailPage /></PublicLayout>} />
-      <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
-      <Route path="/support" element={<PublicLayout><SupportPage /></PublicLayout>} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* Public Routes with Navigation and Footer */}
+        <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+        <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+        <Route path="/services" element={<PublicLayout><ServicesPage /></PublicLayout>} />
+        <Route path="/services/healthcare" element={<PublicLayout><HealthcareServicesPage /></PublicLayout>} />
+        <Route path="/services/research" element={<PublicLayout><ResearchServicesPage /></PublicLayout>} />
+        <Route path="/services/training" element={<PublicLayout><TrainingPlacementPage /></PublicLayout>} />
+        <Route path="/research" element={<PublicLayout><ResearchPage /></PublicLayout>} />
+        <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+        <Route path="/blog/:slug" element={<PublicLayout><BlogDetailPage /></PublicLayout>} />
+        <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+        <Route path="/support" element={<PublicLayout><SupportPage /></PublicLayout>} />
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute requireAdmin={true}>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<PermissionGuard permission="dashboard"><DashboardPage /></PermissionGuard>} />
-        <Route path="users" element={<PermissionGuard permission="users"><UsersPage /></PermissionGuard>} />
-        <Route path="vendors" element={<PermissionGuard permission="vendors"><VendorsPage /></PermissionGuard>} />
-        <Route path="services" element={<PermissionGuard permission="services"><ServicesAdminPage /></PermissionGuard>} />
-        <Route path="bookings" element={<PermissionGuard permission="bookings"><BookingsPage /></PermissionGuard>} />
-        <Route path="prescriptions" element={<PermissionGuard permission="prescriptions"><PrescriptionsPage /></PermissionGuard>} />
-        <Route path="reports" element={<PermissionGuard permission="reports"><ReportsPage /></PermissionGuard>} />
-        <Route path="lab-partners" element={<PermissionGuard permission="labPartners"><LabPartnersPage /></PermissionGuard>} />
-        <Route path="insurance-claims" element={<PermissionGuard permission="insuranceClaims"><InsuranceClaimsPage /></PermissionGuard>} />
-        <Route path="faqs" element={<PermissionGuard permission="faqs"><FAQsPage /></PermissionGuard>} />
-        <Route path="coupons" element={<PermissionGuard permission="coupons"><CouponsPage /></PermissionGuard>} />
-        <Route path="staff" element={<PermissionGuard permission="staff"><StaffPage /></PermissionGuard>} />
-        <Route path="support-tickets" element={<PermissionGuard permission="supportTickets"><SupportTicketsPage /></PermissionGuard>} />
-        <Route path="contact-inquiries" element={<PermissionGuard permission="contactInquiries"><ContactInquiriesPage /></PermissionGuard>} />
-        <Route path="advertisements" element={<PermissionGuard permission="advertisements"><AdvertisementsPage /></PermissionGuard>} />
-        <Route path="jobs" element={<PermissionGuard permission="dashboard"><JobsPage /></PermissionGuard>} />
-        <Route path="job-applications" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
-        <Route path="job-applications/:jobId" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
-        <Route path="blogs" element={<PermissionGuard permission="dashboard"><BlogsPage /></PermissionGuard>} />
-      </Route>
-    </Routes>
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<PermissionGuard permission="dashboard"><DashboardPage /></PermissionGuard>} />
+          <Route path="users" element={<PermissionGuard permission="users"><UsersPage /></PermissionGuard>} />
+          <Route path="vendors" element={<PermissionGuard permission="vendors"><VendorsPage /></PermissionGuard>} />
+          <Route path="services" element={<PermissionGuard permission="services"><ServicesAdminPage /></PermissionGuard>} />
+          <Route path="bookings" element={<PermissionGuard permission="bookings"><BookingsPage /></PermissionGuard>} />
+          <Route path="prescriptions" element={<PermissionGuard permission="prescriptions"><PrescriptionsPage /></PermissionGuard>} />
+          <Route path="reports" element={<PermissionGuard permission="reports"><ReportsPage /></PermissionGuard>} />
+          <Route path="lab-partners" element={<PermissionGuard permission="labPartners"><LabPartnersPage /></PermissionGuard>} />
+          <Route path="insurance-claims" element={<PermissionGuard permission="insuranceClaims"><InsuranceClaimsPage /></PermissionGuard>} />
+          <Route path="faqs" element={<PermissionGuard permission="faqs"><FAQsPage /></PermissionGuard>} />
+          <Route path="coupons" element={<PermissionGuard permission="coupons"><CouponsPage /></PermissionGuard>} />
+          <Route path="staff" element={<PermissionGuard permission="staff"><StaffPage /></PermissionGuard>} />
+          <Route path="support-tickets" element={<PermissionGuard permission="supportTickets"><SupportTicketsPage /></PermissionGuard>} />
+          <Route path="contact-inquiries" element={<PermissionGuard permission="contactInquiries"><ContactInquiriesPage /></PermissionGuard>} />
+          <Route path="advertisements" element={<PermissionGuard permission="advertisements"><AdvertisementsPage /></PermissionGuard>} />
+          <Route path="jobs" element={<PermissionGuard permission="dashboard"><JobsPage /></PermissionGuard>} />
+          <Route path="job-applications" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
+          <Route path="job-applications/:jobId" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
+          <Route path="blogs" element={<PermissionGuard permission="dashboard"><BlogsPage /></PermissionGuard>} />
+        </Route>
+      </Routes>
+    </>
   )
 }
 

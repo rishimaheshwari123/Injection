@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Home, User, Briefcase, FlaskConical, Phone, Menu, X, Mail, Facebook, Twitter, Linkedin, Instagram, BookOpen, Heart, ChevronDown } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import logo from '../assets/logo.jpeg'
 
 const Navigation = () => {
   const location = useLocation()
@@ -119,15 +120,17 @@ const Navigation = () => {
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <div className="flex items-center">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">P</span>
-                </div>
+              <Link to="/" className="flex items-center space-x-3">
+                <img 
+                  src={logo} 
+                  alt="PRLT Health Care Logo" 
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
                 <div>
                   <h1 className="text-lg font-bold text-gray-800">PRLT Health Care</h1>
                   <p className="text-xs text-gray-600">Research Solutions</p>
                 </div>
-              </div>
+              </Link>
             </div>
             
             {/* Desktop Navigation */}
@@ -283,9 +286,11 @@ const Navigation = () => {
               <div className=" bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-xl">P</span>
-                    </div>
+                    <img 
+                      src={logo} 
+                      alt="PRLT Health Care Logo" 
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
                     <div>
                       <h1 className="text-lg font-bold text-white">PRLT Health Care</h1>
                       <p className="text-xs text-teal-100">Research Solutions</p>

@@ -117,6 +117,7 @@ export default function SupportPage() {
                   <option value="Billing">Billing & Payment</option>
                   <option value="Booking">Booking Issue</option>
                   <option value="Service">Service Related</option>
+                  <option value="DeleteUser">Delete User</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
