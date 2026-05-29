@@ -55,22 +55,22 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-lg mb-4">Contact Info</h4>
             <div className="space-y-3 text-gray-400 text-sm">
-              <div className="flex items-center space-x-2">
-                <MapPin size={16} />
-                <span>Office Address</span>
+              <div className="flex items-start space-x-2">
+                <MapPin size={16} className="mt-1 flex-shrink-0" />
+                <span>Madhya Pradesh, India</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <a href="tel:+91-6260760514" className="flex items-center space-x-2 hover:text-white transition-colors duration-200">
                 <Phone size={16} />
-                <span>+91 XXXXXXXXXX</span>
-              </div>
-              <div className="flex items-center space-x-2">
+                <span>+91-6260760514</span>
+              </a>
+              <a href="mailto:info@prlthealthcare.com" className="flex items-center space-x-2 hover:text-white transition-colors duration-200">
                 <Mail size={16} />
-                <span>info@prlthealth.com</span>
-              </div>
-              <div className="flex items-center space-x-2">
+                <span>info@prlthealthcare.com</span>
+              </a>
+              <Link to="/" className="flex items-center space-x-2 hover:text-white transition-colors duration-200">
                 <Globe size={16} />
-                <span>www.prlthealth.com</span>
-              </div>
+                <span>www.prlthealthcare.com</span>
+              </Link>
             </div>
           </div>
         </div>

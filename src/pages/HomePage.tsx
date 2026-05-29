@@ -614,25 +614,25 @@ const HomePage = () => {
               </p>
               
               <div className="space-y-6 mb-8">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                <a href="tel:+91-6260760514" className="flex items-center space-x-4 group">
+                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors duration-200">
                     <Phone className="w-6 h-6 text-teal-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Phone Number</h3>
-                    <p className="text-gray-600">+91 XXXXXXXXXX</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors duration-200">Phone Number</h3>
+                    <p className="text-gray-600">+91-6260760514</p>
                   </div>
-                </div>
+                </a>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <a href="mailto:info@prlthealthcare.com" className="flex items-center space-x-4 group">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
                     <Mail className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Email Address</h3>
-                    <p className="text-gray-600">info@prlthealth.com</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Email Address</h3>
+                    <p className="text-gray-600">info@prlthealthcare.com</p>
                   </div>
-                </div>
+                </a>
                 
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -640,7 +640,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">Office Address</h3>
-                    <p className="text-gray-600">PRLT Health Care and Research Solutions<br />Address Line, City, State</p>
+                    <p className="text-gray-600">PRLT Healthcare and Research Solutions (OPC) Private Limited<br />Madhya Pradesh, India</p>
                   </div>
                 </div>
               </div>

@@ -62,54 +62,57 @@ const Navigation = () => {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-2 hidden md:block">
+      <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-2.5 hidden md:block">
         <div className="w-[90vw] mx-auto px-4">
-          <div className="flex justify-between items-center text-sm">
-            {/* Contact Info */}
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <Phone size={14} />
-                <span>+91 XXXXXXXXXX</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail size={14} />
-                <span>info@prlthealth.com</span>
-              </div>
+          <div className="flex justify-between items-center text-xs">
+            {/* Contact Info Pills */}
+            <div className="flex items-center space-x-4">
+              <a 
+                href="tel:+91-6260760514" 
+                className="flex items-center space-x-2 font-semibold py-1 px-4 bg-white/10 rounded-full border border-white/20 shadow-sm transition-all duration-200 hover:bg-white/20 hover:scale-[1.03]"
+              >
+                <Phone size={12} className="text-[#e4ffe0]" />
+                <span>+91-6260760514</span>
+              </a>
+              <a 
+                href="mailto:info@prlthealthcare.com" 
+                className="flex items-center space-x-2 font-semibold py-1 px-4 bg-white/10 rounded-full border border-white/20 shadow-sm transition-all duration-200 hover:bg-white/20 hover:scale-[1.03]"
+              >
+                <Mail size={12} className="text-[#e4ffe0]" />
+                <span>info@prlthealthcare.com</span>
+              </a>
             </div>
             
-            {/* Social Media */}
-            <div className="flex items-center space-x-4">
-              <span className="text-teal-100">Follow us:</span>
-              <div className="flex space-x-3">
-                <a 
-                  href="#" 
-                  className="hover:text-teal-200 transition-colors duration-200"
-                  aria-label="Facebook"
-                >
-                  <Facebook size={16} />
-                </a>
-                <a 
-                  href="#" 
-                  className="hover:text-teal-200 transition-colors duration-200"
-                  aria-label="Twitter"
-                >
-                  <Twitter size={16} />
-                </a>
-                <a 
-                  href="#" 
-                  className="hover:text-teal-200 transition-colors duration-200"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin size={16} />
-                </a>
-                <a 
-                  href="#" 
-                  className="hover:text-teal-200 transition-colors duration-200"
-                  aria-label="Instagram"
-                >
-                  <Instagram size={16} />
-                </a>
-              </div>
+            {/* Social Media Circular Badges */}
+            <div className="flex items-center space-x-2">
+              <a 
+                href="#" 
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                aria-label="Facebook"
+              >
+                <Facebook size={13} />
+              </a>
+              <a 
+                href="#" 
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                aria-label="Twitter"
+              >
+                <Twitter size={13} />
+              </a>
+              <a 
+                href="#" 
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                aria-label="LinkedIn"
+              >
+                <Linkedin size={13} />
+              </a>
+              <a 
+                href="#" 
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                aria-label="Instagram"
+              >
+                <Instagram size={13} />
+              </a>
             </div>
           </div>
         </div>
@@ -385,14 +388,14 @@ const Navigation = () => {
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gray-50">
                 <div className="text-center space-y-3">
                   <p className="text-sm font-medium text-gray-700 mb-3">Contact Information</p>
-                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                  <a href="tel:+91-6260760514" className="flex items-center justify-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200 py-1">
                     <Phone size={14} />
-                    <span>+91 XXXXXXXXXX</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                    <span>+91-6260760514</span>
+                  </a>
+                  <a href="mailto:info@prlthealthcare.com" className="flex items-center justify-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200 py-1">
                     <Mail size={14} />
-                    <span>info@prlthealth.com</span>
-                  </div>
+                    <span>info@prlthealthcare.com</span>
+                  </a>
                   
                   {/* Social Media in Mobile */}
                   <div className="flex justify-center space-x-4 pt-3 border-t border-gray-200">

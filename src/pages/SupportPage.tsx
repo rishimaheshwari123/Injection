@@ -192,7 +192,7 @@ export default function SupportPage() {
               </svg>
             </div>
             <h3 className="font-semibold mb-2">Email Support</h3>
-            <p className="text-gray-600 text-sm">support@healthcare.com</p>
+            <a href="mailto:info@prlthealthcare.com" className="text-teal-600 hover:text-teal-800 transition-colors text-sm break-all font-medium">info@prlthealthcare.com</a>
           </div>
 
           <div className="bg-white rounded-lg shadow p-6 text-center">
@@ -202,7 +202,7 @@ export default function SupportPage() {
               </svg>
             </div>
             <h3 className="font-semibold mb-2">Phone Support</h3>
-            <p className="text-gray-600 text-sm">+91 1800-123-4567</p>
+            <a href="tel:+91-6260760514" className="text-teal-600 hover:text-teal-800 transition-colors text-sm font-medium">+91-6260760514</a>
           </div>
 
           <div className="bg-white rounded-lg shadow p-6 text-center">

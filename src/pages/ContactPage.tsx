@@ -43,25 +43,25 @@ const ContactPage = () => {
     {
       icon: MapPin,
       title: "Office Address",
-      details: ["PRLT Health Care and Research Solutions", "(OPC) Private Limited", "Address Line 1", "Address Line 2", "City, State - PIN Code"],
+      details: ["PRLT Healthcare and Research Solutions", "(OPC) Private Limited", "Madhya Pradesh, India"],
       color: "from-red-500 to-pink-600"
     },
     {
       icon: Phone,
       title: "Phone Number",
-      details: ["+91 XXXXXXXXXX", "+91 XXXXXXXXXX", "Available 24/7 for emergencies"],
+      details: ["+91-6260760514", "Available for patient support", "and business hours"],
       color: "from-green-500 to-teal-600"
     },
     {
       icon: Mail,
       title: "Email Address",
-      details: ["info@prlthealth.com", "research@prlthealth.com", "training@prlthealth.com"],
+      details: ["info@prlthealthcare.com"],
       color: "from-blue-500 to-cyan-600"
     },
     {
       icon: Globe,
       title: "Website",
-      details: ["www.prlthealth.com", "Follow us on social media", "for latest updates"],
+      details: ["www.prlthealthcare.com", "Follow us on social media", "for latest updates"],
       color: "from-purple-500 to-indigo-600"
     }
   ]

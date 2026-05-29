@@ -35,6 +35,8 @@ import JobApplicationsPage from './pages/admin/JobApplicationsPage'
 import BlogsPage from './pages/admin/BlogsPage'
 import SupportPage from './pages/SupportPage'
 import PermissionGuard from './components/PermissionGuard'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import TermsPage from './pages/TermsPage'
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -65,6 +67,8 @@ function App() {
         <Route path="/blog/:slug" element={<PublicLayout><BlogDetailPage /></PublicLayout>} />
         <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
         <Route path="/support" element={<PublicLayout><SupportPage /></PublicLayout>} />
+        <Route path="/privacy" element={<PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
+        <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={
