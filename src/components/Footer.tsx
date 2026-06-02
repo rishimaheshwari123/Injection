@@ -13,12 +13,9 @@ const Footer = () => {
               <img 
                 src={logo} 
                 alt="PRLT Health Care Logo" 
-                className="w-10 h-10 rounded-lg object-cover"
+                className="w-32 "
               />
-              <div>
-                <h3 className="font-bold text-lg">PRLT Health Care</h3>
-                <p className="text-sm text-gray-400">Research Solutions</p>
-              </div>
+             
             </Link>
             <p className="text-gray-400 text-sm">
               Advancing healthcare through research-driven solutions and improving quality of life.

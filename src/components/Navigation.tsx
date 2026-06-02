@@ -127,12 +127,9 @@ const Navigation = () => {
                 <img 
                   src={logo} 
                   alt="PRLT Health Care Logo" 
-                  className="w-12 h-12 rounded-lg object-cover"
+                  className="w-32 md:w-48 rounded-lg object-cover"
                 />
-                <div>
-                  <h1 className="text-lg font-bold text-gray-800">PRLT Health Care</h1>
-                  <p className="text-xs text-gray-600">Research Solutions</p>
-                </div>
+                
               </Link>
             </div>
             
@@ -292,12 +289,9 @@ const Navigation = () => {
                     <img 
                       src={logo} 
                       alt="PRLT Health Care Logo" 
-                      className="w-12 h-12 rounded-lg object-cover"
+                      className="w-32 "
                     />
-                    <div>
-                      <h1 className="text-lg font-bold text-white">PRLT Health Care</h1>
-                      <p className="text-xs text-teal-100">Research Solutions</p>
-                    </div>
+                    
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}

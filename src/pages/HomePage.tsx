@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle, Users, Award, Target, Heart, FlaskConical, Phone, Send, MapPin, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import logo from '../assets/logo.jpeg'
 
 const HomePage = () => {
   const [formData, setFormData] = useState({
@@ -16,19 +17,20 @@ const HomePage = () => {
   
   const slides = [
     {
-      image: "https://img.freepik.com/free-photo/women-working-chemical-project-new-discovery_23-2148776759.jpg?semt=ais_hybrid&w=740&q=80",
-      title: "Advancing Healthcare through Research & Innovation",
-      subtitle: "PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, and innovative health solutions to improve patient outcomes and medical advancements."
+      image: logo,
+      // image: "https://img.freepik.com/free-photo/women-working-chemical-project-new-discovery_23-2148776759.jpg?semt=ais_hybrid&w=740&q=80",
+      // title: "Advancing Healthcare through Research & Innovation",
+      // subtitle: "PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, and innovative health solutions to improve patient outcomes and medical advancements."
     },
     {
       image: "https://t3.ftcdn.net/jpg/06/45/68/94/360_F_645689490_Fzwptjq0YLCW8JZpC6lASo1KJcAgzZPj.jpg",
-      title: "Expert Medical Care at Your Doorstep",
-      subtitle: "Experience professional healthcare services in the comfort of your home with our qualified medical professionals and state-of-the-art equipment."
+    //   title: "Expert Medical Care at Your Doorstep",
+    //   subtitle: "Experience professional healthcare services in the comfort of your home with our qualified medical professionals and state-of-the-art equipment."
     },
     {
       image: "https://png.pngtree.com/thumb_back/fw800/background/20250828/pngtree-scientific-medical-laboratory-high-definition-close-up-photography-image_18542279.webp",
-      title: "Leading Medical Research & Training",
-      subtitle: "Join our comprehensive training programs and cutting-edge research initiatives that are shaping the future of healthcare and medical education."
+    //   title: "Leading Medical Research & Training",
+    //   subtitle: "Join our comprehensive training programs and cutting-edge research initiatives that are shaping the future of healthcare and medical education."
     }
   ]
 
@@ -93,145 +95,41 @@ const HomePage = () => {
   return (
     <div>
       {/* Hero Slider Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full flex items-center justify-center overflow-hidden bg-white">
         {/* Slider Images */}
-        <div className="absolute inset-0 z-0">
+        <div className="relative w-full z-0 max-h-[600px] md:max-h-[700px]">
           {slides.map((slide, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              className={`transition-opacity duration-1000 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'
               }`}
             >
               <img 
                 src={slide.image} 
                 alt={`Healthcare slide ${index + 1}`} 
-                className="w-full h-full object-cover"
+                className="w-full max-h-[15vh] md:max-h-[70vh] object-cover "
               />
-              <div className="absolute inset-0 bg-black/40"></div>
             </div>
           ))}
         </div>
         
-        {/* Content */}
-        <div className="relative z-20 container mx-auto px-4 text-center text-white">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto"
-          >
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
-            >
-              {slides[currentSlide].title.split(' ').slice(0, 3).join(' ')}
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-300">
-                {slides[currentSlide].title.split(' ').slice(3).join(' ')}
-              </span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg md:text-xl mb-8 leading-relaxed text-gray-200 max-w-3xl mx-auto"
-            >
-              {slides[currentSlide].subtitle}
-            </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-            >
-              <Link
-                to="/services"
-                className="group bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3"
-              >
-                <span>Explore Services</span>
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-              </Link>
-              <Link
-                to="/contact"
-                className="group border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-teal-600 transition-all duration-300 flex items-center space-x-3"
-              >
-                <span>Contact Us</span>
-                <Phone size={20} className="group-hover:scale-110 transition-transform duration-300" />
-              </Link>
-            </motion.div>
-          </motion.div>
-          
-          {/* Floating Elements */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="absolute top-20 left-10 hidden lg:block"
-          >
-            <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Heart className="w-10 h-10 text-white" />
-            </div>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="absolute top-32 right-16 hidden lg:block"
-          >
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <FlaskConical className="w-8 h-8 text-white" />
-            </div>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 1.2 }}
-            className="absolute bottom-32 left-20 hidden lg:block"
-          >
-            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Users className="w-12 h-12 text-white" />
-            </div>
-          </motion.div>
-        </div>
+        {/* Removed Content - Clean Slider */}
         
         {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group md:block hidden"
+          className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/80 backdrop-blur-sm text-gray-800 p-2 md:p-3 rounded-full hover:bg-white transition-all duration-300 group shadow-lg"
         >
-          <ChevronLeft size={24} className="group-hover:scale-110 transition-transform duration-300" />
+          <ChevronLeft size={20} className="md:w-6 md:h-6 group-hover:scale-110 transition-transform duration-300" />
         </button>
         
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group md:block hidden"
+          className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/80 backdrop-blur-sm text-gray-800 p-2 md:p-3 rounded-full hover:bg-white transition-all duration-300 group shadow-lg"
         >
-          <ChevronRight size={24} className="group-hover:scale-110 transition-transform duration-300" />
+          <ChevronRight size={20} className="md:w-6 md:h-6 group-hover:scale-110 transition-transform duration-300" />
         </button>
-        
-        {/* Mobile Navigation Arrows - Bottom Right */}
-        <div className="absolute bottom-20 right-4 z-30 flex space-x-2 md:hidden">
-          <button
-            onClick={prevSlide}
-            className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all duration-300 group"
-          >
-            <ChevronLeft size={20} className="group-hover:scale-110 transition-transform duration-300" />
-          </button>
-          
-          <button
-            onClick={nextSlide}
-            className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all duration-300 group"
-          >
-            <ChevronRight size={20} className="group-hover:scale-110 transition-transform duration-300" />
-          </button>
-        </div>
         
         {/* Slide Indicators */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
@@ -241,39 +139,16 @@ const HomePage = () => {
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentSlide 
-                  ? 'bg-white scale-125' 
-                  : 'bg-white/50 hover:bg-white/75'
+                  ? 'bg-teal-600 scale-125' 
+                  : 'bg-gray-400 hover:bg-gray-600'
               }`}
             />
           ))}
         </div>
-        
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.4 }}
-          className="absolute hidden md:block bottom-8 left-1/2 transform -translate-x-1/2 z-20"
-        >
-          <div className="flex flex-col items-center text-white">
-            <span className="text-sm mb-2 opacity-80">Scroll Down</span>
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center"
-            >
-              <motion.div
-                animate={{ y: [0, 12, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-1 h-3 bg-white rounded-full mt-2"
-              />
-            </motion.div>
-          </div>
-        </motion.div>
       </section>
 
       {/* About Section with Doctor Image */}
-      <section className="py-20 bg-white">
+      <section className="py-5 bg-white">
         <div className="w-[90vw] mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -281,7 +156,7 @@ const HomePage = () => {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">About PRLT Health Care</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">About PRLT Health Care</h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
                 PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. is committed to improving healthcare 
                 through advanced research, medical consultation, and innovative healthcare solutions.
