@@ -68,6 +68,15 @@ export const serviceAPI = {
   getVendorServices: () => api.get(API_ENDPOINTS.SERVICES.BY_VENDOR),
   createService: (serviceData: any) => api.post('/services/admin/create', serviceData),
   updateService: (id: string, serviceData: any) => api.put(`/services/admin/${id}`, serviceData),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/services/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 // Booking APIs

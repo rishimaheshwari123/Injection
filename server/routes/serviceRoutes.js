@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   createService,
+  uploadServiceImage,
   adminCreateService,
   adminGetAllServices,
   adminUpdateService,
@@ -73,6 +74,7 @@ const router = express.Router();
  *         description: Service created successfully
  */
 router.post('/admin/create', protect, adminOnly, adminCreateService);
+router.post('/upload-image', protect, adminOnly, uploadServiceImage);
 
 /**
  * @swagger

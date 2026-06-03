@@ -1,4 +1,57 @@
 import Service from '../models/Service.js';
+import cloudinary from '../config/cloudinary.js';
+
+// @desc    Upload service image
+// @route   POST /api/services/upload-image
+// @access  Private/Admin
+export const uploadServiceImage = async (req, res) => {
+  try {
+    if (!req.files || !req.files.image) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image'
+      });
+    }
+
+    const file = req.files.image;
+
+    // Check file type
+    if (!file.mimetype.startsWith('image')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image size should be less than 5MB'
+      });
+    }
+
+    // Upload to cloudinary
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: 'services',
+      resource_type: 'image'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: {
+        url: result.secure_url,
+        publicId: result.public_id
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 // @desc    Create new service (Admin)
 // @route   POST /api/services/admin/create
@@ -224,17 +277,17 @@ export const createService = async (req, res) => {
 export const adminGetAllServices = async (req, res) => {
   try {
     const { category, vendorId, isActive } = req.query;
-    
+
     let query = {};
-    
+
     if (category) {
       query.category = category;
     }
-    
+
     if (vendorId) {
       query.vendorId = vendorId;
     }
-    
+
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
     }
@@ -333,9 +386,9 @@ export const getVendorServices = async (req, res) => {
 // @access  Public
 export const getServicesByVendorId = async (req, res) => {
   try {
-    const services = await Service.find({ 
+    const services = await Service.find({
       vendorId: req.params.vendorId,
-      isActive: true 
+      isActive: true
     })
       .populate('vendorId', 'name businessName phone email')
       .sort({ createdAt: -1 });
@@ -627,9 +680,9 @@ export const toggleServiceStatus = async (req, res) => {
 // @access  Public
 export const getServicesByCategory = async (req, res) => {
   try {
-    const services = await Service.find({ 
+    const services = await Service.find({
       category: req.params.category,
-      isActive: true 
+      isActive: true
     })
       .populate('vendorId', 'name businessName phone email city state rating')
       .sort({ createdAt: -1 });

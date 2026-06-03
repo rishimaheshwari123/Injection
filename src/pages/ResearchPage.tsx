@@ -1,61 +1,91 @@
-import { motion } from 'framer-motion'
-import { FlaskConical, Users, Award, BarChart3, Microscope, Target } from 'lucide-react'
+import { motion } from "framer-motion";
+import {
+  FlaskConical,
+  Users,
+  Award,
+  BarChart3,
+  Microscope,
+  Target,
+} from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const ResearchPage = () => {
   const researchAreas = [
     {
       icon: FlaskConical,
       title: "Clinical Studies",
-      description: "Comprehensive clinical research studies focusing on improving patient outcomes and medical treatments."
+      description:
+        "Comprehensive clinical research studies focusing on improving patient outcomes and medical treatments.",
     },
     {
       icon: BarChart3,
       title: "Medical Data Analysis",
-      description: "Advanced statistical analysis of medical data to derive meaningful insights for healthcare improvement."
+      description:
+        "Advanced statistical analysis of medical data to derive meaningful insights for healthcare improvement.",
     },
     {
       icon: Microscope,
       title: "Healthcare Innovation Research",
-      description: "Cutting-edge research in healthcare technology and innovative medical solutions."
+      description:
+        "Cutting-edge research in healthcare technology and innovative medical solutions.",
     },
     {
       icon: Users,
       title: "Community Health Research",
-      description: "Population-based studies focusing on public health outcomes and community wellness."
-    }
-  ]
+      description:
+        "Population-based studies focusing on public health outcomes and community wellness.",
+    },
+  ];
 
   const projects = [
     {
       title: "Diabetes Management Study",
-      description: "A comprehensive study on home-based diabetes management and patient outcomes.",
+      description:
+        "A comprehensive study on home-based diabetes management and patient outcomes.",
       status: "Ongoing",
-      duration: "2023-2024"
+      duration: "2023-2024",
     },
     {
       title: "Community Health Awareness",
-      description: "Research on the effectiveness of community health education programs.",
+      description:
+        "Research on the effectiveness of community health education programs.",
       status: "Completed",
-      duration: "2022-2023"
+      duration: "2022-2023",
     },
     {
       title: "Laboratory Quality Assessment",
-      description: "Evaluation of laboratory testing accuracy and quality control measures.",
+      description:
+        "Evaluation of laboratory testing accuracy and quality control measures.",
       status: "Ongoing",
-      duration: "2024-2025"
-    }
-  ]
+      duration: "2024-2025",
+    },
+  ];
 
   const collaborations = [
     "Medical Colleges and Universities",
     "Government Health Departments",
     "International Research Organizations",
     "Healthcare Institutions",
-    "Community Health Centers"
-  ]
+    "Community Health Centers",
+  ];
 
   return (
     <div>
+      <Helmet>
+        <title>
+          Healthcare Research & Innovation | Clinical Research Services | PRLT
+          Healthcare
+        </title>
+        <meta
+          name="description"
+          content="PRLT Healthcare drives healthcare innovation through clinical research, healthcare studies, data analysis, and evidence-based solutions that improve patient outcomes and advance medical knowledge."
+        />
+        <meta
+          name="keywords"
+          content="Healthcare Research, Clinical Research, Healthcare Research Services, Medical Research, Healthcare Innovation, Evidence-Based Healthcare, Clinical Studies, Research & Development Healthcare, Healthcare Data Analysis, Medical Research Solutions, Healthcare Research Organization, Healthcare Research Programs, Clinical Trial Support, Healthcare Innovation Research, Healthcare Research Excellence"
+        />
+      </Helmet>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
         <div className="w-[90vw] mx-auto px-4">
@@ -65,10 +95,13 @@ const ResearchPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">Research & Innovation</h1>
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Research & Innovation
+            </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Our research team works on innovative healthcare solutions aimed at improving patient care, 
-              medical technology, and public health outcomes through evidence-based research and collaboration.
+              Our research team works on innovative healthcare solutions aimed
+              at improving patient care, medical technology, and public health
+              outcomes through evidence-based research and collaboration.
             </p>
           </motion.div>
         </div>
@@ -83,9 +116,12 @@ const ResearchPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Research Areas</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Research Areas
+            </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We focus on diverse areas of healthcare research to address current challenges and future needs
+              We focus on diverse areas of healthcare research to address
+              current challenges and future needs
             </p>
           </motion.div>
 
@@ -101,8 +137,12 @@ const ResearchPage = () => {
                 <div className="w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-4">
                   <area.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{area.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{area.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {area.title}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {area.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -118,8 +158,12 @@ const ResearchPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Current Research Projects</h2>
-            <p className="text-xl text-gray-600">Ongoing and completed research initiatives</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Current Research Projects
+            </h2>
+            <p className="text-xl text-gray-600">
+              Ongoing and completed research initiatives
+            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -135,26 +179,31 @@ const ResearchPage = () => {
                   <div className="w-12 h-12 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-lg flex items-center justify-center">
                     <Target className="w-6 h-6 text-white" />
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    project.status === 'Ongoing' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      project.status === "Ongoing"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
                     {project.status}
                   </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{project.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed">{project.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {project.title}
+                </h3>
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                  {project.description}
+                </p>
                 <div className="text-xs text-gray-500">
-                  <span className="font-medium">Duration:</span> {project.duration}
+                  <span className="font-medium">Duration:</span>{" "}
+                  {project.duration}
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
-
-    
 
       {/* Collaborations */}
       <section className="py-20 bg-gradient-to-br from-teal-50 to-blue-50">
@@ -165,9 +214,12 @@ const ResearchPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Collaborations</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Our Collaborations
+            </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Partnering with leading institutions to advance healthcare research and innovation
+              Partnering with leading institutions to advance healthcare
+              research and innovation
             </p>
           </motion.div>
 
@@ -199,8 +251,12 @@ const ResearchPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Healthcare Innovations</h2>
-            <p className="text-xl text-gray-600">Breakthrough innovations in healthcare technology and patient care</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Healthcare Innovations
+            </h2>
+            <p className="text-xl text-gray-600">
+              Breakthrough innovations in healthcare technology and patient care
+            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -209,14 +265,16 @@ const ResearchPage = () => {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Our Innovation Focus</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Our Innovation Focus
+              </h3>
               <div className="space-y-4">
                 {[
                   "Digital health platforms for remote patient monitoring",
                   "Advanced research data management systems",
                   "Health analytics solutions for better outcomes",
                   "Mobile health applications for community care",
-                  "Laboratory automation and quality control systems"
+                  "Laboratory automation and quality control systems",
                 ].map((innovation, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full"></div>
@@ -237,7 +295,9 @@ const ResearchPage = () => {
                   <div className="w-24 h-24 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-6">
                     <Award className="w-12 h-12 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Innovation Excellence</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    Innovation Excellence
+                  </h3>
                   <p className="text-gray-600">Leading Healthcare Research</p>
                 </div>
               </div>
@@ -246,7 +306,7 @@ const ResearchPage = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default ResearchPage
+export default ResearchPage;

@@ -15,11 +15,16 @@ const Footer = () => {
                 alt="PRLT Health Care Logo" 
                 className="w-32 "
               />
-             
             </Link>
+            <h4 className="font-semibold text-lg text-white">Healthcare That Comes To You</h4>
             <p className="text-gray-400 text-sm">
-              Advancing healthcare through research-driven solutions and improving quality of life.
+              Receive professional healthcare services in the comfort of your home. From IV drips and injections to wound dressing and nursing care, PRLT Healthcare is committed to providing safe, reliable, and compassionate medical support whenever you need it.
             </p>
+            <div className="pt-2">
+              <Link to="/contact" className="text-teal-400 font-semibold hover:text-teal-300 transition-colors">
+                Call Now | Book Your Appointment Today
+              </Link>
+            </div>
           </div>
 
           {/* Quick Links */}

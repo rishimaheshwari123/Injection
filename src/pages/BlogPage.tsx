@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion'
-import { Calendar, User, ArrowRight, Tag, Clock } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { blogAPI } from '../services/api';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Calendar, User, ArrowRight, Tag, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { blogAPI } from "../services/api";
 
 interface Blog {
   _id: string;
@@ -27,9 +28,16 @@ const BlogPage = () => {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const categories = ["All", "Healthcare", "Research", "Training", "Technology", "News"];
+  const categories = [
+    "All",
+    "Healthcare",
+    "Research",
+    "Training",
+    "Technology",
+    "News",
+  ];
 
   useEffect(() => {
     fetchBlogs();
@@ -41,26 +49,42 @@ const BlogPage = () => {
       const response = await blogAPI.getAllBlogs({ limit: 50 });
       setBlogs(response.data.data);
     } catch (error) {
-      console.error('Error fetching blogs:', error);
+      console.error("Error fetching blogs:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
-  const filteredBlogs = selectedCategory === 'All' 
-    ? blogs 
-    : blogs.filter(blog => blog.category === selectedCategory);
+  const filteredBlogs =
+    selectedCategory === "All"
+      ? blogs
+      : blogs.filter((blog) => blog.category === selectedCategory);
 
   return (
     <div>
+      <Helmet>
+        <title>
+          Healthcare Blog | Health Tips, Medical Insights & Wellness Articles |
+          PRLT Healthcare
+        </title>
+        <meta
+          name="description"
+          content="Explore the PRLT Healthcare Blog for expert health tips, medical insights, home healthcare guidance, wellness advice, patient care information, and healthcare industry updates to help you live a healthier life."
+        />
+        <meta
+          name="keywords"
+          content="Healthcare Blog, Health Tips Blog, Medical Insights, Healthcare Articles, Patient Care Tips, Home Healthcare Blog, Wellness Articles, Healthcare News, Medical Advice Blog, Healthy Living Tips, Healthcare Education, Health Awareness Articles, Nursing Care Tips, Elderly Care Advice, Preventive Healthcare"
+        />
+      </Helmet>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
         <div className="w-[90vw] mx-auto px-4">
@@ -70,10 +94,12 @@ const BlogPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">Blog & Insights</h1>
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Blog & Insights
+            </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Stay updated with the latest healthcare trends, research findings, and expert insights 
-              from PRLT Health Care and Research Solutions.
+              Stay updated with the latest healthcare trends, research findings,
+              and expert insights from PRLT Health Care and Research Solutions.
             </p>
           </motion.div>
         </div>
@@ -92,8 +118,8 @@ const BlogPage = () => {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
                   selectedCategory === category
-                    ? 'bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {category}
@@ -102,7 +128,6 @@ const BlogPage = () => {
           </div>
         </div>
       </section>
-
 
       {/* Latest Articles - From Database */}
       {loading ? (
@@ -123,8 +148,12 @@ const BlogPage = () => {
               transition={{ duration: 0.6 }}
               className="mb-12"
             >
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Latest Articles</h2>
-              <p className="text-gray-600">Explore our recent healthcare insights and updates</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Latest Articles
+              </h2>
+              <p className="text-gray-600">
+                Explore our recent healthcare insights and updates
+              </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -139,14 +168,16 @@ const BlogPage = () => {
                 >
                   <div className="relative overflow-hidden">
                     {post.featuredImage ? (
-                      <img 
-                        src={post.featuredImage} 
+                      <img
+                        src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                        <span className="text-white text-4xl font-bold">{post.title.charAt(0)}</span>
+                        <span className="text-white text-4xl font-bold">
+                          {post.title.charAt(0)}
+                        </span>
                       </div>
                     )}
                     <div className="absolute top-4 left-4">
@@ -156,7 +187,7 @@ const BlogPage = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
                       <div className="flex items-center space-x-1">
@@ -168,23 +199,25 @@ const BlogPage = () => {
                         <span>{post.readingTime} min read</span>
                       </div>
                     </div>
-                    
+
                     <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-teal-600 transition-colors duration-300">
                       {post.title}
                     </h3>
-                    
+
                     <p className="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">
-                      {post.excerpt || post.content.substring(0, 150) + '...'}
+                      {post.excerpt || post.content.substring(0, 150) + "..."}
                     </p>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center">
                           <User size={14} className="text-white" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">{post.authorName || post.author?.name}</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {post.authorName || post.author?.name}
+                        </span>
                       </div>
-                      
+
                       <div className="text-teal-600 font-medium text-sm hover:text-teal-700 flex items-center space-x-1 group-hover:translate-x-1 transition-transform duration-300">
                         <span>Read More</span>
                         <ArrowRight size={16} />
@@ -211,9 +244,10 @@ const BlogPage = () => {
               Subscribe to Our Newsletter
             </h2>
             <p className="text-xl text-teal-100 mb-8">
-              Get the latest healthcare insights, research updates, and expert tips delivered to your inbox.
+              Get the latest healthcare insights, research updates, and expert
+              tips delivered to your inbox.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
               <input
                 type="email"
@@ -228,7 +262,7 @@ const BlogPage = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default BlogPage
+export default BlogPage;
