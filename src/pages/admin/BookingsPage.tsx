@@ -728,7 +728,7 @@ const BookingsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {bookings.map((booking: any) => (
+              {filteredBookings.map((booking: any) => (
                 <tr
                   key={booking._id}
                   className="hover:bg-gray-50 transition-colors"

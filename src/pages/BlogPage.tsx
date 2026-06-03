@@ -41,7 +41,6 @@ const BlogPage = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalBlogs, setTotalBlogs] = useState(0);
   const limit = 9;
 
   const categories = [
@@ -69,7 +68,6 @@ const BlogPage = () => {
       if (response.data.success) {
         setBlogs(response.data.data);
         setTotalPages(response.data.totalPages || 1);
-        setTotalBlogs(response.data.totalBlogs || response.data.data.length);
       }
     } catch (error) {
       console.error("Error fetching blogs:", error);
