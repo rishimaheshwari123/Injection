@@ -1,10 +1,38 @@
-import { useEffect, useState } from 'react';
-import { Search, Calendar, Download, FileText, Receipt, Image, Plus, Edit2, MessageSquare, MoreVertical, Upload, X } from 'lucide-react';
-import { bookingAPI, prescriptionAPI, reportAPI, invoiceAPI, serviceAPI, vendorAPI, userAPI } from '../../services/api';
-import { setBookings, addBooking, updateBooking, setLoading } from '../../store/slices/bookingSlice';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { toast } from 'react-toastify';
-import * as XLSX from 'xlsx';
+import { useEffect, useState } from "react";
+import {
+  Search,
+  Calendar,
+  Download,
+  FileText,
+  Receipt,
+  Image,
+  Plus,
+  Edit2,
+  MessageSquare,
+  MoreVertical,
+  Upload,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  bookingAPI,
+  prescriptionAPI,
+  reportAPI,
+  invoiceAPI,
+  serviceAPI,
+  vendorAPI,
+  userAPI,
+} from "../../services/api";
+import {
+  setBookings,
+  addBooking,
+  updateBooking,
+  setLoading,
+} from "../../store/slices/bookingSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 
 // Import all modal components
 import {
@@ -17,19 +45,26 @@ import {
   ViewReportsModal,
   AddPrescriptionModal,
   RescheduleBookingModal,
-  CancelBookingModal
-} from '../../components/bookings';
+  CancelBookingModal,
+} from "../../components/bookings";
 
 const BookingsPage = () => {
   const dispatch = useAppDispatch();
   const { bookings, loading } = useAppSelector((state: any) => state.bookings);
-  
+
   // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [vendorFilter, setVendorFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [vendorFilter, setVendorFilter] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [customLimit, setCustomLimit] = useState("");
+
   // Modal visibility states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -38,20 +73,25 @@ const BookingsPage = () => {
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showViewReportsModal, setShowViewReportsModal] = useState(false);
-  const [showAddPrescriptionModal, setShowAddPrescriptionModal] = useState(false);
+  const [showAddPrescriptionModal, setShowAddPrescriptionModal] =
+    useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  
+
   // Selected data for modals
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [viewingPrescription, setViewingPrescription] = useState<any>(null);
-  const [selectedBookingForReport, setSelectedBookingForReport] = useState<any>(null);
+  const [selectedBookingForReport, setSelectedBookingForReport] =
+    useState<any>(null);
   const [viewingReports, setViewingReports] = useState<any>(null);
-  const [selectedBookingForPrescription, setSelectedBookingForPrescription] = useState<any>(null);
-  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState<any>(null);
-  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<any>(null);
-  
+  const [selectedBookingForPrescription, setSelectedBookingForPrescription] =
+    useState<any>(null);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] =
+    useState<any>(null);
+  const [selectedBookingForCancel, setSelectedBookingForCancel] =
+    useState<any>(null);
+
   // Data states
   const [vendors, setVendors] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
@@ -62,7 +102,19 @@ const BookingsPage = () => {
     fetchVendors();
     fetchServices();
     fetchUsers();
-  }, []);
+  }, [currentPage, limit, statusFilter, vendorFilter]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchBookings();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchVendors = async () => {
     try {
@@ -71,7 +123,7 @@ const BookingsPage = () => {
         setVendors(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching vendors:', error);
+      console.error("Error fetching vendors:", error);
     }
   };
 
@@ -82,7 +134,7 @@ const BookingsPage = () => {
         setServices(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error("Error fetching services:", error);
     }
   };
 
@@ -93,60 +145,75 @@ const BookingsPage = () => {
         setUsers(response.data.data);
       }
     } catch (error: any) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to fetch users');
+      console.error("Error fetching users:", error);
+      toast.error("Failed to fetch users");
     }
   };
 
   const fetchBookings = async () => {
     dispatch(setLoading(true));
     try {
-      const response = await bookingAPI.getAllBookings();
+      const params = {
+        page: currentPage,
+        limit,
+        status: statusFilter,
+        search: searchTerm,
+        vendorId: vendorFilter,
+      };
+      const response = await bookingAPI.getAllBookings(params);
       if (response.data.success) {
         dispatch(setBookings(response.data.data));
+        setTotalPages(response.data.totalPages || 1);
+        setTotalBookings(
+          response.data.totalBookings || response.data.data.length,
+        );
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to fetch bookings');
-      console.error('Error fetching bookings:', error);
+      toast.error(error.response?.data?.message || "Failed to fetch bookings");
+      console.error("Error fetching bookings:", error);
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
   const handleExportToExcel = () => {
     try {
-      const excelData = filteredBookings.map((booking: any) => {
+      const excelData = bookings.map((booking: any) => {
         const dateTime = formatBookingDateTime(booking);
         return {
-          'Patient Name': booking.patientName,
-          'Age': booking.age,
-          'Gender': booking.sex,
-          'Email': booking.email,
-          'Phone': booking.alternateMobile || 'N/A',
-          'Address': booking.address,
-          'Pincode': booking.pincode,
-          'Services': booking.selectedServices.map((s: any) => s.serviceName).join(', '),
-          'Subtotal': booking.subtotal,
-          'GST': booking.gstAmount,
-          'Grand Total': booking.grandTotal,
-          'Vendor': booking.vendorId?.businessName || 'Not Assigned',
-          'Status': booking.bookingStatus,
-          'Booking Date': dateTime.date,
-          'Booking Time': dateTime.time,
-          'Time Slot': booking.preferredTimeSlot || 'N/A',
-          'Staff Preference': booking.staffPreference,
-          'Created At': new Date(booking.createdAt).toLocaleDateString('en-IN'),
+          "Patient Name": booking.patientName,
+          Age: booking.age,
+          Gender: booking.sex,
+          Email: booking.email,
+          Phone: booking.alternateMobile || "N/A",
+          Address: booking.address,
+          Pincode: booking.pincode,
+          Services: booking.selectedServices
+            .map((s: any) => s.serviceName)
+            .join(", "),
+          Subtotal: booking.subtotal,
+          GST: booking.gstAmount,
+          "Grand Total": booking.grandTotal,
+          Vendor: booking.vendorId?.businessName || "Not Assigned",
+          Status: booking.bookingStatus,
+          "Booking Date": dateTime.date,
+          "Booking Time": dateTime.time,
+          "Time Slot": booking.preferredTimeSlot || "N/A",
+          "Staff Preference": booking.staffPreference,
+          "Created At": new Date(booking.createdAt).toLocaleDateString("en-IN"),
         };
       });
 
       const ws = XLSX.utils.json_to_sheet(excelData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
-      const fileName = `Bookings_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.utils.book_append_sheet(wb, ws, "Bookings");
+      const fileName = `Bookings_Page_${currentPage}_${new Date().toISOString().split("T")[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
-      
-      toast.success('Bookings data exported successfully!');
+
+      toast.success("Current page bookings exported successfully!");
     } catch (error) {
-      toast.error('Failed to export data');
-      console.error('Export error:', error);
+      toast.error("Failed to export data");
+      console.error("Export error:", error);
     }
   };
 
@@ -154,19 +221,19 @@ const BookingsPage = () => {
     try {
       const booking = bookings.find((b: any) => b._id === bookingId);
       if (!booking) {
-        toast.error('Booking not found');
+        toast.error("Booking not found");
         return;
       }
 
       if (!booking.prescriptions || booking.prescriptions.length === 0) {
-        toast.info('No prescription uploaded for this booking');
+        toast.info("No prescription uploaded for this booking");
         return;
       }
 
       setViewingPrescription(booking);
       setShowPrescriptionModal(true);
     } catch (error: any) {
-      toast.error('Failed to load prescription');
+      toast.error("Failed to load prescription");
     }
   };
 
@@ -175,149 +242,188 @@ const BookingsPage = () => {
       setViewingReports(booking);
       setShowViewReportsModal(true);
     } else if (booking.reportUrl) {
-      window.open(booking.reportUrl, '_blank');
+      window.open(booking.reportUrl, "_blank");
     } else {
-      toast.info('No reports available for this booking');
+      toast.info("No reports available for this booking");
     }
   };
 
   const handleDownloadInvoice = async (bookingId: string) => {
     try {
       const response = await invoiceAPI.generateInvoice(bookingId);
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `invoice_${bookingId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      toast.success('Invoice downloaded successfully!');
+
+      toast.success("Invoice downloaded successfully!");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to download invoice');
+      toast.error(
+        error.response?.data?.message || "Failed to download invoice",
+      );
     }
   };
 
   const filteredBookings = bookings.filter((booking: any) => {
-    const matchesSearch = booking.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      booking.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.bookingStatus.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === '' || booking.bookingStatus === statusFilter;
-    const matchesVendor = vendorFilter === '' || booking.vendorId?._id === vendorFilter;
-    
+
+    const matchesStatus =
+      statusFilter === "" || booking.bookingStatus === statusFilter;
+    const matchesVendor =
+      vendorFilter === "" || booking.vendorId?._id === vendorFilter;
+
     return matchesSearch && matchesStatus && matchesVendor;
   });
 
   // Handler for CreateBookingModal
   const handleCreateBooking = async (data: any) => {
-    const { formData, bookingType, selectedUser, prescriptionData, prescriptionFile, dateTimeSlots } = data;
-    
-    const subtotal = formData.selectedServices.reduce((sum: number, s: any) => sum + (s.price * s.quantity), 0);
+    const {
+      formData,
+      bookingType,
+      selectedUser,
+      prescriptionData,
+      prescriptionFile,
+      dateTimeSlots,
+    } = data;
+
+    const subtotal = formData.selectedServices.reduce(
+      (sum: number, s: any) => sum + s.price * s.quantity,
+      0,
+    );
     const grandTotal = subtotal;
-    
-    const vendorId = formData.selectedServices.length > 0 
-      ? formData.selectedServices[0].vendorId 
-      : null;
+
+    const vendorId =
+      formData.selectedServices.length > 0
+        ? formData.selectedServices[0].vendorId
+        : null;
 
     try {
       // Create multiple bookings for each date-time slot
       const createdBookings = [];
-      
+
       for (let i = 0; i < dateTimeSlots.length; i++) {
         const slot = dateTimeSlots[i];
         const preferredTimeSlot = `${slot.date} ${slot.time}`;
-        
+
         const bookingData = {
           ...formData,
           preferredTimeSlot,
           vendorId,
-          userId: bookingType === 'self' ? selectedUser : 'NEW_PATIENT',
+          userId: bookingType === "self" ? selectedUser : "NEW_PATIENT",
           subtotal,
           gstAmount: 0,
-          grandTotal
+          grandTotal,
         };
 
         const response = await bookingAPI.createBooking(bookingData);
         if (response.data.success) {
           const createdBooking = response.data.data;
           createdBookings.push(createdBooking);
-          
+
           // Add prescription only to the first booking if provided
           if (i === 0) {
-            const hasFormData = prescriptionData.doctorName || 
-                                prescriptionData.diagnosis || 
-                                prescriptionData.medications.some((m: any) => m.name);
-            
+            const hasFormData =
+              prescriptionData.doctorName ||
+              prescriptionData.diagnosis ||
+              prescriptionData.medications.some((m: any) => m.name);
+
             if (hasFormData) {
               try {
                 if (prescriptionFile) {
                   try {
-                    const uploadResponse = await prescriptionAPI.uploadImage(prescriptionFile);
+                    const uploadResponse =
+                      await prescriptionAPI.uploadImage(prescriptionFile);
                     if (uploadResponse.data.success) {
                       await bookingAPI.updatePrescription(
                         createdBooking._id,
                         {
                           ...prescriptionData,
-                          supportingImageUrl: uploadResponse.data.data.url
+                          supportingImageUrl: uploadResponse.data.data.url,
                         },
-                        'form'
+                        "form",
                       );
                     } else {
-                      await bookingAPI.updatePrescription(createdBooking._id, prescriptionData, 'form');
+                      await bookingAPI.updatePrescription(
+                        createdBooking._id,
+                        prescriptionData,
+                        "form",
+                      );
                     }
                   } catch (error: any) {
-                    await bookingAPI.updatePrescription(createdBooking._id, prescriptionData, 'form');
+                    await bookingAPI.updatePrescription(
+                      createdBooking._id,
+                      prescriptionData,
+                      "form",
+                    );
                   }
                 } else {
-                  await bookingAPI.updatePrescription(createdBooking._id, prescriptionData, 'form');
+                  await bookingAPI.updatePrescription(
+                    createdBooking._id,
+                    prescriptionData,
+                    "form",
+                  );
                 }
               } catch (error: any) {
-                console.error('Prescription save failed for first booking');
+                console.error("Prescription save failed for first booking");
               }
             }
           }
-          
+
           dispatch(addBooking(createdBooking));
         }
       }
-      
+
       if (createdBookings.length > 0) {
-        toast.success(`${createdBookings.length} booking(s) created successfully!`);
+        toast.success(
+          `${createdBookings.length} booking(s) created successfully!`,
+        );
         setShowCreateModal(false);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create bookings');
+      toast.error(error.response?.data?.message || "Failed to create bookings");
     }
   };
 
   // Handler for StatusUpdateModal
   const handleStatusUpdate = async (status: string) => {
     if (!selectedBooking) return;
-    
-    const response = await bookingAPI.updateBookingStatus(selectedBooking._id, status);
+
+    const response = await bookingAPI.updateBookingStatus(
+      selectedBooking._id,
+      status,
+    );
     if (response.data.success) {
       const updatedBooking = { ...selectedBooking, bookingStatus: status };
       dispatch(updateBooking(updatedBooking));
-      toast.success('Booking status updated successfully!');
+      toast.success("Booking status updated successfully!");
     }
   };
 
   // Handler for NotesModal
   const handleAddNote = async (note: string) => {
     if (!selectedBooking) return;
-    
+
     const response = await bookingAPI.addBookingNote(selectedBooking._id, note);
     if (response.data.success) {
       dispatch(updateBooking(response.data.data));
-      toast.success('Note added successfully!');
+      toast.success("Note added successfully!");
     }
   };
 
   // Handler for ReportUploadModal
-  const handleUploadReport = async (file: File, reportType: string, reportName: string) => {
+  const handleUploadReport = async (
+    file: File,
+    reportType: string,
+    reportName: string,
+  ) => {
     if (!selectedBookingForReport) return;
 
     const uploadResponse = await prescriptionAPI.uploadImage(file);
@@ -326,69 +432,94 @@ const BookingsPage = () => {
         selectedBookingForReport._id,
         uploadResponse.data.data.url,
         reportType,
-        reportName
+        reportName,
       );
-      
+
       if (updateResponse.data.success) {
-        toast.success('Report uploaded successfully!');
+        toast.success("Report uploaded successfully!");
         fetchBookings();
       }
     }
   };
 
   // Handler for AddPrescriptionModal
-  const handleAddPrescription = async (prescriptionData: any, prescriptionFile: File | null) => {
+  const handleAddPrescription = async (
+    prescriptionData: any,
+    prescriptionFile: File | null,
+  ) => {
     if (!selectedBookingForPrescription) return;
 
     try {
       // If supporting image is also uploaded
       if (prescriptionFile) {
         try {
-          console.log('Uploading prescription image...', prescriptionFile.name);
-          const uploadResponse = await prescriptionAPI.uploadImage(prescriptionFile);
-          console.log('Upload response:', uploadResponse.data);
-          
+          console.log("Uploading prescription image...", prescriptionFile.name);
+          const uploadResponse =
+            await prescriptionAPI.uploadImage(prescriptionFile);
+          console.log("Upload response:", uploadResponse.data);
+
           if (uploadResponse.data.success) {
             // Save form data + supporting image URL
             await bookingAPI.updatePrescription(
               selectedBookingForPrescription._id,
               {
                 ...prescriptionData,
-                supportingImageUrl: uploadResponse.data.data.url
+                supportingImageUrl: uploadResponse.data.data.url,
               },
-              'form'
+              "form",
             );
-            toast.success('Prescription added with form and image!');
+            toast.success("Prescription added with form and image!");
           } else {
-            console.error('Image upload failed:', uploadResponse.data);
+            console.error("Image upload failed:", uploadResponse.data);
             // Save form data without image
-            await bookingAPI.updatePrescription(selectedBookingForPrescription._id, prescriptionData, 'form');
-            toast.warning('Prescription added with form (image upload failed)');
+            await bookingAPI.updatePrescription(
+              selectedBookingForPrescription._id,
+              prescriptionData,
+              "form",
+            );
+            toast.warning("Prescription added with form (image upload failed)");
           }
         } catch (error: any) {
-          console.error('Error uploading prescription image:', error);
-          console.error('Error response:', error.response?.data);
+          console.error("Error uploading prescription image:", error);
+          console.error("Error response:", error.response?.data);
           // Save form data without image
-          await bookingAPI.updatePrescription(selectedBookingForPrescription._id, prescriptionData, 'form');
-          toast.warning(`Prescription added with form (image upload error: ${error.response?.data?.message || error.message})`);
+          await bookingAPI.updatePrescription(
+            selectedBookingForPrescription._id,
+            prescriptionData,
+            "form",
+          );
+          toast.warning(
+            `Prescription added with form (image upload error: ${error.response?.data?.message || error.message})`,
+          );
         }
       } else {
         // Save form data only
-        await bookingAPI.updatePrescription(selectedBookingForPrescription._id, prescriptionData, 'form');
-        toast.success('Prescription added successfully!');
+        await bookingAPI.updatePrescription(
+          selectedBookingForPrescription._id,
+          prescriptionData,
+          "form",
+        );
+        toast.success("Prescription added successfully!");
       }
-      
+
       fetchBookings();
       setShowAddPrescriptionModal(false);
       setSelectedBookingForPrescription(null);
     } catch (error: any) {
-      console.error('Error saving prescription:', error);
-      toast.error('Failed to add prescription: ' + (error.response?.data?.message || error.message));
+      console.error("Error saving prescription:", error);
+      toast.error(
+        "Failed to add prescription: " +
+          (error.response?.data?.message || error.message),
+      );
     }
   };
 
   // Handler for RescheduleBookingModal
-  const handleRescheduleBooking = async (newDate: string, newTime: string, reason: string) => {
+  const handleRescheduleBooking = async (
+    newDate: string,
+    newTime: string,
+    reason: string,
+  ) => {
     if (!selectedBookingForReschedule) return;
 
     try {
@@ -396,18 +527,20 @@ const BookingsPage = () => {
         selectedBookingForReschedule._id,
         newDate,
         newTime,
-        reason
+        reason,
       );
 
       if (response.data.success) {
-        toast.success('Booking rescheduled successfully!');
+        toast.success("Booking rescheduled successfully!");
         dispatch(updateBooking(response.data.data));
         setShowRescheduleModal(false);
         setSelectedBookingForReschedule(null);
         fetchBookings();
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to reschedule booking');
+      toast.error(
+        error.response?.data?.message || "Failed to reschedule booking",
+      );
     }
   };
 
@@ -418,28 +551,28 @@ const BookingsPage = () => {
     try {
       const response = await bookingAPI.cancelBooking(
         selectedBookingForCancel._id,
-        reason
+        reason,
       );
 
       if (response.data.success) {
-        toast.success('Booking cancelled successfully!');
+        toast.success("Booking cancelled successfully!");
         dispatch(updateBooking(response.data.data));
         setShowCancelModal(false);
         setSelectedBookingForCancel(null);
         fetchBookings();
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to cancel booking');
+      toast.error(error.response?.data?.message || "Failed to cancel booking");
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -448,48 +581,48 @@ const BookingsPage = () => {
     if (booking.preferredTimeSlot) {
       try {
         // preferredTimeSlot format: "2026-04-20 10:00"
-        const [datePart, timePart] = booking.preferredTimeSlot.split(' ');
-        
+        const [datePart, timePart] = booking.preferredTimeSlot.split(" ");
+
         if (datePart && timePart) {
           const date = new Date(datePart);
-          const formattedDate = date.toLocaleDateString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
+          const formattedDate = date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
           });
-          
+
           // Convert 24-hour time to 12-hour format with AM/PM
-          const [hours, minutes] = timePart.split(':');
+          const [hours, minutes] = timePart.split(":");
           const hour = parseInt(hours, 10);
-          const period = hour >= 12 ? 'PM' : 'AM';
+          const period = hour >= 12 ? "PM" : "AM";
           const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
           const formattedTime = `${hour12}:${minutes} ${period}`;
-          
+
           return {
             date: formattedDate,
             time: formattedTime,
-            full: `${formattedDate} at ${formattedTime}`
+            full: `${formattedDate} at ${formattedTime}`,
           };
         }
       } catch (error) {
-        console.error('Error parsing preferredTimeSlot:', error);
+        console.error("Error parsing preferredTimeSlot:", error);
       }
     }
-    
+
     // Fallback to createdAt
     const createdDate = new Date(booking.createdAt);
     return {
-      date: createdDate.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
+      date: createdDate.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       }),
-      time: createdDate.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
+      time: createdDate.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
       }),
-      full: formatDate(booking.createdAt)
+      full: formatDate(booking.createdAt),
     };
   };
 
@@ -497,10 +630,15 @@ const BookingsPage = () => {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-gray-800">Bookings Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Bookings Management
+        </h1>
         <div className="flex items-center gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Search bookings..."
@@ -566,60 +704,105 @@ const BookingsPage = () => {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Patient</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Services</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Vendor</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Booking Date & Time</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Patient
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Services
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Vendor
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Booking Date & Time
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredBookings.map((booking: any) => (
-                <tr key={booking._id} className="hover:bg-gray-50 transition-colors">
+              {bookings.map((booking: any) => (
+                <tr
+                  key={booking._id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-800">{booking.patientName}</p>
+                      <p className="font-medium text-gray-800">
+                        {booking.patientName}
+                      </p>
                       <p className="text-sm text-gray-600">{booking.email}</p>
-                      <p className="text-sm text-gray-600">{booking.age} years, {booking.sex}</p>
+                      <p className="text-sm text-gray-600">
+                        {booking.age} years, {booking.sex}
+                      </p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="space-y-1">
-                      {booking.selectedServices.map((service: any, idx: number) => (
-                        <div key={idx} className="text-sm">
-                          <p className="font-medium text-gray-800">{service.serviceName}</p>
-                          <p className="text-gray-600">Qty: {service.quantity} × ₹{service.price}</p>
-                        </div>
-                      ))}
+                      {booking.selectedServices.map(
+                        (service: any, idx: number) => (
+                          <div key={idx} className="text-sm">
+                            <p className="font-medium text-gray-800">
+                              {service.serviceName}
+                            </p>
+                            <p className="text-gray-600">
+                              Qty: {service.quantity} × ₹{service.price}
+                            </p>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     {booking.vendorId ? (
                       <div>
-                        <p className="font-medium text-gray-800">{booking.vendorId.businessName}</p>
-                        <p className="text-sm text-gray-600">{booking.vendorId.name}</p>
+                        <p className="font-medium text-gray-800">
+                          {booking.vendorId.businessName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {booking.vendorId.name}
+                        </p>
                       </div>
                     ) : (
-                      <span className="text-gray-500 text-sm">Not assigned</span>
+                      <span className="text-gray-500 text-sm">
+                        Not assigned
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-bold text-gray-800">₹{booking.grandTotal}</p>
-                      <p className="text-sm text-gray-600">Subtotal: ₹{booking.subtotal}</p>
-                      <p className="text-sm text-gray-600">GST: ₹{booking.gstAmount}</p>
+                      <p className="font-bold text-gray-800">
+                        ₹{booking.grandTotal}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Subtotal: ₹{booking.subtotal}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        GST: ₹{booking.gstAmount}
+                      </p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                      booking.bookingStatus === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                      booking.bookingStatus === 'accepted' ? 'bg-purple-100 text-purple-700' :
-                      booking.bookingStatus === 'cancelled' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        booking.bookingStatus === "completed"
+                          ? "bg-green-100 text-green-700"
+                          : booking.bookingStatus === "in-progress"
+                            ? "bg-blue-100 text-blue-700"
+                            : booking.bookingStatus === "accepted"
+                              ? "bg-purple-100 text-purple-700"
+                              : booking.bookingStatus === "cancelled"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
                       {booking.bookingStatus}
                     </span>
                   </td>
@@ -632,27 +815,35 @@ const BookingsPage = () => {
                         🕐 {formatBookingDateTime(booking).time}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Created: {new Date(booking.createdAt).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                        Created:{" "}
+                        {new Date(booking.createdAt).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
                       </p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="relative">
                       <button
-                        onClick={() => setOpenDropdown(openDropdown === booking._id ? null : booking._id)}
+                        onClick={() =>
+                          setOpenDropdown(
+                            openDropdown === booking._id ? null : booking._id,
+                          )
+                        }
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       >
                         <MoreVertical size={20} className="text-gray-600" />
                       </button>
-                      
+
                       {openDropdown === booking._id && (
                         <>
-                          <div 
-                            className="fixed inset-0 z-10" 
+                          <div
+                            className="fixed inset-0 z-10"
                             onClick={() => setOpenDropdown(null)}
                           />
                           <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
@@ -676,7 +867,9 @@ const BookingsPage = () => {
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-indigo-600"
                             >
                               <MessageSquare size={16} />
-                              {booking.notes && booking.notes.length > 0 ? 'View/Add Notes' : 'Add Notes'}
+                              {booking.notes && booking.notes.length > 0
+                                ? "View/Add Notes"
+                                : "Add Notes"}
                             </button>
                             <div className="border-t border-gray-200 my-2"></div>
                             <button
@@ -708,9 +901,9 @@ const BookingsPage = () => {
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-green-600"
                             >
                               <FileText size={16} />
-                              {booking.reports && booking.reports.length > 0 
-                                ? `View Reports (${booking.reports.length})` 
-                                : 'View Report'}
+                              {booking.reports && booking.reports.length > 0
+                                ? `View Reports (${booking.reports.length})`
+                                : "View Report"}
                             </button>
                             <button
                               onClick={() => {
@@ -721,7 +914,9 @@ const BookingsPage = () => {
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-teal-600"
                             >
                               <Upload size={16} />
-                              {booking.reports && booking.reports.length > 0 ? 'Add More Reports' : 'Upload Report'}
+                              {booking.reports && booking.reports.length > 0
+                                ? "Add More Reports"
+                                : "Upload Report"}
                             </button>
                             <button
                               onClick={() => {
@@ -740,7 +935,10 @@ const BookingsPage = () => {
                                 setShowRescheduleModal(true);
                                 setOpenDropdown(null);
                               }}
-                              disabled={booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled'}
+                              disabled={
+                                booking.bookingStatus === "completed" ||
+                                booking.bookingStatus === "cancelled"
+                              }
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Calendar size={16} />
@@ -752,7 +950,10 @@ const BookingsPage = () => {
                                 setShowCancelModal(true);
                                 setOpenDropdown(null);
                               }}
-                              disabled={booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled'}
+                              disabled={
+                                booking.bookingStatus === "completed" ||
+                                booking.bookingStatus === "cancelled"
+                              }
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <X size={16} />
@@ -770,7 +971,106 @@ const BookingsPage = () => {
         </div>
       )}
 
-      {!loading && filteredBookings.length === 0 && (
+      {/* Pagination Controls */}
+      {!loading && totalBookings > 0 && (
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-md gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#63D64F] outline-none"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Custom limit"
+                value={customLimit}
+                onChange={(e) => setCustomLimit(e.target.value)}
+                onBlur={() => {
+                  if (customLimit && Number(customLimit) > 0) {
+                    setLimit(Number(customLimit));
+                    setCurrentPage(1);
+                  }
+                }}
+                className="w-24 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#63D64F] outline-none"
+              />
+            </div>
+            <span className="text-sm text-gray-500">
+              Showing {Math.min((currentPage - 1) * limit + 1, totalBookings)}{" "}
+              to {Math.min(currentPage * limit, totalBookings)} of{" "}
+              {totalBookings} bookings
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={20} className="text-gray-600" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                // Show only a few page numbers if there are too many
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                        currentPage === pageNum
+                          ? "bg-[#63D64F] text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <span key={pageNum} className="px-1 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={20} className="text-gray-600" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!loading && bookings.length === 0 && (
         <div className="text-center py-12">
           <Calendar className="mx-auto text-gray-400 mb-4" size={48} />
           <p className="text-gray-600">No bookings found</p>

@@ -7,7 +7,6 @@ import {
   X,
   Edit,
   Loader2,
-  Upload,
   ImageIcon,
 } from "lucide-react";
 import { serviceAPI, vendorAPI } from "../../services/api";
@@ -28,7 +27,6 @@ const ServicesPage = () => {
   const [vendors, setVendors] = useState<any[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     serviceName: "",
     description: "",
@@ -69,15 +67,12 @@ const ServicesPage = () => {
   const uploadImage = async () => {
     if (!imageFile) return formData.image || null;
     try {
-      setUploadingImage(true);
       const response = await serviceAPI.uploadImage(imageFile);
       return response.data.data.url;
     } catch (error: any) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image");
       return null;
-    } finally {
-      setUploadingImage(false);
     }
   };
 

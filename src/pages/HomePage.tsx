@@ -2,9 +2,6 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   CheckCircle,
-  Users,
-  Award,
-  Target,
   Heart,
   FlaskConical,
   Phone,

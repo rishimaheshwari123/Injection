@@ -27,29 +27,29 @@ export const createBooking = async (req, res) => {
       currentLocation,
       alternateMobile,
       email,
-      
+
       // Selected Services
       selectedServices,
-      
+
       // Additional Information
       additionalRequirements,
-      
+
       // Insurance
       hasInsurance,
       insurancePolicyNumber,
-      
+
       // Pricing
       subtotal,
       gstAmount,
       grandTotal,
-      
+
       // Preferences
       freeComplimentaryService,
       preferredTimeSlot,
       staffPreference,
       serviceLocation,
       estimatedDuration,
-      
+
       // Vendor Reference
       vendorId
     } = req.body;
@@ -97,33 +97,33 @@ export const createBooking = async (req, res) => {
       currentLocation,
       alternateMobile,
       email,
-      
+
       // Selected Services
       selectedServices,
-      
+
       // Additional Information
       additionalRequirements,
-      
+
       // Insurance
       hasInsurance: hasInsurance || false,
       insurancePolicyNumber,
-      
+
       // Pricing
       subtotal,
       gstAmount,
       grandTotal,
-      
+
       // Preferences
       freeComplimentaryService: freeComplimentaryService || 'None',
       preferredTimeSlot,
       staffPreference: staffPreference || 'Any Available',
       serviceLocation: serviceLocation || 'At Home',
       estimatedDuration: estimatedDuration || 45,
-      
+
       // References
       userId,
       vendorId: vendorId || null,
-      
+
       // Status
       bookingStatus: 'pending'
     });
@@ -138,7 +138,7 @@ export const createBooking = async (req, res) => {
     try {
       let couponCode;
       let isUnique = false;
-      
+
       // Generate unique coupon code
       while (!isUnique) {
         couponCode = generateCouponCode();
@@ -147,11 +147,11 @@ export const createBooking = async (req, res) => {
           isUnique = true;
         }
       }
-      
+
       // Set expiry date to 30 days from now
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 30);
-      
+
       const newCoupon = await Coupon.create({
         name: `Booking Reward - ${booking.patientName}`,
         code: couponCode,
@@ -164,7 +164,7 @@ export const createBooking = async (req, res) => {
         isUsed: false,
         expiresAt: expiryDate
       });
-      
+
       console.log(`Auto-created coupon ${couponCode} for user ${userId}`);
     } catch (couponError) {
       console.error('Error creating auto-coupon:', couponError);
@@ -245,7 +245,7 @@ export const getAvailableBookings = async (req, res) => {
     const serviceIds = vendorServices.map(service => service._id);
 
     // Find bookings that have vendor's services and are pending
-    const bookings = await Booking.find({ 
+    const bookings = await Booking.find({
       bookingStatus: 'pending',
       vendorId: null,
       'selectedServices.serviceId': { $in: serviceIds }
@@ -490,7 +490,7 @@ export const cancelBooking = async (req, res) => {
 export const rescheduleBooking = async (req, res) => {
   try {
     const { newDate, newTime, reason } = req.body;
-    
+
     if (!newDate || !newTime) {
       return res.status(400).json({
         success: false,
@@ -517,12 +517,12 @@ export const rescheduleBooking = async (req, res) => {
 
     // Store old time slot for history
     const oldTimeSlot = booking.preferredTimeSlot;
-    
+
     // Update time slot
     booking.preferredTimeSlot = `${newDate} ${newTime}`;
     booking.rescheduledAt = new Date();
     booking.rescheduleReason = reason || 'Rescheduled by user';
-    
+
     // Add note about reschedule
     booking.notes.push({
       text: `Booking rescheduled from "${oldTimeSlot}" to "${booking.preferredTimeSlot}". Reason: ${reason || 'Not specified'}`,
@@ -554,14 +554,18 @@ export const rescheduleBooking = async (req, res) => {
 // @access  Private/Admin
 export const getAllBookings = async (req, res) => {
   try {
-    const { status, date } = req.query;
-    
+    const { status, date, page = 1, limit = 10, search } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
     let query = {};
-    
+
     if (status) {
       query.bookingStatus = status;
     }
-    
+
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
@@ -569,14 +573,31 @@ export const getAllBookings = async (req, res) => {
       query.createdAt = { $gte: startDate, $lt: endDate };
     }
 
+    if (search) {
+      query.$or = [
+        { patientName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { alternateMobile: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const totalBookings = await Booking.countDocuments(query);
+    const totalPages = Math.ceil(totalBookings / limitNum);
+
     const bookings = await Booking.find(query)
       .populate('userId', 'name email phone')
       .populate('vendorId', 'name phone businessName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     res.status(200).json({
       success: true,
       count: bookings.length,
+      totalBookings,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
       data: bookings
     });
   } catch (error) {
@@ -653,7 +674,7 @@ export const deleteBooking = async (req, res) => {
 export const addNoteToBooking = async (req, res) => {
   try {
     const { text } = req.body;
-    
+
     if (!text || text.trim() === '') {
       return res.status(400).json({
         success: false,
@@ -702,7 +723,7 @@ export const addNoteToBooking = async (req, res) => {
 export const addPrescription = async (req, res) => {
   try {
     const { prescriptionData, prescriptionType } = req.body;
-    
+
     if (!prescriptionData || !prescriptionType) {
       return res.status(400).json({
         success: false,

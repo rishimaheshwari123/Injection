@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { blogAPI } from '../../services/api';
-import { toast } from 'react-toastify';
+import { useState, useEffect } from "react";
+import { blogAPI } from "../../services/api";
+import { toast } from "react-toastify";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 interface Blog {
   _id: string;
@@ -17,7 +18,7 @@ interface Blog {
   };
   authorName: string;
   featuredImage: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   isActive: boolean;
   isFeatured: boolean;
   views: number;
@@ -32,15 +33,15 @@ interface Blog {
 }
 
 const CATEGORIES = [
-  'Healthcare',
-  'Research',
-  'Training',
-  'Technology',
-  'News',
-  'Tips & Advice',
-  'Case Studies',
-  'Industry Updates',
-  'Other'
+  "Healthcare",
+  "Research",
+  "Training",
+  "Technology",
+  "News",
+  "Tips & Advice",
+  "Case Studies",
+  "Industry Updates",
+  "Other",
 ];
 
 export default function BlogsPage() {
@@ -48,42 +49,73 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const [customLimit, setCustomLimit] = useState("");
 
   const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    excerpt: '',
-    category: 'Healthcare',
-    tags: '',
-    featuredImage: '',
-    status: 'draft' as 'draft' | 'published' | 'archived',
+    title: "",
+    slug: "",
+    content: "",
+    excerpt: "",
+    category: "Healthcare",
+    tags: "",
+    featuredImage: "",
+    status: "draft" as "draft" | "published" | "archived",
     isFeatured: false,
-    metaTitle: '',
-    metaDescription: '',
-    metaKeywords: ''
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [currentPage, limit, filterStatus, filterCategory]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchBlogs();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const response = await blogAPI.adminGetAllBlogs();
-      setBlogs(response.data.data);
+      const params = {
+        page: currentPage,
+        limit,
+        status: filterStatus === "all" ? "" : filterStatus,
+        category: filterCategory === "all" ? "" : filterCategory,
+        search: searchTerm,
+      };
+      const response = await blogAPI.adminGetAllBlogs(params);
+      if (response.data.success) {
+        setBlogs(response.data.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalBlogs(response.data.totalBlogs || response.data.data.length);
+      }
     } catch (error: any) {
-      console.error('Error fetching blogs:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch blogs');
+      console.error("Error fetching blogs:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch blogs");
     } finally {
       setLoading(false);
     }
@@ -91,18 +123,18 @@ export default function BlogsPage() {
 
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     // Auto-generate slug from title
-    if (name === 'title' && !editingBlog) {
+    if (name === "title" && !editingBlog) {
       const slug = value
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      setFormData(prev => ({ ...prev, slug }));
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      setFormData((prev) => ({ ...prev, slug }));
     }
   };
 
@@ -110,19 +142,19 @@ export default function BlogsPage() {
     const file = e.target.files?.[0];
     if (file) {
       // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
         return;
       }
-      
+
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error("Image size should be less than 5MB");
         return;
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -138,11 +170,11 @@ export default function BlogsPage() {
     try {
       setUploadingImage(true);
       const response = await blogAPI.uploadImage(imageFile);
-      toast.success('Image uploaded successfully');
+      toast.success("Image uploaded successfully");
       return response.data.data.url;
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload image');
+      console.error("Error uploading image:", error);
+      toast.error(error.response?.data?.message || "Failed to upload image");
       return null;
     } finally {
       setUploadingImage(false);
@@ -151,9 +183,9 @@ export default function BlogsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (submitting) return; // Prevent double submission
-    
+
     try {
       setSubmitting(true);
       let featuredImageUrl = formData.featuredImage;
@@ -172,24 +204,30 @@ export default function BlogsPage() {
       const blogData = {
         ...formData,
         featuredImage: featuredImageUrl,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        metaKeywords: formData.metaKeywords.split(',').map(kw => kw.trim()).filter(kw => kw)
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag),
+        metaKeywords: formData.metaKeywords
+          .split(",")
+          .map((kw) => kw.trim())
+          .filter((kw) => kw),
       };
 
       if (editingBlog) {
         await blogAPI.updateBlog(editingBlog._id, blogData);
-        toast.success('Blog updated successfully! 🎉');
+        toast.success("Blog updated successfully! 🎉");
       } else {
         await blogAPI.createBlog(blogData);
-        toast.success('Blog created successfully! 🎉');
+        toast.success("Blog created successfully! 🎉");
       }
 
       setShowModal(false);
       resetForm();
       fetchBlogs();
     } catch (error: any) {
-      console.error('Error saving blog:', error);
-      toast.error(error.response?.data?.message || 'Failed to save blog');
+      console.error("Error saving blog:", error);
+      toast.error(error.response?.data?.message || "Failed to save blog");
     } finally {
       setSubmitting(false);
     }
@@ -201,84 +239,89 @@ export default function BlogsPage() {
       title: blog.title,
       slug: blog.slug,
       content: blog.content,
-      excerpt: blog.excerpt || '',
+      excerpt: blog.excerpt || "",
       category: blog.category,
-      tags: blog.tags.join(', '),
-      featuredImage: blog.featuredImage || '',
+      tags: blog.tags.join(", "),
+      featuredImage: blog.featuredImage || "",
       status: blog.status,
       isFeatured: blog.isFeatured,
-      metaTitle: blog.metaTitle || '',
-      metaDescription: blog.metaDescription || '',
-      metaKeywords: blog.metaKeywords?.join(', ') || ''
+      metaTitle: blog.metaTitle || "",
+      metaDescription: blog.metaDescription || "",
+      metaKeywords: blog.metaKeywords?.join(", ") || "",
     });
-    setImagePreview(blog.featuredImage || '');
+    setImagePreview(blog.featuredImage || "");
     setImageFile(null);
     setShowModal(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!confirm("Are you sure you want to delete this blog?")) return;
 
     try {
       await blogAPI.deleteBlog(id);
-      toast.success('Blog deleted successfully');
+      toast.success("Blog deleted successfully");
       fetchBlogs();
     } catch (error: any) {
-      console.error('Error deleting blog:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete blog');
+      console.error("Error deleting blog:", error);
+      toast.error(error.response?.data?.message || "Failed to delete blog");
     }
   };
 
   const handleToggleStatus = async (id: string) => {
     try {
       await blogAPI.toggleBlogStatus(id);
-      toast.success('Blog status updated successfully');
+      toast.success("Blog status updated successfully");
       fetchBlogs();
     } catch (error: any) {
-      console.error('Error toggling status:', error);
-      toast.error(error.response?.data?.message || 'Failed to toggle status');
+      console.error("Error toggling status:", error);
+      toast.error(error.response?.data?.message || "Failed to toggle status");
     }
   };
 
   const handleToggleFeatured = async (id: string) => {
     try {
       await blogAPI.toggleFeaturedStatus(id);
-      toast.success('Featured status updated successfully');
+      toast.success("Featured status updated successfully");
       fetchBlogs();
     } catch (error: any) {
-      console.error('Error toggling featured:', error);
-      toast.error(error.response?.data?.message || 'Failed to toggle featured status');
+      console.error("Error toggling featured:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to toggle featured status",
+      );
     }
   };
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      slug: '',
-      content: '',
-      excerpt: '',
-      category: 'Healthcare',
-      tags: '',
-      featuredImage: '',
-      status: 'draft',
+      title: "",
+      slug: "",
+      content: "",
+      excerpt: "",
+      category: "Healthcare",
+      tags: "",
+      featuredImage: "",
+      status: "draft",
       isFeatured: false,
-      metaTitle: '',
-      metaDescription: '',
-      metaKeywords: ''
+      metaTitle: "",
+      metaDescription: "",
+      metaKeywords: "",
     });
     setEditingBlog(null);
     setImageFile(null);
-    setImagePreview('');
+    setImagePreview("");
   };
 
-  const filteredBlogs = blogs.filter(blog => {
-    if (filterStatus !== 'all' && blog.status !== filterStatus) return false;
-    if (filterCategory !== 'all' && blog.category !== filterCategory) return false;
+  const filteredBlogs = blogs.filter((blog) => {
+    if (filterStatus !== "all" && blog.status !== filterStatus) return false;
+    if (filterCategory !== "all" && blog.category !== filterCategory)
+      return false;
     return true;
   });
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    );
   }
 
   return (
@@ -297,28 +340,52 @@ export default function BlogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex gap-4">
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="all">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </select>
+      <div className="mb-6 flex justify-between items-center gap-4">
+        <div className="flex gap-4">
+          <select
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="border rounded px-3 py-2"
+          >
+            <option value="all">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
 
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="all">All Categories</option>
-          {CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
+          <select
+            value={filterCategory}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="border rounded px-3 py-2"
+          >
+            <option value="all">All Categories</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
+          <input
+            type="text"
+            placeholder="Search blogs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64"
+          />
+        </div>
       </div>
 
       {/* Blogs Table */}
@@ -326,13 +393,27 @@ export default function BlogsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Image
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Title
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Author
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Views
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -353,39 +434,60 @@ export default function BlogsPage() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                   
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{blog.title}</div>
-                      <div className="text-xs text-gray-500 mt-1">{blog.slug}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {blog.title}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {blog.slug}
+                      </div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{blog.category}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{blog.authorName || blog.author?.name}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {blog.category}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {blog.authorName || blog.author?.name}
+                </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    blog.status === 'published' ? 'bg-green-100 text-green-800' :
-                    blog.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      blog.status === "published"
+                        ? "bg-green-100 text-green-800"
+                        : blog.status === "draft"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
                     {blog.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{blog.views}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {blog.views}
+                </td>
                 <td className="px-6 py-4 text-sm relative">
                   <button
-                    onClick={() => setOpenDropdown(openDropdown === blog._id ? null : blog._id)}
+                    onClick={() =>
+                      setOpenDropdown(
+                        openDropdown === blog._id ? null : blog._id,
+                      )
+                    }
                     className="text-gray-500 hover:text-gray-700 focus:outline-none"
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                     </svg>
                   </button>
-                  
+
                   {openDropdown === blog._id && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-10" 
+                      <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setOpenDropdown(null)}
                       ></div>
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200">
@@ -406,7 +508,9 @@ export default function BlogsPage() {
                             }}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            {blog.status === 'published' ? '📝 Unpublish' : '✅ Publish'}
+                            {blog.status === "published"
+                              ? "📝 Unpublish"
+                              : "✅ Publish"}
                           </button>
                           <button
                             onClick={() => {
@@ -415,7 +519,7 @@ export default function BlogsPage() {
                             }}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            {blog.isFeatured ? '⭐ Unfeature' : '⭐ Feature'}
+                            {blog.isFeatured ? "⭐ Unfeature" : "⭐ Feature"}
                           </button>
                           <hr className="my-1" />
                           <button
@@ -438,17 +542,116 @@ export default function BlogsPage() {
         </table>
       </div>
 
+      {/* Pagination Controls */}
+      {!loading && totalBlogs > 0 && (
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-md gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Custom"
+                value={customLimit}
+                onChange={(e) => setCustomLimit(e.target.value)}
+                onBlur={() => {
+                  if (customLimit && Number(customLimit) > 0) {
+                    setLimit(Number(customLimit));
+                    setCurrentPage(1);
+                  }
+                }}
+                className="w-20 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <span className="text-sm text-gray-500">
+              Showing {Math.min((currentPage - 1) * limit + 1, totalBlogs)} to{" "}
+              {Math.min(currentPage * limit, totalBlogs)} of {totalBlogs} blogs
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={20} className="text-gray-600" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                        currentPage === pageNum
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <span key={pageNum} className="px-1 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={20} className="text-gray-600" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl m-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
-              {editingBlog ? 'Edit Blog' : 'Create New Blog'}
+              {editingBlog ? "Edit Blog" : "Create New Blog"}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Title *</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Title *
+                  </label>
                   <input
                     type="text"
                     name="title"
@@ -460,7 +663,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Slug *</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Slug *
+                  </label>
                   <input
                     type="text"
                     name="slug"
@@ -472,7 +677,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Category *</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Category *
+                  </label>
                   <select
                     name="category"
                     value={formData.category}
@@ -480,14 +687,18 @@ export default function BlogsPage() {
                     required
                     className="w-full border rounded px-3 py-2"
                   >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Status
+                  </label>
                   <select
                     name="status"
                     value={formData.status}
@@ -501,7 +712,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Excerpt</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Excerpt
+                  </label>
                   <textarea
                     name="excerpt"
                     value={formData.excerpt}
@@ -513,7 +726,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Content *</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Content *
+                  </label>
                   <textarea
                     name="content"
                     value={formData.content}
@@ -525,7 +740,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Tags (comma separated)</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Tags (comma separated)
+                  </label>
                   <input
                     type="text"
                     name="tags"
@@ -537,7 +754,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Featured Image</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Featured Image
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
@@ -545,7 +764,9 @@ export default function BlogsPage() {
                     className="w-full border rounded px-3 py-2"
                   />
                   {uploadingImage && (
-                    <p className="text-sm text-blue-600 mt-2">Uploading image...</p>
+                    <p className="text-sm text-blue-600 mt-2">
+                      Uploading image...
+                    </p>
                   )}
                   {imagePreview && (
                     <div className="mt-2">
@@ -579,7 +800,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Meta Title</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Meta Title
+                  </label>
                   <input
                     type="text"
                     name="metaTitle"
@@ -591,7 +814,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Meta Description</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Meta Description
+                  </label>
                   <textarea
                     name="metaDescription"
                     value={formData.metaDescription}
@@ -603,7 +828,9 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Meta Keywords (comma separated)</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Meta Keywords (comma separated)
+                  </label>
                   <input
                     type="text"
                     name="metaKeywords"
@@ -634,10 +861,10 @@ export default function BlogsPage() {
                   {submitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>{editingBlog ? 'Updating...' : 'Creating...'}</span>
+                      <span>{editingBlog ? "Updating..." : "Creating..."}</span>
                     </>
                   ) : (
-                    <span>{editingBlog ? 'Update' : 'Create'} Blog</span>
+                    <span>{editingBlog ? "Update" : "Create"} Blog</span>
                   )}
                 </button>
               </div>

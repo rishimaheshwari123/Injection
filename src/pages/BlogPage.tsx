@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, User, ArrowRight, Tag, Clock } from "lucide-react";
+import {
+  Calendar,
+  User,
+  ArrowRight,
+  Tag,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { blogAPI } from "../services/api";
@@ -30,6 +38,12 @@ const BlogPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const limit = 9;
+
   const categories = [
     "All",
     "Healthcare",
@@ -41,13 +55,22 @@ const BlogPage = () => {
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [currentPage, selectedCategory]);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const response = await blogAPI.getAllBlogs({ limit: 50 });
-      setBlogs(response.data.data);
+      const params = {
+        page: currentPage,
+        limit,
+        category: selectedCategory === "All" ? "" : selectedCategory,
+      };
+      const response = await blogAPI.getAllBlogs(params);
+      if (response.data.success) {
+        setBlogs(response.data.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalBlogs(response.data.totalBlogs || response.data.data.length);
+      }
     } catch (error) {
       console.error("Error fetching blogs:", error);
     } finally {
@@ -63,10 +86,7 @@ const BlogPage = () => {
     });
   };
 
-  const filteredBlogs =
-    selectedCategory === "All"
-      ? blogs
-      : blogs.filter((blog) => blog.category === selectedCategory);
+  const filteredBlogs = blogs;
 
   return (
     <div>
@@ -227,6 +247,71 @@ const BlogPage = () => {
                 </motion.article>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex justify-center items-center gap-4">
+                <button
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.max(prev - 1, 1));
+                    window.scrollTo({ top: 400, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === 1}
+                  className="p-3 rounded-full bg-white shadow-md text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-teal-50 transition-colors"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 400, behavior: "smooth" });
+                          }}
+                          className={`w-12 h-12 rounded-full font-bold transition-all duration-300 ${
+                            currentPage === pageNum
+                              ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white shadow-lg scale-110"
+                              : "bg-white text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      pageNum === currentPage - 2 ||
+                      pageNum === currentPage + 2
+                    ) {
+                      return (
+                        <span key={pageNum} className="text-gray-400 font-bold">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                    window.scrollTo({ top: 400, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="p-3 rounded-full bg-white shadow-md text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-teal-50 transition-colors"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+            )}
           </div>
         </section>
       )}
