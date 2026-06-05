@@ -16,6 +16,13 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import logo from "../assets/logo.jpeg";
+import s1 from "../assets/s1.jpeg";
+import s2 from "../assets/s2.jpeg";
+import s3 from "../assets/s3.jpeg";
+import s4 from "../assets/s4.jpeg";
+import s5 from "../assets/s5.jpeg";
+import s6 from "../assets/s6.jpeg";
+import s7 from "../assets/s7.jpeg";
 
 const HomePage = () => {
   const [formData, setFormData] = useState({
@@ -213,6 +220,86 @@ const HomePage = () => {
               }`}
             />
           ))}
+        </div>
+      </section>
+
+      {/* ISO Certification Auto-Scrolling Image Slider */}
+      <section className="py-12 bg-gradient-to-r from-blue-50 to-teal-50 overflow-hidden">
+        <div className="w-[90vw] mx-auto px-4">
+          {/* Heading */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-8"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              An ISO 9001:2015 Certified Company
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+          </motion.div>
+
+          {/* Auto-scrolling Image Slider */}
+          <div className="relative">
+            <div className="overflow-hidden">
+              <motion.div
+                className="flex space-x-6"
+                animate={{
+                  x: [0, -1400],
+                }}
+                transition={{
+                  x: {
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    duration: 20,
+                    ease: "linear",
+                  },
+                }}
+              >
+                {/* First set of images */}
+                {[s1, s2, s3, s4, s5,s6,s7].map((img, idx) => (
+                  <div
+                    key={`set1-${idx}`}
+                    className="flex-shrink-0 w-80 h-60 bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300 flex items-center justify-center p-4"
+                  >
+                    <img
+                      src={img}
+                      alt={`Certification ${idx + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ))}
+                {/* Duplicate set for seamless loop */}
+                {[s1, s2, s3, s4, s5,s6,s7].map((img, idx) => (
+                  <div
+                    key={`set2-${idx}`}
+                    className="flex-shrink-0 w-80 h-60 bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300 flex items-center justify-center p-4"
+                  >
+                    <img
+                      src={img}
+                      alt={`Certification ${idx + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Gradient Overlays for smooth edges */}
+            <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-blue-50 via-blue-50/50 to-transparent pointer-events-none z-10"></div>
+            <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-teal-50 via-teal-50/50 to-transparent pointer-events-none z-10"></div>
+          </div>
+
+          {/* Optional: Certifications text */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-center text-gray-600 mt-8 max-w-2xl mx-auto"
+          >
+            Committed to maintaining the highest standards of quality management
+            and healthcare excellence in all our services.
+          </motion.p>
         </div>
       </section>
 
