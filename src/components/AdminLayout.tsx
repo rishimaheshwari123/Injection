@@ -1,6 +1,6 @@
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Users, Building2, Package, Calendar, LogOut, LayoutDashboard, FileText, FileBarChart, FlaskConical, Shield, HelpCircle, Menu, X, UserCog, Ticket, Headphones, MessageSquare, Image, Briefcase, BookOpen } from 'lucide-react';
+import { Users, Building2, Package, Calendar, LogOut, LayoutDashboard, FileText, FileBarChart, FlaskConical, Shield, HelpCircle, Menu, X, UserCog, Ticket, Headphones, MessageSquare, Image, Briefcase, BookOpen, Settings } from 'lucide-react';
 import { logout } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
 import { toast } from 'react-toastify';
@@ -39,6 +39,7 @@ const AdminLayout = () => {
     { path: '/admin/jobs', icon: Briefcase, label: 'Job Postings', permission: 'dashboard' },
     { path: '/admin/blogs', icon: BookOpen, label: 'Blogs', permission: 'dashboard' },
     { path: '/admin/staff', icon: UserCog, label: 'Staff Management', permission: 'staff' },
+    { path: '/admin/settings', icon: Settings, label: 'Settings', permission: 'dashboard' },
   ];
 
   const hasPermission = (permission: string) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Upload, Eye, FileText, X, Loader2 } from 'lucide-react';
+import { Search, Upload, Eye, FileText, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { bookingAPI, reportAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -17,16 +17,51 @@ const ReportsPage = () => {
   const [reportType, setReportType] = useState<'lab' | 'imaging' | 'general' | 'other'>('general');
   const [reportName, setReportName] = useState('');
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [customLimit, setCustomLimit] = useState("");
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    withReport: 0,
+    withoutReport: 0,
+  });
+
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [currentPage, limit, filterStatus]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchBookings();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const response = await bookingAPI.getAllBookings();
+      const params = {
+        page: currentPage,
+        limit,
+        search: searchTerm,
+        reportStatus: filterStatus,
+      };
+      const response = await bookingAPI.getAllBookings(params);
       if (response.data.success) {
         setBookings(response.data.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalBookings(response.data.totalBookings || response.data.data.length);
+        if (response.data.stats) {
+          setStats(response.data.stats);
+        }
       }
     } catch (error: any) {
       toast.error('Failed to fetch bookings');
@@ -131,19 +166,7 @@ const ReportsPage = () => {
     setShowViewModal(true);
   };
 
-  const filteredBookings = bookings.filter((booking: any) => {
-    const matchesSearch = 
-      booking.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking._id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = 
-      filterStatus === 'all' ? true :
-      filterStatus === 'with' ? (booking.reports && booking.reports.length > 0) :
-      !(booking.reports && booking.reports.length > 0);
-    
-    return matchesSearch && matchesFilter;
-  });
+  const filteredBookings = bookings;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -199,7 +222,7 @@ const ReportsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Total Bookings</p>
-              <p className="text-3xl font-bold text-gray-800">{bookings.length}</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.totalBookings}</p>
             </div>
             <FileText size={40} className="text-blue-500" />
           </div>
@@ -209,7 +232,7 @@ const ReportsPage = () => {
             <div>
               <p className="text-gray-600 text-sm">With Reports</p>
               <p className="text-3xl font-bold text-green-600">
-                {bookings.filter(b => b.reports && b.reports.length > 0).length}
+                {stats.withReport}
               </p>
             </div>
             <Upload size={40} className="text-green-500" />
@@ -220,7 +243,7 @@ const ReportsPage = () => {
             <div>
               <p className="text-gray-600 text-sm">Without Reports</p>
               <p className="text-3xl font-bold text-orange-600">
-                {bookings.filter(b => !(b.reports && b.reports.length > 0)).length}
+                {stats.withoutReport}
               </p>
             </div>
             <FileText size={40} className="text-orange-500" />
@@ -328,6 +351,105 @@ const ReportsPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalBookings > 0 && (
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-md gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#63D64F] outline-none"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Custom limit"
+                value={customLimit}
+                onChange={(e) => setCustomLimit(e.target.value)}
+                onBlur={() => {
+                  if (customLimit && Number(customLimit) > 0) {
+                    setLimit(Number(customLimit));
+                    setCurrentPage(1);
+                  }
+                }}
+                className="w-24 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#63D64F] outline-none"
+              />
+            </div>
+            <span className="text-sm text-gray-500">
+              Showing {Math.min((currentPage - 1) * limit + 1, totalBookings)}{" "}
+              to {Math.min(currentPage * limit, totalBookings)} of{" "}
+              {totalBookings} bookings
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={20} className="text-gray-600" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                // Show only a few page numbers if there are too many
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                        currentPage === pageNum
+                          ? "bg-[#63D64F] text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <span key={pageNum} className="px-1 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={20} className="text-gray-600" />
+            </button>
+          </div>
         </div>
       )}
 

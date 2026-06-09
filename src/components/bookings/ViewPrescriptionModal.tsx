@@ -1,12 +1,37 @@
-import { X, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, FileText, Loader2 } from 'lucide-react';
 
 interface ViewPrescriptionModalProps {
   show: boolean;
   onClose: () => void;
   booking: any;
+  isAdmin?: boolean;
+  onUpdateSummary?: (summary: string) => Promise<void>;
 }
 
-const ViewPrescriptionModal = ({ show, onClose, booking }: ViewPrescriptionModalProps) => {
+const ViewPrescriptionModal = ({ show, onClose, booking, isAdmin = false, onUpdateSummary }: ViewPrescriptionModalProps) => {
+  const [isEditingSummary, setIsEditingSummary] = useState(false);
+  const [summaryInput, setSummaryInput] = useState('');
+  const [savingSummary, setSavingSummary] = useState(false);
+
+  useEffect(() => {
+    if (booking) {
+      setSummaryInput(booking.prescriptionSummary || '');
+      setIsEditingSummary(false);
+    }
+  }, [booking]);
+
+  const handleSaveSummary = async () => {
+    if (!onUpdateSummary) return;
+    setSavingSummary(true);
+    try {
+      await onUpdateSummary(summaryInput);
+      setIsEditingSummary(false);
+    } finally {
+      setSavingSummary(false);
+    }
+  };
+
   if (!show || !booking) return null;
 
   return (
@@ -47,6 +72,49 @@ const ViewPrescriptionModal = ({ show, onClose, booking }: ViewPrescriptionModal
                 <span className="ml-2 text-blue-900">{booking.alternateMobile}</span>
               </div>
             </div>
+          </div>
+
+          {/* Prescription Summary */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-green-900 flex items-center gap-1.5">
+                <FileText size={16} />
+                Prescription Summary
+              </h3>
+              {isAdmin && onUpdateSummary && (
+                <button
+                  onClick={() => setIsEditingSummary(!isEditingSummary)}
+                  className="text-xs px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  {isEditingSummary ? 'Cancel' : 'Edit Summary'}
+                </button>
+              )}
+            </div>
+            {isEditingSummary ? (
+              <div className="space-y-2">
+                <textarea
+                  value={summaryInput}
+                  onChange={(e) => setSummaryInput(e.target.value)}
+                  placeholder="Enter prescription summary..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm resize-none"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveSummary}
+                    disabled={savingSummary}
+                    className="px-4 py-1.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg text-xs font-semibold hover:shadow-md transition-all flex items-center gap-1.5"
+                  >
+                    {savingSummary && <Loader2 size={12} className="animate-spin" />}
+                    Save Summary
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-green-800 whitespace-pre-wrap">
+                {booking.prescriptionSummary || 'No prescription summary manually added yet.'}
+              </p>
+            )}
           </div>
 
           {/* All Prescriptions */}

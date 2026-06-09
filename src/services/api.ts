@@ -122,6 +122,8 @@ export const bookingAPI = {
       prescriptionData,
       prescriptionType,
     }),
+  updatePrescriptionSummary: (id: string, summary: string) =>
+    api.put(`/bookings/${id}/prescription-summary`, { summary }),
 };
 
 // Prescription APIs
@@ -223,7 +225,15 @@ export const blogAPI = {
     api.put(API_ENDPOINTS.BLOGS.TOGGLE_STATUS(id)),
   toggleFeaturedStatus: (id: string) =>
     api.put(API_ENDPOINTS.BLOGS.TOGGLE_FEATURED(id)),
-  likeBlog: (id: string) => api.put(API_ENDPOINTS.BLOGS.LIKE(id)),
+  likeBlog: (id: string) => api.put(API_ENDPOINTS.BLOGS.LIKE(id),),
+};
+
+export const adminSettingAPI = {
+  getAllSettings: () => api.get("/admin-settings"),
+  getSettingById: (id: string) => api.get(`/admin-settings/${id}`),
+  createSetting: (data: any) => api.post("/admin-settings", data),
+  updateSetting: (id: string, data: any) => api.put(`/admin-settings/${id}`, data),
+  deleteSetting: (id: string) => api.delete(`/admin-settings/${id}`),
 };
 
 export default api;

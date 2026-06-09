@@ -554,7 +554,7 @@ export const rescheduleBooking = async (req, res) => {
 // @access  Private/Admin
 export const getAllBookings = async (req, res) => {
   try {
-    const { status, date, page = 1, limit = 10, search } = req.query;
+    const { status, date, page = 1, limit = 10, search, prescriptionStatus, reportStatus } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -564,6 +564,27 @@ export const getAllBookings = async (req, res) => {
 
     if (status) {
       query.bookingStatus = status;
+    }
+
+    if (prescriptionStatus === 'with') {
+      query['prescriptions.0'] = { $exists: true };
+    } else if (prescriptionStatus === 'without') {
+      query.$or = [
+        { prescriptions: { $exists: false } },
+        { prescriptions: { $size: 0 } }
+      ];
+    }
+
+    if (reportStatus === 'with') {
+      query.$or = [
+        { 'reports.0': { $exists: true } },
+        { reportUrl: { $ne: null, $exists: true } }
+      ];
+    } else if (reportStatus === 'without') {
+      query.$and = [
+        { $or: [{ reports: { $exists: false } }, { reports: { $size: 0 } }] },
+        { $or: [{ reportUrl: { $exists: false } }, { reportUrl: null }, { reportUrl: '' }] }
+      ];
     }
 
     if (date) {
@@ -584,6 +605,29 @@ export const getAllBookings = async (req, res) => {
     const totalBookings = await Booking.countDocuments(query);
     const totalPages = Math.ceil(totalBookings / limitNum);
 
+    const totalOverallBookings = await Booking.countDocuments({});
+    const totalOverallWithPrescriptions = await Booking.countDocuments({ 'prescriptions.0': { $exists: true } });
+    const totalOverallWithoutPrescriptions = await Booking.countDocuments({
+      $or: [
+        { prescriptions: { $exists: false } },
+        { prescriptions: { $size: 0 } }
+      ]
+    });
+
+    const totalOverallWithReports = await Booking.countDocuments({
+      $or: [
+        { 'reports.0': { $exists: true } },
+        { reportUrl: { $ne: null, $exists: true } }
+      ]
+    });
+
+    const totalOverallWithoutReports = await Booking.countDocuments({
+      $and: [
+        { $or: [{ reports: { $exists: false } }, { reports: { $size: 0 } }] },
+        { $or: [{ reportUrl: { $exists: false } }, { reportUrl: null }, { reportUrl: '' }] }
+      ]
+    });
+
     const bookings = await Booking.find(query)
       .populate('userId', 'name email phone')
       .populate('vendorId', 'name phone businessName')
@@ -598,6 +642,13 @@ export const getAllBookings = async (req, res) => {
       totalPages,
       currentPage: pageNum,
       limit: limitNum,
+      stats: {
+        totalBookings: totalOverallBookings,
+        withPrescription: totalOverallWithPrescriptions,
+        withoutPrescription: totalOverallWithoutPrescriptions,
+        withReport: totalOverallWithReports,
+        withoutReport: totalOverallWithoutReports
+      },
       data: bookings
     });
   } catch (error) {
@@ -796,4 +847,41 @@ export const addPrescription = async (req, res) => {
 export const updatePrescription = async (req, res) => {
   // Just call addPrescription for backward compatibility
   return addPrescription(req, res);
+};
+
+// @desc    Update prescription summary for booking (Admin)
+// @route   PUT /api/bookings/:id/prescription-summary
+// @access  Private/Admin
+export const updatePrescriptionSummary = async (req, res) => {
+  try {
+    const { summary } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    booking.prescriptionSummary = summary;
+    await booking.save();
+
+    // Populate user and vendor details before returning
+    await booking.populate('userId', 'name email phone');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Prescription summary updated successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };

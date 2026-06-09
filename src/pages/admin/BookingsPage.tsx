@@ -46,6 +46,7 @@ import {
   AddPrescriptionModal,
   RescheduleBookingModal,
   CancelBookingModal,
+  PrescriptionSummaryModal,
 } from "../../components/bookings";
 
 const BookingsPage = () => {
@@ -77,6 +78,7 @@ const BookingsPage = () => {
     useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   // Selected data for modals
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -222,11 +224,6 @@ const BookingsPage = () => {
       const booking = bookings.find((b: any) => b._id === bookingId);
       if (!booking) {
         toast.error("Booking not found");
-        return;
-      }
-
-      if (!booking.prescriptions || booking.prescriptions.length === 0) {
-        toast.info("No prescription uploaded for this booking");
         return;
       }
 
@@ -872,52 +869,70 @@ const BookingsPage = () => {
                                 : "Add Notes"}
                             </button>
                             <div className="border-t border-gray-200 my-2"></div>
-                            <button
-                              onClick={() => {
-                                handleViewPrescription(booking._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-blue-600"
-                            >
-                              <Image size={16} />
-                              View Prescription
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedBookingForPrescription(booking);
-                                setShowAddPrescriptionModal(true);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-cyan-600"
-                            >
-                              <Upload size={16} />
-                              Add Prescription
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleViewReport(booking);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-green-600"
-                            >
-                              <FileText size={16} />
-                              {booking.reports && booking.reports.length > 0
-                                ? `View Reports (${booking.reports.length})`
-                                : "View Report"}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedBookingForReport(booking);
-                                setShowReportModal(true);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-teal-600"
-                            >
-                              <Upload size={16} />
-                              {booking.reports && booking.reports.length > 0
-                                ? "Add More Reports"
-                                : "Upload Report"}
-                            </button>
+                            {booking.prescriptions && booking.prescriptions.length > 0 ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleViewPrescription(booking._id);
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-blue-600"
+                                >
+                                  <Image size={16} />
+                                  View Prescription
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setShowSummaryModal(true);
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-emerald-600"
+                                >
+                                  <FileText size={16} />
+                                  Prescription Summary
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedBookingForPrescription(booking);
+                                  setShowAddPrescriptionModal(true);
+                                  setOpenDropdown(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-cyan-600"
+                              >
+                                <Upload size={16} />
+                                Add Prescription
+                              </button>
+                            )}
+
+                            {((booking.reports && booking.reports.length > 0) || booking.reportUrl) ? (
+                              <button
+                                onClick={() => {
+                                  handleViewReport(booking);
+                                  setOpenDropdown(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-green-600"
+                              >
+                                <FileText size={16} />
+                                {booking.reports && booking.reports.length > 0
+                                  ? `View Reports (${booking.reports.length})`
+                                  : "View Report"}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedBookingForReport(booking);
+                                  setShowReportModal(true);
+                                  setOpenDropdown(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-teal-600"
+                              >
+                                <Upload size={16} />
+                                Upload Report
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 handleDownloadInvoice(booking._id);
@@ -1126,6 +1141,49 @@ const BookingsPage = () => {
           setViewingPrescription(null);
         }}
         booking={viewingPrescription}
+        isAdmin={true}
+        onUpdateSummary={async (summary) => {
+          try {
+            const response = await bookingAPI.updatePrescriptionSummary(
+              viewingPrescription._id,
+              summary
+            );
+            if (response.data.success) {
+              dispatch(updateBooking(response.data.data));
+              setViewingPrescription(response.data.data);
+              toast.success("Prescription summary updated successfully!");
+            }
+          } catch (error: any) {
+            toast.error(
+              error.response?.data?.message || "Failed to update prescription summary",
+            );
+          }
+        }}
+      />
+
+      <PrescriptionSummaryModal
+        show={showSummaryModal}
+        onClose={() => {
+          setShowSummaryModal(false);
+          setSelectedBooking(null);
+        }}
+        onSubmit={async (summary) => {
+          try {
+            const response = await bookingAPI.updatePrescriptionSummary(
+              selectedBooking._id,
+              summary
+            );
+            if (response.data.success) {
+              dispatch(updateBooking(response.data.data));
+              toast.success("Prescription summary updated successfully!");
+            }
+          } catch (error: any) {
+            toast.error(
+              error.response?.data?.message || "Failed to update prescription summary",
+            );
+          }
+        }}
+        booking={selectedBooking}
       />
 
       <ReportUploadModal

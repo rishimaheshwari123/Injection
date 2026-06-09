@@ -8,3 +8,4 @@ export { default as ViewReportsModal } from './ViewReportsModal';
 export { default as AddPrescriptionModal } from './AddPrescriptionModal';
 export { default as RescheduleBookingModal } from './RescheduleBookingModal';
 export { default as CancelBookingModal } from './CancelBookingModal';
+export { default as PrescriptionSummaryModal } from './PrescriptionSummaryModal';

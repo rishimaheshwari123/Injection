@@ -15,7 +15,8 @@ import {
   deleteBooking,
   addNoteToBooking,
   updatePrescription,
-  addPrescription
+  addPrescription,
+  updatePrescriptionSummary
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -407,6 +408,7 @@ router.post('/:id/notes', protect, adminOnly, addNoteToBooking);
  *         description: Prescription updated successfully
  */
 router.put('/:id/prescription', protect, adminOnly, updatePrescription);
+router.put('/:id/prescription-summary', protect, adminOnly, updatePrescriptionSummary);
 
 /**
  * @swagger

@@ -1,4 +1,5 @@
 import Booking from '../models/Booking.js';
+import AdminSetting from '../models/AdminSetting.js';
 import PDFDocument from 'pdfkit';
 import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
@@ -6,6 +7,21 @@ import streamifier from 'streamifier';
 // @desc    Generate invoice for booking
 // @route   GET /api/invoices/:bookingId
 // @access  Private (User/Admin)
+const fetchImageBuffer = async (url) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error('Failed to fetch image buffer:', error);
+    return null;
+  }
+};
+
+// @desc    Generate invoice for booking
+// @route   GET /api/invoices/:bookingId
+// @access  Private (User/Vendor/Admin)
 export const generateInvoice = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -23,18 +39,37 @@ export const generateInvoice = async (req, res) => {
     }
 
     // Check authorization
-    const isUser = req.user && booking.userId._id.toString() === req.user._id.toString();
+    const isUser = req.user && booking.userId && booking.userId._id.toString() === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && booking.vendorId._id.toString() === req.vendor._id.toString();
     const isAdmin = req.user && req.user.role === 'admin';
 
-    if (!isUser && !isAdmin) {
+    if (!isUser && !isVendor && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view this invoice'
       });
     }
 
+    // Fetch active branding settings
+    const activeSetting = await AdminSetting.findOne({ isActive: true });
+    
+    let logoBuffer = null;
+    let signatureBuffer = null;
+
+    if (activeSetting) {
+      if (activeSetting.logoUrl) {
+        logoBuffer = await fetchImageBuffer(activeSetting.logoUrl);
+      }
+      if (activeSetting.signatureUrl) {
+        signatureBuffer = await fetchImageBuffer(activeSetting.signatureUrl);
+      }
+    }
+
     // Create PDF
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({ 
+      margin: 50,
+      size: 'A4'
+    });
     const chunks = [];
 
     doc.on('data', (chunk) => chunks.push(chunk));
@@ -43,82 +78,251 @@ export const generateInvoice = async (req, res) => {
       doc.on('end', resolve);
       doc.on('error', reject);
 
-      // Header
-      doc.fontSize(24).text('INVOICE', { align: 'center', underline: true });
-      doc.moveDown();
+      // Colors
+      const primaryColor = '#0f766e'; // Teal 700
+      const darkColor = '#1e293b';    // Slate 800
+      const lightColor = '#64748b';   // Slate 500
+      const borderColor = '#e2e8f0';  // Slate 200
+      const tableHeaderBg = '#f1f5f9'; // Slate 100
+      const highlightBg = '#f0fdfa';   // Teal 50
 
-      // Company Details
-      doc.fontSize(12).text('PRLT Health Care and Research Solutions', { bold: true });
-      doc.fontSize(10).text('Research Solutions');
-      doc.text('GST No: XXXXXXXXXXXX');
-      doc.moveDown();
+      // Top decorative bar
+      doc.rect(0, 0, doc.page.width, 10).fill(primaryColor);
 
-      // Invoice Details
-      doc.fontSize(10);
-      doc.text(`Invoice No: INV-${booking._id.toString().slice(-8).toUpperCase()}`, { align: 'right' });
-      doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, { align: 'right' });
-      doc.text(`Booking ID: ${booking._id}`, { align: 'right' });
-      doc.moveDown();
+      // --- HEADER SECTION ---
+      doc.y = 35;
+      const startY = doc.y;
 
-      // Bill To
-      doc.fontSize(12).text('Bill To:', { underline: true });
-      doc.fontSize(10);
-      doc.text(`Name: ${booking.patientName}`);
-      doc.text(`Email: ${booking.email}`);
-      doc.text(`Phone: ${booking.userId.phone}`);
-      doc.text(`Address: ${booking.address}, ${booking.pincode}`);
-      doc.moveDown();
-
-      // Service Provider
-      if (booking.vendorId) {
-        doc.fontSize(12).text('Service Provider:', { underline: true });
-        doc.fontSize(10);
-        doc.text(`Name: ${booking.vendorId.businessName}`);
-        doc.text(`Contact: ${booking.vendorId.phone}`);
-        doc.moveDown();
+      // Logo (if available) on the left
+      if (logoBuffer) {
+        try {
+          doc.image(logoBuffer, 50, startY, { height: 40 });
+        } catch (err) {
+          console.error('Error adding logo to PDF:', err);
+        }
       }
 
-      // Table Header
-      doc.fontSize(10);
-      const tableTop = doc.y;
-      doc.text('Service', 50, tableTop, { width: 200 });
-      doc.text('Qty', 250, tableTop, { width: 50 });
-      doc.text('Price', 300, tableTop, { width: 100 });
-      doc.text('Amount', 400, tableTop, { width: 100 });
+      // Title on the right
+      doc.fillColor(primaryColor)
+         .font('Helvetica-Bold')
+         .fontSize(22)
+         .text('INVOICE', 350, startY, { align: 'right', width: 200 });
+
+      // Move down below logo/title
+      doc.y = startY + 50;
+
+      // Divider line
+      doc.strokeColor(borderColor)
+         .lineWidth(1)
+         .moveTo(50, doc.y)
+         .lineTo(doc.page.width - 50, doc.y)
+         .stroke();
+      doc.moveDown(0.8);
+
+      // --- DETAILS GRID ---
+      const detailsY = doc.y;
+
+      // Left Column: Company Info
+      doc.fillColor(darkColor)
+         .font('Helvetica-Bold')
+         .fontSize(11)
+         .text('PRLT Health Care and Research Solutions', 50, detailsY);
       
-      doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
-      doc.moveDown();
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor(lightColor)
+         .text('Healthcare & Research Solutions')
+         .text('GST No: XXXXXXXXXXXX');
+
+      // Right Column: Invoice Details (align right)
+      doc.fillColor(lightColor)
+         .font('Helvetica')
+         .fontSize(9);
+      
+      const detailsRightX = 350;
+      doc.text('Invoice No:', detailsRightX, detailsY, { width: 100, align: 'left' });
+      doc.font('Helvetica-Bold').fillColor(darkColor)
+         .text(`INV-${booking._id.toString().slice(-8).toUpperCase()}`, detailsRightX + 70, detailsY, { width: 130, align: 'right' });
+      
+      doc.font('Helvetica').fillColor(lightColor)
+         .text('Date:', detailsRightX, detailsY + 14, { width: 100, align: 'left' });
+      doc.font('Helvetica-Bold').fillColor(darkColor)
+         .text(new Date().toLocaleDateString('en-IN'), detailsRightX + 70, detailsY + 14, { width: 130, align: 'right' });
+
+      doc.font('Helvetica').fillColor(lightColor)
+         .text('Booking ID:', detailsRightX, detailsY + 28, { width: 100, align: 'left' });
+      doc.font('Helvetica-Bold').fillColor(darkColor)
+         .text(booking._id.toString(), detailsRightX + 70, detailsY + 28, { width: 130, align: 'right' });
+
+      // Move down past details
+      doc.y = detailsY + 50;
+
+      // Divider line
+      doc.strokeColor(borderColor)
+         .lineWidth(1)
+         .moveTo(50, doc.y)
+         .lineTo(doc.page.width - 50, doc.y)
+         .stroke();
+      doc.moveDown(0.8);
+
+      // --- BILLING / VENDOR GRID ---
+      const billingY = doc.y;
+
+      // Left Column: Bill To
+      doc.fillColor(primaryColor)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text('BILL TO:', 50, billingY);
+
+      doc.fillColor(darkColor)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text(booking.patientName, 50, billingY + 15);
+
+      doc.font('Helvetica')
+         .fontSize(9)
+         .fillColor(lightColor)
+         .text(`Email: ${booking.email || 'N/A'}`)
+         .text(`Phone: ${booking.userId?.phone || booking.alternateMobile || 'N/A'}`)
+         .text(`Address: ${booking.address}, ${booking.pincode}`);
+
+      // Right Column: Service Provider
+      doc.fillColor(primaryColor)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text('SERVICE PROVIDER:', 320, billingY);
+
+      if (booking.vendorId) {
+        doc.fillColor(darkColor)
+           .font('Helvetica-Bold')
+           .fontSize(10)
+           .text(booking.vendorId.businessName, 320, billingY + 15);
+
+        doc.font('Helvetica')
+           .fontSize(9)
+           .fillColor(lightColor)
+           .text(`Contact: ${booking.vendorId.phone || 'N/A'}`)
+           .text(`City: ${booking.vendorId.city || ''}, ${booking.vendorId.state || ''}`);
+      } else {
+        doc.fillColor(lightColor)
+           .font('Helvetica-Oblique')
+           .fontSize(9)
+           .text('Pending Assignment (Platform Services)', 320, billingY + 15);
+      }
+
+      // Move down below billing grids
+      doc.y = Math.max(doc.y, billingY + 70);
+
+      // Divider line
+      doc.strokeColor(borderColor)
+         .lineWidth(1)
+         .moveTo(50, doc.y)
+         .lineTo(doc.page.width - 50, doc.y)
+         .stroke();
+      doc.moveDown(1);
+
+      // --- TABLE SECTION ---
+      const tableTop = doc.y;
+      
+      // Draw background header block
+      doc.rect(50, tableTop, 500, 20).fill(tableHeaderBg);
+      
+      // Table Header text
+      doc.fillColor(darkColor)
+         .font('Helvetica-Bold')
+         .fontSize(9);
+      
+      doc.text('Service Description', 60, tableTop + 5, { width: 220 });
+      doc.text('Qty', 280, tableTop + 5, { width: 40, align: 'right' });
+      doc.text('Unit Price', 330, tableTop + 5, { width: 90, align: 'right' });
+      doc.text('Amount', 430, tableTop + 5, { width: 110, align: 'right' });
 
       // Table Rows
-      let yPosition = tableTop + 25;
-      booking.selectedServices.forEach((service) => {
-        doc.text(service.serviceName, 50, yPosition, { width: 200 });
-        doc.text(service.quantity.toString(), 250, yPosition, { width: 50 });
-        doc.text(`₹${service.price}`, 300, yPosition, { width: 100 });
-        doc.text(`₹${service.price * service.quantity}`, 400, yPosition, { width: 100 });
+      let yPosition = tableTop + 20;
+      doc.font('Helvetica').fontSize(9);
+
+      booking.selectedServices.forEach((service, index) => {
+        // Alternating row background for clean view
+        if (index % 2 === 1) {
+          doc.rect(50, yPosition, 500, 20).fill('#f8fafc');
+        }
+        
+        doc.fillColor(darkColor);
+        doc.text(service.serviceName, 60, yPosition + 5, { width: 220 });
+        doc.text(service.quantity.toString(), 280, yPosition + 5, { width: 40, align: 'right' });
+        doc.text(`INR ${service.price}`, 330, yPosition + 5, { width: 90, align: 'right' });
+        doc.text(`INR ${service.price * service.quantity}`, 430, yPosition + 5, { width: 110, align: 'right' });
+        
         yPosition += 20;
       });
 
-      doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
+      // Table bottom border
+      doc.strokeColor(borderColor)
+         .lineWidth(1)
+         .moveTo(50, yPosition)
+         .lineTo(550, yPosition)
+         .stroke();
+      
       yPosition += 10;
 
-      // Totals
-      doc.text('Subtotal:', 350, yPosition);
-      doc.text(`₹${booking.subtotal}`, 450, yPosition);
-      yPosition += 20;
+      // --- TOTALS SECTION ---
+      const totalsX = 330;
+      doc.font('Helvetica').fontSize(9).fillColor(lightColor);
 
-      doc.text(`GST (18%):`, 350, yPosition);
-      doc.text(`₹${booking.gstAmount}`, 450, yPosition);
-      yPosition += 20;
+      doc.text('Subtotal:', totalsX, yPosition, { width: 90, align: 'left' });
+      doc.fillColor(darkColor).text(`INR ${booking.subtotal}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
+      
+      yPosition += 16;
+      doc.fillColor(lightColor).text('GST (18%):', totalsX, yPosition, { width: 90, align: 'left' });
+      doc.fillColor(darkColor).text(`INR ${booking.gstAmount}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
+      
+      yPosition += 16;
+      
+      // Draw grand total box
+      doc.rect(totalsX - 10, yPosition - 4, 230, 22).fill(highlightBg);
+      
+      doc.fillColor(primaryColor)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text('Grand Total:', totalsX, yPosition, { width: 90, align: 'left' });
+      
+      doc.text(`INR ${booking.grandTotal}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
 
-      doc.fontSize(12).text('Grand Total:', 350, yPosition, { bold: true });
-      doc.text(`₹${booking.grandTotal}`, 450, yPosition, { bold: true });
-      doc.fontSize(10);
+      // Move Y position for signature
+      yPosition += 35;
 
-      // Footer
-      doc.moveDown(3);
-      doc.fontSize(8).text('Thank you for choosing our services!', { align: 'center' });
-      doc.text('This is a computer-generated invoice.', { align: 'center' });
+      // --- SIGNATURE SECTION ---
+      if (signatureBuffer) {
+        try {
+          doc.fillColor(lightColor)
+             .font('Helvetica')
+             .fontSize(8)
+             .text('Authorized Signature / Doctor Signature:', 350, yPosition, { align: 'right', width: 200 });
+          
+          yPosition += 12;
+          doc.image(signatureBuffer, 430, yPosition, { height: 32 });
+          yPosition += 36;
+        } catch (err) {
+          console.error('Error adding signature to PDF:', err);
+        }
+      }
+
+      // --- FOOTER SECTION ---
+      // Force footer to bottom of A4 if enough space, otherwise output inline
+      const footerY = Math.max(yPosition + 30, doc.page.height - 75);
+      
+      doc.strokeColor(borderColor)
+         .lineWidth(0.5)
+         .moveTo(50, footerY - 10)
+         .lineTo(doc.page.width - 50, footerY - 10)
+         .stroke();
+
+      doc.fillColor(lightColor)
+         .font('Helvetica')
+         .fontSize(8)
+         .text('Thank you for choosing our services!', 50, footerY, { align: 'center', width: doc.page.width - 100 });
+      
+      doc.text('This is a computer-generated invoice and does not require a physical signature.', 50, footerY + 11, { align: 'center', width: doc.page.width - 100 });
 
       doc.end();
     });
@@ -141,7 +345,7 @@ export const generateInvoice = async (req, res) => {
 
 // @desc    Get invoice URL (if stored)
 // @route   GET /api/invoices/url/:bookingId
-// @access  Private (User/Admin)
+// @access  Private (User/Vendor/Admin)
 export const getInvoiceUrl = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -156,10 +360,11 @@ export const getInvoiceUrl = async (req, res) => {
     }
 
     // Check authorization
-    const isUser = req.user && booking.userId.toString() === req.user._id.toString();
+    const isUser = req.user && booking.userId && booking.userId.toString() === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && booking.vendorId.toString() === req.vendor._id.toString();
     const isAdmin = req.user && req.user.role === 'admin';
 
-    if (!isUser && !isAdmin) {
+    if (!isUser && !isVendor && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view this invoice'
