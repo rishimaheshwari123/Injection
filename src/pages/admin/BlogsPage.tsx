@@ -737,6 +737,9 @@ export default function BlogsPage() {
                     rows={10}
                     className="w-full border rounded px-3 py-2"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tip: You can add backlinks using HTML (e.g. <code>&lt;a href="https://example.com"&gt;text&lt;/a&gt;</code>) or Markdown (e.g. <code>[text](https://example.com)</code>). They will be automatically styled with an underline.
+                  </p>
                 </div>
 
                 <div className="col-span-2">

@@ -196,8 +196,16 @@ export default function BlogDetailPage() {
             className="prose prose-lg max-w-none"
           >
             <div 
-              className="text-gray-700 leading-relaxed whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: blog.content.replace(/\n/g, '<br />') }} 
+              className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_a]:text-teal-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-teal-800 [&_a]:font-medium transition-all"
+              dangerouslySetInnerHTML={{ 
+                __html: blog.content
+                  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+                    const isExternal = url.startsWith('http://') || url.startsWith('https://');
+                    const target = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
+                    return `<a href="${url}" ${target}>${text}</a>`;
+                  })
+                  .replace(/\n/g, '<br />')
+              }} 
             />
           </motion.div>
 
