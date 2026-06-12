@@ -34,6 +34,8 @@ export const authAPI = {
 // User APIs
 export const userAPI = {
   getAllUsers: () => api.get(API_ENDPOINTS.USERS.BASE),
+  getPaginatedUsers: (params?: any) =>
+    api.get("/users/admin/paginated", { params }),
   getUserById: (id: string) => api.get(API_ENDPOINTS.USERS.BY_ID(id)),
   createUser: (userData: any) => api.post("/users/admin/create", userData),
   updateUser: (id: string, data: any) =>
@@ -55,6 +57,8 @@ export const vendorAPI = {
   login: (email: string, password: string) =>
     api.post(API_ENDPOINTS.VENDORS.LOGIN, { email, password }),
   getAllVendors: () => api.get(API_ENDPOINTS.VENDORS.BASE),
+  getPaginatedVendors: (params?: any) =>
+    api.get("/vendors/admin/paginated", { params }),
   getVendorById: (id: string) => api.get(API_ENDPOINTS.VENDORS.BY_ID(id)),
   createVendor: (vendorData: any) =>
     api.post("/vendors/admin/create", vendorData),
@@ -71,6 +75,7 @@ export const vendorAPI = {
 // Service APIs
 export const serviceAPI = {
   getAllServices: () => api.get("/services/admin/all"),
+  getPublicServices: () => api.get("/services"),
   getServiceById: (id: string) => api.get(API_ENDPOINTS.SERVICES.BY_ID(id)),
   getVendorServices: () => api.get(API_ENDPOINTS.SERVICES.BY_VENDOR),
   createService: (serviceData: any) =>

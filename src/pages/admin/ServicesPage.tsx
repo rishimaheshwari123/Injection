@@ -34,7 +34,7 @@ const ServicesPage = () => {
     basePrice: "",
     duration: "45",
     serviceType: "At Home",
-    vendorId: "",
+    vendors: [] as string[],
     requirements: "",
     image: "",
   });
@@ -127,7 +127,7 @@ const ServicesPage = () => {
         "Base Price": service.basePrice,
         "Duration (mins)": service.duration,
         "Service Type": service.serviceType,
-        "Vendor Name": service.vendorId?.businessName || "N/A",
+        "Vendor Name": service.vendors?.map((v: any) => v.businessName).join(', ') || "N/A",
         Status: service.isActive ? "Active" : "Inactive",
         "Created At": new Date(service.createdAt).toLocaleDateString("en-IN"),
       }));
@@ -164,11 +164,6 @@ const ServicesPage = () => {
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.vendorId) {
-      toast.error("Please select a vendor");
-      return;
-    }
-
     setSubmitting(true);
     try {
       const imageUrl = await uploadImage();
@@ -190,7 +185,7 @@ const ServicesPage = () => {
           basePrice: "",
           duration: "45",
           serviceType: "At Home",
-          vendorId: "",
+          vendors: [],
           requirements: "",
           image: "",
         });
@@ -215,7 +210,7 @@ const ServicesPage = () => {
       basePrice: service.basePrice.toString(),
       duration: service.duration.toString(),
       serviceType: service.serviceType,
-      vendorId: service.vendorId?._id || "",
+      vendors: service.vendors ? service.vendors.map((v: any) => v._id || v) : [],
       requirements: service.requirements || "",
       image: service.image || "",
     });
@@ -226,11 +221,6 @@ const ServicesPage = () => {
 
   const handleUpdateService = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.vendorId) {
-      toast.error("Please select a vendor");
-      return;
-    }
 
     setSubmitting(true);
     try {
@@ -254,7 +244,7 @@ const ServicesPage = () => {
           basePrice: "",
           duration: "45",
           serviceType: "At Home",
-          vendorId: "",
+          vendors: [],
           requirements: "",
           image: "",
         });
@@ -301,12 +291,11 @@ const ServicesPage = () => {
     const matchesSearch =
       service.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vendorId?.businessName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      service.vendors?.some((v: any) => v.businessName?.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesVendor =
-      selectedVendor === "" || service.vendorId?._id === selectedVendor;
+      selectedVendor === "" || 
+      service.vendors?.some((v: any) => (v._id || v) === selectedVendor);
 
     return matchesSearch && matchesVendor;
   });
@@ -448,9 +437,11 @@ const ServicesPage = () => {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600">Vendor:</p>
-                <p className="font-medium text-gray-800">
-                  {service.vendorId?.businessName || "N/A"}
+                <p className="text-sm text-gray-600 font-semibold">Vendors:</p>
+                <p className="font-medium text-gray-800 text-sm line-clamp-2">
+                  {service.vendors && service.vendors.length > 0
+                    ? service.vendors.map((v: any) => v.businessName).join(', ')
+                    : "None"}
                 </p>
               </div>
             </div>
@@ -485,34 +476,41 @@ const ServicesPage = () => {
             <form onSubmit={handleCreateService} className="p-6 space-y-4">
               {/* Vendor Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Vendor <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-semibold">
+                  Select Vendors (Optional)
                 </label>
-                <select
-                  name="vendorId"
-                  value={formData.vendorId}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
-                >
-                  <option value="">
-                    Choose a vendor ({vendors.length} available)
-                  </option>
+                <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
                   {vendors.map((vendor) => (
-                    <option key={vendor._id} value={vendor._id}>
-                      {vendor.businessName} - {vendor.name} ({vendor.city})
-                      {!vendor.isVerified && " [Not Verified]"}
-                      {!vendor.isActive && " [Inactive]"}
-                    </option>
+                    <label key={vendor._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={formData.vendors.includes(vendor._id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            vendors: checked 
+                              ? [...prev.vendors, vendor._id] 
+                              : prev.vendors.filter(id => id !== vendor._id)
+                          }));
+                        }}
+                        className="w-4 h-4 text-[#63D64F] border-gray-300 rounded focus:ring-[#63D64F]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {vendor.businessName} - {vendor.name} ({vendor.city})
+                        {!vendor.isVerified && " [Not Verified]"}
+                        {!vendor.isActive && " [Inactive]"}
+                      </span>
+                    </label>
                   ))}
-                </select>
+                </div>
                 {vendors.length === 0 && (
                   <p className="text-sm text-red-500 mt-1">
                     No vendors found. Please create vendors first.
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  Admin can create services for any vendor
+                  You can select multiple vendors for this service
                 </p>
               </div>
 
@@ -734,27 +732,34 @@ const ServicesPage = () => {
             <form onSubmit={handleUpdateService} className="p-6 space-y-4">
               {/* Vendor Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Vendor <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-semibold">
+                  Select Vendors (Optional)
                 </label>
-                <select
-                  name="vendorId"
-                  value={formData.vendorId}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
-                >
-                  <option value="">
-                    Choose a vendor ({vendors.length} available)
-                  </option>
+                <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
                   {vendors.map((vendor) => (
-                    <option key={vendor._id} value={vendor._id}>
-                      {vendor.businessName} - {vendor.name} ({vendor.city})
-                      {!vendor.isVerified && " [Not Verified]"}
-                      {!vendor.isActive && " [Inactive]"}
-                    </option>
+                    <label key={vendor._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={formData.vendors.includes(vendor._id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            vendors: checked 
+                              ? [...prev.vendors, vendor._id] 
+                              : prev.vendors.filter(id => id !== vendor._id)
+                          }));
+                        }}
+                        className="w-4 h-4 text-[#63D64F] border-gray-300 rounded focus:ring-[#63D64F]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {vendor.businessName} - {vendor.name} ({vendor.city})
+                        {!vendor.isVerified && " [Not Verified]"}
+                        {!vendor.isActive && " [Inactive]"}
+                      </span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Service Name */}

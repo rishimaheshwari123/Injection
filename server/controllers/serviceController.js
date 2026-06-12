@@ -1,4 +1,5 @@
 import Service from '../models/Service.js';
+import Vendor from '../models/Vendor.js';
 import cloudinary from '../config/cloudinary.js';
 
 // @desc    Upload service image
@@ -66,7 +67,7 @@ export const adminCreateService = async (req, res) => {
       basePrice,
       duration,
       serviceType,
-      vendorId,
+      vendors,
       isActive,
       icon,
       image,
@@ -82,13 +83,7 @@ export const adminCreateService = async (req, res) => {
       });
     }
 
-    // Validate vendorId is provided
-    if (!vendorId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vendor ID is required'
-      });
-    }
+    const finalVendors = Array.isArray(vendors) ? vendors : (vendors ? [vendors] : []);
 
     // Validate category
     const validCategories = [
@@ -133,7 +128,7 @@ export const adminCreateService = async (req, res) => {
       basePrice,
       duration: duration || 45,
       serviceType: serviceType || 'At Home',
-      vendorId,
+      vendors: finalVendors,
       isActive: isActive !== undefined ? isActive : true,
       icon: icon || null,
       image: image || null,
@@ -141,8 +136,13 @@ export const adminCreateService = async (req, res) => {
       requirements
     });
 
+    // Update vendors' services arrays
+    if (finalVendors.length > 0) {
+      await Vendor.updateMany({ _id: { $in: finalVendors } }, { $addToSet: { services: service._id } });
+    }
+
     // Populate vendor details
-    await service.populate('vendorId', 'name businessName phone email');
+    await service.populate('vendors', 'name businessName phone email');
 
     res.status(201).json({
       success: true,
@@ -170,7 +170,7 @@ export const createService = async (req, res) => {
       basePrice,
       duration,
       serviceType,
-      vendorId,
+      vendors,
       isActive,
       icon,
       image,
@@ -178,8 +178,8 @@ export const createService = async (req, res) => {
       requirements
     } = req.body;
 
-    // Use vendorId from req.body if provided, otherwise from JWT token
-    const finalVendorId = vendorId || req.vendor._id;
+    // Use vendors from req.body if provided, otherwise from JWT token
+    const finalVendors = Array.isArray(vendors) && vendors.length > 0 ? vendors : [req.vendor._id];
 
     // Check if vendor is verified and active
     if (!req.vendor.isActive) {
@@ -247,7 +247,7 @@ export const createService = async (req, res) => {
       basePrice,
       duration: duration || 45,
       serviceType: serviceType || 'At Home',
-      vendorId: finalVendorId,
+      vendors: finalVendors,
       isActive: isActive !== undefined ? isActive : true,
       icon: icon || null,
       image: image || null,
@@ -255,8 +255,13 @@ export const createService = async (req, res) => {
       requirements
     });
 
+    // Update vendors' services arrays
+    if (finalVendors.length > 0) {
+      await Vendor.updateMany({ _id: { $in: finalVendors } }, { $addToSet: { services: service._id } });
+    }
+
     // Populate vendor details
-    await service.populate('vendorId', 'name businessName phone email');
+    await service.populate('vendors', 'name businessName phone email');
 
     res.status(201).json({
       success: true,
@@ -285,7 +290,7 @@ export const adminGetAllServices = async (req, res) => {
     }
 
     if (vendorId) {
-      query.vendorId = vendorId;
+      query.vendors = vendorId;
     }
 
     if (isActive !== undefined) {
@@ -294,7 +299,7 @@ export const adminGetAllServices = async (req, res) => {
 
     const services = await Service.find(query)
       .populate({
-        path: 'vendorId',
+        path: 'vendors',
         select: 'name businessName phone email city state rating isActive isVerified verificationStatus'
       })
       .sort({ createdAt: -1 });
@@ -317,7 +322,9 @@ export const adminGetAllServices = async (req, res) => {
 // @access  Public
 export const getAllServices = async (req, res) => {
   try {
-    const services = await Service.find().sort({ createdAt: -1 });
+    const services = await Service.find()
+      .populate('vendors', 'name businessName phone email rating')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -339,7 +346,7 @@ export const getAllServices = async (req, res) => {
 export const getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('vendorId', 'name businessName phone email address city state pincode rating totalReviews');
+      .populate('vendors', 'name businessName phone email address city state pincode rating totalReviews');
 
     if (!service) {
       return res.status(404).json({
@@ -365,7 +372,7 @@ export const getServiceById = async (req, res) => {
 // @access  Private/Vendor
 export const getVendorServices = async (req, res) => {
   try {
-    const services = await Service.find({ vendorId: req.vendor._id })
+    const services = await Service.find({ vendors: req.vendor._id })
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -387,10 +394,10 @@ export const getVendorServices = async (req, res) => {
 export const getServicesByVendorId = async (req, res) => {
   try {
     const services = await Service.find({
-      vendorId: req.params.vendorId,
+      vendors: req.params.vendorId,
       isActive: true
     })
-      .populate('vendorId', 'name businessName phone email')
+      .populate('vendors', 'name businessName phone email')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -419,7 +426,7 @@ export const adminUpdateService = async (req, res) => {
       basePrice,
       duration,
       serviceType,
-      vendorId,
+      vendors,
       isActive,
       icon,
       image,
@@ -434,6 +441,16 @@ export const adminUpdateService = async (req, res) => {
         success: false,
         message: 'Service not found'
       });
+    }
+
+    let vendorsChanged = false;
+    let oldVendors = [];
+    let newVendors = [];
+
+    if (vendors !== undefined) {
+      newVendors = Array.isArray(vendors) ? vendors.map(v => v.toString()) : (vendors ? [vendors.toString()] : []);
+      oldVendors = service.vendors.map(v => v.toString());
+      vendorsChanged = JSON.stringify(newVendors.sort()) !== JSON.stringify(oldVendors.sort());
     }
 
     // Validate category if provided
@@ -478,7 +495,7 @@ export const adminUpdateService = async (req, res) => {
     if (basePrice !== undefined) service.basePrice = basePrice;
     if (duration !== undefined) service.duration = duration;
     if (serviceType !== undefined) service.serviceType = serviceType;
-    if (vendorId !== undefined) service.vendorId = vendorId;
+    if (vendors !== undefined) service.vendors = newVendors;
     if (isActive !== undefined) service.isActive = isActive;
     if (icon !== undefined) service.icon = icon;
     if (image !== undefined) service.image = image;
@@ -486,7 +503,20 @@ export const adminUpdateService = async (req, res) => {
     if (requirements !== undefined) service.requirements = requirements;
 
     await service.save();
-    await service.populate('vendorId', 'name businessName phone email city state rating isActive isVerified verificationStatus');
+
+    if (vendorsChanged) {
+      const vendorsToRemove = oldVendors.filter(v => !newVendors.includes(v));
+      const vendorsToAdd = newVendors.filter(v => !oldVendors.includes(v));
+
+      if (vendorsToRemove.length > 0) {
+        await Vendor.updateMany({ _id: { $in: vendorsToRemove } }, { $pull: { services: service._id } });
+      }
+      if (vendorsToAdd.length > 0) {
+        await Vendor.updateMany({ _id: { $in: vendorsToAdd } }, { $addToSet: { services: service._id } });
+      }
+    }
+
+    await service.populate('vendors', 'name businessName phone email city state rating isActive isVerified verificationStatus');
 
     res.status(200).json({
       success: true,
@@ -531,7 +561,7 @@ export const updateService = async (req, res) => {
     }
 
     // Check if vendor owns this service
-    if (service.vendorId.toString() !== req.vendor._id.toString()) {
+    if (!service.vendors.map(v => v.toString()).includes(req.vendor._id.toString())) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this service'
@@ -616,13 +646,14 @@ export const deleteService = async (req, res) => {
     }
 
     // Check if vendor owns this service
-    if (service.vendorId.toString() !== req.vendor._id.toString()) {
+    if (!service.vendors.map(v => v.toString()).includes(req.vendor._id.toString())) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this service'
       });
     }
 
+    await Vendor.updateMany({ _id: { $in: service.vendors } }, { $pull: { services: service._id } });
     await service.deleteOne();
 
     res.status(200).json({
@@ -652,7 +683,7 @@ export const toggleServiceStatus = async (req, res) => {
     }
 
     // Check if vendor owns this service
-    if (service.vendorId.toString() !== req.vendor._id.toString()) {
+    if (!service.vendors.map(v => v.toString()).includes(req.vendor._id.toString())) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this service'
@@ -684,7 +715,7 @@ export const getServicesByCategory = async (req, res) => {
       category: req.params.category,
       isActive: true
     })
-      .populate('vendorId', 'name businessName phone email city state rating')
+      .populate('vendors', 'name businessName phone email city state rating')
       .sort({ createdAt: -1 });
 
     res.status(200).json({

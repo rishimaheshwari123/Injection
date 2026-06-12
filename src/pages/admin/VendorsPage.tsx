@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX } from 'lucide-react';
-import { vendorAPI } from '../../services/api';
+import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package } from 'lucide-react';
+import { vendorAPI, serviceAPI, bookingAPI } from '../../services/api';
 import { setVendors, setLoading, updateVendorStatus, addVendor, updateVendor, removeVendor } from '../../store/slices/vendorSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toast } from 'react-toastify';
@@ -10,6 +10,13 @@ const VendorsPage = () => {
   const dispatch = useAppDispatch();
   const { vendors, loading } = useAppSelector((state: any) => state.vendors);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalVendors, setTotalVendors] = useState(0);
+  const [jumpPage, setJumpPage] = useState('');
+  const [customLimit, setCustomLimit] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
@@ -17,16 +24,20 @@ const VendorsPage = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewVendor, setViewVendor] = useState<any>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [vendorBookings, setVendorBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
   
   console.log('VendorsPage render - vendors count:', vendors.length);
   console.log('Vendors:', vendors);
   
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', phone: '', alternatePhone: '',
+    gender: 'Male',
     businessName: '', businessType: 'Individual', registrationNumber: '',
     gstNumber: '', experience: '', specialization: '', address: '',
     city: '', state: '', pincode: '', bio: '', profileImage: '',
     isActive: true, isVerified: false,
+    services: [] as string[],
     bankDetails: {
       accountHolderName: '',
       accountNumber: '',
@@ -34,23 +45,55 @@ const VendorsPage = () => {
       bankName: ''
     }
   });
-  const [servicesOffered, setServicesOffered] = useState<string[]>([]);
   const [serviceAreas, setServiceAreas] = useState<string[]>([]);
+  const [servicesList, setServicesList] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchVendors();
+    fetchVendors(1, limit, activeSearch);
+    fetchServicesList();
   }, []);
 
-  const fetchVendors = async () => {
+  const fetchServicesList = async () => {
+    try {
+      const response = await serviceAPI.getAllServices();
+      if (response.data.success) {
+        setServicesList(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch services list:', error);
+    }
+  };
+
+  const fetchVendors = async (page = currentPage, pageSize = limit, searchVal = activeSearch) => {
     dispatch(setLoading(true));
     try {
-      const response = await vendorAPI.getAllVendors();
+      const response = await vendorAPI.getPaginatedVendors({
+        page,
+        limit: pageSize,
+        search: searchVal
+      });
       if (response.data.success) {
         dispatch(setVendors(response.data.data));
+        setTotalPages(response.data.totalPages || 1);
+        setTotalVendors(response.data.totalVendors || 0);
+        setCurrentPage(response.data.currentPage || 1);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to fetch vendors');
+    } finally {
+      dispatch(setLoading(false));
     }
+  };
+
+  const handleSearch = () => {
+    setActiveSearch(searchTerm);
+    fetchVendors(1, limit, searchTerm);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setActiveSearch('');
+    fetchVendors(1, limit, '');
   };
 
   const handleToggleStatus = async (vendorId: string, currentStatus: boolean, businessName: string) => {
@@ -61,6 +104,7 @@ const VendorsPage = () => {
       if (response.data.success) {
         dispatch(updateVendorStatus({ vendorId, isActive: !currentStatus, isVerified: !currentStatus }));
         toast.success(`${businessName} ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+        fetchVendors(currentPage, limit, activeSearch);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update vendor status');
@@ -81,6 +125,7 @@ const VendorsPage = () => {
                 if (response.data.success) {
                   dispatch(removeVendor(vendorId));
                   toast.success(`${businessName} deleted successfully!`);
+                  fetchVendors(currentPage, limit, activeSearch);
                 }
               } catch (error: any) {
                 toast.error(error.response?.data?.message || 'Failed to delete vendor');
@@ -106,6 +151,8 @@ const VendorsPage = () => {
       setFormData({
         ...vendor,
         password: '',
+        gender: vendor.gender || 'Male',
+        services: vendor.services ? vendor.services.map((s: any) => s._id || s) : [],
         bankDetails: vendor.bankDetails || {
           accountHolderName: '',
           accountNumber: '',
@@ -113,17 +160,18 @@ const VendorsPage = () => {
           bankName: ''
         }
       });
-      setServicesOffered(vendor.servicesOffered || []);
       setServiceAreas(vendor.serviceAreas || []);
     } else {
       setEditMode(false);
       setSelectedVendor(null);
       setFormData({
         name: '', email: '', password: '', phone: '', alternatePhone: '',
+        gender: 'Male',
         businessName: '', businessType: 'Individual', registrationNumber: '',
         gstNumber: '', experience: '', specialization: '', address: '',
         city: '', state: '', pincode: '', bio: '', profileImage: '',
         isActive: true, isVerified: false,
+        services: [],
         bankDetails: {
           accountHolderName: '',
           accountNumber: '',
@@ -131,16 +179,27 @@ const VendorsPage = () => {
           bankName: ''
         }
       });
-      setServicesOffered([]);
       setServiceAreas([]);
     }
     setShowModal(true);
   };
 
-  const handleViewVendor = (vendor: any) => {
+  const handleViewVendor = async (vendor: any) => {
     setViewVendor(vendor);
     setShowViewModal(true);
     setOpenDropdown(null);
+    setLoadingBookings(true);
+    setVendorBookings([]);
+    try {
+      const response = await bookingAPI.getAllBookings({ vendorId: vendor._id, limit: 1000 });
+      if (response.data.success) {
+        setVendorBookings(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch bookings for vendor:', error);
+    } finally {
+      setLoadingBookings(false);
+    }
   };
 
   const toggleDropdown = (vendorId: string) => {
@@ -159,7 +218,7 @@ const VendorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const submitData = { ...formData, servicesOffered, serviceAreas };
+      const submitData = { ...formData, serviceAreas };
       
       console.log('Submitting vendor data:', submitData);
       
@@ -172,6 +231,7 @@ const VendorsPage = () => {
           console.log('Vendor updated in Redux');
           toast.success('Vendor updated successfully!');
           setShowModal(false);
+          fetchVendors(currentPage, limit, activeSearch);
         }
       } else {
         console.log('Creating new vendor');
@@ -182,6 +242,7 @@ const VendorsPage = () => {
           console.log('Vendor added to Redux:', response.data.data);
           toast.success('Vendor created successfully!');
           setShowModal(false);
+          fetchVendors(1, limit, activeSearch);
         }
       }
     } catch (error: any) {
@@ -210,11 +271,7 @@ const VendorsPage = () => {
     }
   };
 
-  const filteredVendors = vendors.filter((vendor: any) =>
-    vendor.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVendors = vendors;
 
   return (
     <div>
@@ -227,10 +284,21 @@ const VendorsPage = () => {
           <button onClick={handleExportToExcel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Download size={20} /> Export
           </button>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input type="text" placeholder="Search vendors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none" />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input type="text" placeholder="Search vendors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none" />
+            </div>
+            <button onClick={handleSearch} className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all font-medium">
+              Search
+            </button>
+            {activeSearch && (
+              <button onClick={handleClearSearch} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -240,7 +308,8 @@ const VendorsPage = () => {
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#63D64F]"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-md ">
+        <>
+          <div className="bg-white rounded-xl shadow-md ">
           <div className="">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
@@ -249,6 +318,7 @@ const VendorsPage = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Owner</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Contact</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Services</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
@@ -271,6 +341,19 @@ const VendorsPage = () => {
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                         {vendor.businessType}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {vendor.services && vendor.services.length > 0 ? (
+                          vendor.services.map((s: any) => (
+                            <span key={s._id || s} className="px-2 py-0.5 rounded bg-green-50 text-green-700 text-xs border border-green-200">
+                              {s.serviceName || s}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">No services</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${vendor.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -307,7 +390,110 @@ const VendorsPage = () => {
             </table>
           </div>
         </div>
-      )}
+
+        {/* Pagination Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 font-medium">Show:</span>
+            <select
+              value={[5, 10, 20, 50, 100].includes(limit) && !customLimit ? limit : ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  const newLimit = parseInt(val);
+                  setLimit(newLimit);
+                  setCustomLimit('');
+                  fetchVendors(1, newLimit, activeSearch);
+                }
+              }}
+              className="px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm bg-white font-medium"
+            >
+              <option value="" disabled={!customLimit}>Select</option>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            
+            <input
+              type="number"
+              min={1}
+              placeholder="Custom"
+              value={customLimit}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomLimit(val);
+                if (val) {
+                  const newLimit = parseInt(val);
+                  if (newLimit > 0) {
+                    setLimit(newLimit);
+                    fetchVendors(1, newLimit, activeSearch);
+                  }
+                }
+              }}
+              className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm text-center font-medium"
+            />
+
+            <span className="text-sm text-gray-500 ml-2 font-medium">
+              Showing {vendors.length > 0 ? (currentPage - 1) * limit + 1 : 0} to {Math.min(currentPage * limit, totalVendors)} of {totalVendors} vendors
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => fetchVendors(currentPage - 1, limit, activeSearch)}
+                disabled={currentPage === 1 || loading}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Previous
+              </button>
+              
+              <span className="px-4 py-1.5 text-sm text-gray-700 bg-gray-50 border rounded-lg font-medium">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+
+              <button
+                onClick={() => fetchVendors(currentPage + 1, limit, activeSearch)}
+                disabled={currentPage === totalPages || totalPages === 0 || loading}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 border-l pl-4 border-gray-200">
+              <span className="text-sm text-gray-600">Go to page:</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages || 1}
+                value={jumpPage}
+                onChange={(e) => setJumpPage(e.target.value)}
+                placeholder="Page"
+                className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm text-center font-medium"
+              />
+              <button
+                onClick={() => {
+                  const targetPage = parseInt(jumpPage);
+                  if (targetPage >= 1 && targetPage <= totalPages) {
+                    fetchVendors(targetPage, limit, activeSearch);
+                    setJumpPage('');
+                  } else {
+                    toast.error(`Please enter a page between 1 and ${totalPages}`);
+                  }
+                }}
+                disabled={loading || !jumpPage}
+                className="px-3 py-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg text-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Go
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
 
       {/* Create/Edit Modal */}
       {showModal && (
@@ -347,6 +533,15 @@ const VendorsPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Alternate Phone</label>
                     <input type="tel" value={formData.alternatePhone} onChange={(e) => setFormData({...formData, alternatePhone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                    <select required value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]">
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -396,6 +591,52 @@ const VendorsPage = () => {
                     <textarea value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Offered Services</h3>
+                <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
+                  {servicesList.map((service) => (
+                    <label key={service._id} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded border border-slate-100">
+                      <input
+                        type="checkbox"
+                        checked={formData.services.includes(service._id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            services: checked 
+                              ? [...prev.services, service._id] 
+                              : prev.services.filter(id => id !== service._id)
+                          }));
+                        }}
+                        className="w-4 h-4 text-[#63D64F] border-gray-300 rounded focus:ring-[#63D64F]"
+                      />
+                      {service.image ? (
+                        <img
+                          src={service.image}
+                          alt={service.serviceName}
+                          className="w-10 h-10 object-cover rounded-md border"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-slate-100 rounded-md border flex items-center justify-center text-slate-400">
+                          <Package size={20} />
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-sm text-gray-700 font-semibold block">
+                          {service.serviceName}
+                        </span>
+                        <span className="text-xs text-gray-500 block">
+                          {service.category} - ₹{service.basePrice}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                  {servicesList.length === 0 && (
+                    <p className="text-sm text-gray-500">No services created yet.</p>
+                  )}
                 </div>
               </div>
 
@@ -510,13 +751,78 @@ const VendorsPage = () => {
                   <div><p className="text-sm text-gray-600">Owner Name</p><p className="font-medium text-gray-800">{viewVendor.name}</p></div>
                   <div><p className="text-sm text-gray-600">Email</p><p className="font-medium text-gray-800">{viewVendor.email}</p></div>
                   <div><p className="text-sm text-gray-600">Phone</p><p className="font-medium text-gray-800">{viewVendor.phone}</p></div>
-                  <div><p className="text-sm text-gray-600">Status</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${viewVendor.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {viewVendor.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
+                  <div><p className="text-sm text-gray-600">Gender</p><p className="font-medium text-gray-800">{viewVendor.gender || 'Male'}</p></div>
                   <div className="md:col-span-2"><p className="text-sm text-gray-600">Address</p><p className="font-medium text-gray-800">{viewVendor.address}, {viewVendor.city}, {viewVendor.state} - {viewVendor.pincode}</p></div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600 font-semibold">Offered Services</p>
+                    <p className="font-medium text-gray-800 text-sm">
+                      {viewVendor.services && viewVendor.services.length > 0 
+                        ? viewVendor.services.map((s: any) => s.serviceName).join(', ') 
+                        : "None"}
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Booked Services (Booking History)</h3>
+                {loadingBookings ? (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#63D64F]"></div>
+                  </div>
+                ) : vendorBookings.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Patient</th>
+                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Services</th>
+                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Total Price</th>
+                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Date / Slot</th>
+                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {vendorBookings.map((booking: any) => (
+                          <tr key={booking._id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2">
+                              <p className="font-medium text-gray-800">{booking.patientName}</p>
+                              <p className="text-xs text-gray-500">{booking.email}</p>
+                            </td>
+                            <td className="px-4 py-2">
+                              <ul className="list-disc list-inside">
+                                {booking.selectedServices?.map((item: any, idx: number) => (
+                                  <li key={idx} className="text-xs text-gray-700">
+                                    {item.serviceName} x{item.quantity}
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                            <td className="px-4 py-2 text-gray-800 font-semibold">
+                              ₹{booking.grandTotal}
+                            </td>
+                            <td className="px-4 py-2 text-xs text-gray-600">
+                              {booking.preferredTimeSlot}
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                                booking.bookingStatus === 'accepted' ? 'bg-blue-100 text-blue-800' :
+                                booking.bookingStatus === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                                booking.bookingStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {booking.bookingStatus}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic py-2">No bookings associated with this vendor.</p>
+                )}
               </div>
             </div>
             <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end">

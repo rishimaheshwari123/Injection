@@ -61,12 +61,11 @@ const serviceSchema = new mongoose.Schema({
     default: 'At Home'
   },
   
-  // Vendor Reference
-  vendorId: {
+  // Vendor References
+  vendors: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vendor',
-    required: [true, 'Vendor ID is required']
-  },
+    ref: 'Vendor'
+  }],
   
   // Service Status
   isActive: {
@@ -95,7 +94,7 @@ const serviceSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-serviceSchema.index({ vendorId: 1, isActive: 1 });
+serviceSchema.index({ vendors: 1, isActive: 1 });
 serviceSchema.index({ category: 1, isActive: 1 });
 
 const Service = mongoose.model('Service', serviceSchema);

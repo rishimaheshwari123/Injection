@@ -9,7 +9,8 @@ import {
   deactivateVendor,
   deleteVendor,
   updateVendorByAdmin,
-  createVendorByAdmin
+  createVendorByAdmin,
+  getAllVendorsByPagination
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -72,12 +73,6 @@ const router = express.Router();
  *                 type: string
  *                 pattern: '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$'
  *                 description: GST number
- *               servicesOffered:
- *                 type: array
- *                 items:
- *                   type: string
- *                   enum: [Home Injections, IV Drip Services, Wound Dressing, Day Care at Home, Patient Monitoring, Old Age Patient Care, 24 HR Patient Care, Field Survey Service, Data Collection Service, Field Sample Collection, Community Survey, Awareness Activities, Lab-based Training, BSC/MSC Training, DMLT Training, Nursing Training, Dissertation Program, Placement Services]
- *                 description: Services offered by the vendor
  *               qualifications:
  *                 type: array
  *                 items:
@@ -182,6 +177,7 @@ router.post('/login', vendorLogin);
  *         description: List of all vendors
  */
 router.get('/', protect, adminOnly, getAllVendors);
+router.get('/admin/paginated', protect, adminOnly, getAllVendorsByPagination);
 router.get('/getAll',getAllVendors);
 
 /**
@@ -225,10 +221,6 @@ router.get('/:id', getVendorById);
  *                 type: string
  *               businessName:
  *                 type: string
- *               servicesOffered:
- *                 type: array
- *                 items:
- *                   type: string
  *               address:
  *                 type: string
  *               city:

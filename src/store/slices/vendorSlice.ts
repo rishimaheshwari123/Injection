@@ -7,7 +7,8 @@ interface Vendor {
   phone: string;
   businessName: string;
   businessType: string;
-  servicesOffered: string[];
+  gender: string;
+  services: string[];
   address: string;
   city: string;
   state: string;

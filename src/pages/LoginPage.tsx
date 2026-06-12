@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../services/api';
@@ -123,6 +123,14 @@ const LoginPage = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-600">
+            Want to offer services?{' '}
+            <Link to="/vendor-register" className="font-semibold text-[#3DB9A6] hover:underline">
+              Become a Service Partner
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   <Footer/>

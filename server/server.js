@@ -22,6 +22,7 @@ import advertisementRoutes from './routes/advertisement.js';
 import jobRoutes from './routes/job.js';
 import blogRoutes from './routes/blogRoutes.js';
 import adminSettingRoutes from './routes/adminSettingRoutes.js';
+import userBookingRoutes from './routes/userBookingRoutes.js';
 import fs from 'fs';
 
 // Load env vars
@@ -78,6 +79,7 @@ app.use('/api/advertisements', advertisementRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/admin-settings', adminSettingRoutes);
+app.use('/api/user-bookings', userBookingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

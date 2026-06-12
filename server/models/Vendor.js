@@ -31,6 +31,11 @@ const vendorSchema = new mongoose.Schema({
     type: String,
     match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
   },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other'],
+    default: 'Male'
+  },
   
   // Business Information
   businessName: {
@@ -53,29 +58,9 @@ const vendorSchema = new mongoose.Schema({
     // match: [/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Please provide a valid GST number']
   },
   
-  // Services Offered
-  servicesOffered: [{
-    type: String,
-    enum: [
-      'Home Injections',
-      'IV Drip Services',
-      'Wound Dressing',
-      'Day Care at Home',
-      'Patient Monitoring',
-      'Old Age Patient Care',
-      '24 HR Patient Care',
-      'Field Survey Service',
-      'Data Collection Service',
-      'Field Sample Collection',
-      'Community Survey',
-      'Awareness Activities',
-      'Lab-based Training',
-      'BSC/MSC Training',
-      'DMLT Training',
-      'Nursing Training',
-      'Dissertation Program',
-      'Placement Services'
-    ]
+  services: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Service'
   }],
   
   // Professional Details

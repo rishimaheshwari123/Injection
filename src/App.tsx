@@ -38,6 +38,7 @@ import SupportPage from './pages/SupportPage'
 import PermissionGuard from './components/PermissionGuard'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
+import VendorRegisterPage from './pages/VendorRegisterPage'
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -55,6 +56,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/vendor-register" element={<VendorRegisterPage />} />
         
         {/* Public Routes with Navigation and Footer */}
         <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />

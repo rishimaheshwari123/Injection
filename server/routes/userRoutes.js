@@ -11,7 +11,8 @@ import {
   deleteUser,
   getMe,
   createUserByAdmin,
-  updateUserByAdmin
+  updateUserByAdmin,
+  getAllUsersByPagination
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -48,6 +49,7 @@ router.get('/me', protect, getMe);
  *         description: List of all users
  */
 router.get('/', protect, adminOnly, getAllUsers);
+router.get('/admin/paginated', protect, adminOnly, getAllUsersByPagination);
 
 /**
  * @swagger

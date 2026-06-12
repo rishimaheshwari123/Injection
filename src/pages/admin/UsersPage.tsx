@@ -33,6 +33,13 @@ const UsersPage = () => {
   const dispatch = useAppDispatch();
   const { users, loading } = useAppSelector((state: any) => state.users);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [jumpPage, setJumpPage] = useState('');
+  const [customLimit, setCustomLimit] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -56,19 +63,39 @@ const UsersPage = () => {
   console.log('Users:', users);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1, limit, activeSearch);
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = currentPage, pageSize = limit, searchVal = activeSearch) => {
     dispatch(setLoading(true));
     try {
-      const response = await userAPI.getAllUsers();
+      const response = await userAPI.getPaginatedUsers({
+        page,
+        limit: pageSize,
+        search: searchVal
+      });
       if (response.data.success) {
         dispatch(setUsers(response.data.data));
+        setTotalPages(response.data.totalPages || 1);
+        setTotalUsers(response.data.totalUsers || 0);
+        setCurrentPage(response.data.currentPage || 1);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to fetch users');
+    } finally {
+      dispatch(setLoading(false));
     }
+  };
+
+  const handleSearch = () => {
+    setActiveSearch(searchTerm);
+    fetchUsers(1, limit, searchTerm);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setActiveSearch('');
+    fetchUsers(1, limit, '');
   };
 
   const handleToggleStatus = async (userId: string, currentStatus: boolean, userName: string) => {
@@ -99,6 +126,7 @@ const UsersPage = () => {
                   if (response.data.success) {
                     dispatch(removeUser(userId));
                     toast.success(`${userName} deleted successfully!`);
+                    fetchUsers(currentPage, limit, activeSearch);
                   }
                 } catch (error: any) {
                   toast.error(error.response?.data?.message || 'Failed to delete user');
@@ -197,6 +225,7 @@ const UsersPage = () => {
           console.log('User updated in Redux');
           toast.success('User updated successfully!');
           setShowModal(false);
+          fetchUsers(currentPage, limit, activeSearch);
         }
       } else {
         console.log('Creating new user');
@@ -207,6 +236,7 @@ const UsersPage = () => {
           console.log('User added to Redux:', response.data.data);
           toast.success('User created successfully!');
           setShowModal(false);
+          fetchUsers(1, limit, activeSearch);
         }
       }
     } catch (error: any) {
@@ -235,10 +265,7 @@ const UsersPage = () => {
     }
   };
 
-  const filteredUsers = users.filter((user: any) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users;
 
   return (
     <div>
@@ -251,10 +278,21 @@ const UsersPage = () => {
           <button onClick={handleExportToExcel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Download size={20} /> Export
           </button>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none" />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none" />
+            </div>
+            <button onClick={handleSearch} className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all font-medium">
+              Search
+            </button>
+            {activeSearch && (
+              <button onClick={handleClearSearch} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -264,7 +302,8 @@ const UsersPage = () => {
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#63D64F]"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-md ">
+        <>
+          <div className="bg-white rounded-xl shadow-md ">
           <div className="">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
@@ -377,7 +416,110 @@ const UsersPage = () => {
             </table>
           </div>
         </div>
-      )}
+
+        {/* Pagination Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 font-medium">Show:</span>
+            <select
+              value={[5, 10, 20, 50, 100].includes(limit) && !customLimit ? limit : ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  const newLimit = parseInt(val);
+                  setLimit(newLimit);
+                  setCustomLimit('');
+                  fetchUsers(1, newLimit, activeSearch);
+                }
+              }}
+              className="px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm bg-white font-medium"
+            >
+              <option value="" disabled={!customLimit}>Select</option>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            
+            <input
+              type="number"
+              min={1}
+              placeholder="Custom"
+              value={customLimit}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomLimit(val);
+                if (val) {
+                  const newLimit = parseInt(val);
+                  if (newLimit > 0) {
+                    setLimit(newLimit);
+                    fetchUsers(1, newLimit, activeSearch);
+                  }
+                }
+              }}
+              className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm text-center font-medium"
+            />
+
+            <span className="text-sm text-gray-500 ml-2 font-medium">
+              Showing {users.length > 0 ? (currentPage - 1) * limit + 1 : 0} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => fetchUsers(currentPage - 1, limit, activeSearch)}
+                disabled={currentPage === 1 || loading}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Previous
+              </button>
+              
+              <span className="px-4 py-1.5 text-sm text-gray-700 bg-gray-50 border rounded-lg font-medium">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+
+              <button
+                onClick={() => fetchUsers(currentPage + 1, limit, activeSearch)}
+                disabled={currentPage === totalPages || totalPages === 0 || loading}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 border-l pl-4 border-gray-200">
+              <span className="text-sm text-gray-600">Go to page:</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages || 1}
+                value={jumpPage}
+                onChange={(e) => setJumpPage(e.target.value)}
+                placeholder="Page"
+                className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] outline-none text-sm text-center font-medium"
+              />
+              <button
+                onClick={() => {
+                  const targetPage = parseInt(jumpPage);
+                  if (targetPage >= 1 && targetPage <= totalPages) {
+                    fetchUsers(targetPage, limit, activeSearch);
+                    setJumpPage('');
+                  } else {
+                    toast.error(`Please enter a page between 1 and ${totalPages}`);
+                  }
+                }}
+                disabled={loading || !jumpPage}
+                className="px-3 py-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg text-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Go
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

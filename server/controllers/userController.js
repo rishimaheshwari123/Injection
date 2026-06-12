@@ -427,3 +427,49 @@ export const getMe = async (req, res) => {
     });
   }
 };
+
+// @desc    Get all users with pagination and search (Admin)
+// @route   GET /api/users/admin/paginated
+// @access  Private/Admin
+export const getAllUsersByPagination = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    let query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const totalUsers = await User.countDocuments(query);
+    const totalPages = Math.ceil(totalUsers / limitNum);
+
+    const users = await User.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      totalUsers,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

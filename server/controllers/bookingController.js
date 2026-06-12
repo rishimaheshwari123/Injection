@@ -554,13 +554,17 @@ export const rescheduleBooking = async (req, res) => {
 // @access  Private/Admin
 export const getAllBookings = async (req, res) => {
   try {
-    const { status, date, page = 1, limit = 10, search, prescriptionStatus, reportStatus } = req.query;
+    const { status, date, page = 1, limit = 10, search, prescriptionStatus, reportStatus, vendorId } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
     let query = {};
+
+    if (vendorId) {
+      query.vendorId = vendorId;
+    }
 
     if (status) {
       query.bookingStatus = status;
