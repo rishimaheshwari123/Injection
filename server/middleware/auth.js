@@ -78,3 +78,15 @@ export const vendorOnly = (req, res, next) => {
     });
   }
 };
+
+// User only access
+export const userOnly = (req, res, next) => {
+  if (req.user && !req.vendor) {
+    next();
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. User only.'
+    });
+  }
+};

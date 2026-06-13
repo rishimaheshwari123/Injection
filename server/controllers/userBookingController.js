@@ -163,15 +163,17 @@ export const createUserBooking = async (req, res) => {
     }
 
     // Filter by staff gender preference if specified
+    // If 'Any Available', no gender filter is applied (both Male and Female vendors will match)
     if (staffPreference === 'Male Staff') {
       vendorQuery.gender = 'Male';
     } else if (staffPreference === 'Female Staff') {
       vendorQuery.gender = 'Female';
     }
+    // For 'Any Available' or any other value, no gender restriction is added
 
     const matchingVendors = await Vendor.find(vendorQuery);
 
-    // Create notifications for matched vendors
+    // Create notifications for matched vendors (can be multiple vendors)
     if (matchingVendors.length > 0) {
       const notifications = matchingVendors.map(vendor => ({
         vendorId: vendor._id,

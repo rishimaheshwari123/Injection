@@ -5,12 +5,12 @@ import {
   acceptUserBooking,
   markNotificationRead
 } from '../controllers/userBookingController.js';
-import { protect, vendorOnly } from '../middleware/auth.js';
+import { protect, vendorOnly, userOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // User auth route to create booking
-router.post('/create', protect, createUserBooking);
+router.post('/create', protect, userOnly, createUserBooking);
 
 // Vendor auth routes
 router.get('/notifications', protect, vendorOnly, getVendorNotifications);
