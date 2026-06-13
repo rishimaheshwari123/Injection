@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package } from 'lucide-react';
+import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText } from 'lucide-react';
 import { vendorAPI, serviceAPI, bookingAPI } from '../../services/api';
 import { setVendors, setLoading, updateVendorStatus, addVendor, updateVendor, removeVendor } from '../../store/slices/vendorSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -43,10 +43,67 @@ const VendorsPage = () => {
       accountNumber: '',
       ifscCode: '',
       bankName: ''
+    },
+    documents: {
+      identityProof: { type: 'Identity Proof', url: '' },
+      qualificationCertificate: { type: 'Qualification Certificate', url: '' },
+      businessLicense: { type: 'Business License', url: '' },
+      insuranceCertificate: { type: 'Insurance Certificate', url: '' }
     }
   });
   const [serviceAreas, setServiceAreas] = useState<string[]>([]);
   const [servicesList, setServicesList] = useState<any[]>([]);
+
+  const [uploadingFiles, setUploadingFiles] = useState({
+    profileImage: false,
+    identityProof: false,
+    qualificationCertificate: false,
+    businessLicense: false,
+    insuranceCertificate: false
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds 5MB limit');
+      return;
+    }
+
+    setUploadingFiles(prev => ({ ...prev, [fieldName]: true }));
+    try {
+      const response = await vendorAPI.uploadFile(file);
+      if (response.data.success) {
+        const fileUrl = response.data.data.url;
+        if (fieldName === 'profileImage') {
+          setFormData(prev => ({
+            ...prev,
+            profileImage: fileUrl
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            documents: {
+              ...prev.documents,
+              [fieldName]: {
+                type: fieldName === 'identityProof' ? 'Identity Proof' 
+                      : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
+                      : fieldName === 'businessLicense' ? 'Business License'
+                      : 'Insurance Certificate',
+                url: fileUrl
+              }
+            }
+          }));
+        }
+        toast.success(`${file.name} uploaded successfully!`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'File upload failed');
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [fieldName]: false }));
+    }
+  };
 
   useEffect(() => {
     fetchVendors(1, limit, activeSearch);
@@ -158,7 +215,26 @@ const VendorsPage = () => {
           accountNumber: '',
           ifscCode: '',
           bankName: ''
-        }
+        },
+        documents: {
+          identityProof: { 
+            type: 'Identity Proof', 
+            url: vendor.documents?.identityProof?.url || '' 
+          },
+          qualificationCertificate: { 
+            type: 'Qualification Certificate', 
+            url: vendor.documents?.qualificationCertificate?.url || '' 
+          },
+          businessLicense: { 
+            type: 'Business License', 
+            url: vendor.documents?.businessLicense?.url || '' 
+          },
+          insuranceCertificate: { 
+            type: 'Insurance Certificate', 
+            url: vendor.documents?.insuranceCertificate?.url || '' 
+          }
+        },
+        profileImage: vendor.profileImage || ''
       });
       setServiceAreas(vendor.serviceAreas || []);
     } else {
@@ -177,6 +253,12 @@ const VendorsPage = () => {
           accountNumber: '',
           ifscCode: '',
           bankName: ''
+        },
+        documents: {
+          identityProof: { type: 'Identity Proof', url: '' },
+          qualificationCertificate: { type: 'Qualification Certificate', url: '' },
+          businessLicense: { type: 'Business License', url: '' },
+          insuranceCertificate: { type: 'Insurance Certificate', url: '' }
         }
       });
       setServiceAreas([]);
@@ -218,7 +300,19 @@ const VendorsPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const submitData = { ...formData, serviceAreas };
+      const cleanedDocuments: any = {};
+      Object.entries(formData.documents || {}).forEach(([key, value]: [string, any]) => {
+        if (value && value.url) {
+          cleanedDocuments[key] = value;
+        }
+      });
+
+      const submitData = { 
+        ...formData, 
+        serviceAreas,
+        documents: Object.keys(cleanedDocuments).length > 0 ? cleanedDocuments : undefined,
+        profileImage: formData.profileImage || undefined
+      };
       
       console.log('Submitting vendor data:', submitData);
       
@@ -697,6 +791,104 @@ const VendorsPage = () => {
               </div>
 
               <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Profile Image & Documents</h3>
+                
+                {/* Profile Image */}
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row items-center gap-6 mb-4">
+                  <div className="relative w-20 h-20 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center flex-shrink-0 animate-pulse-slow">
+                    {formData.profileImage ? (
+                      <img src={formData.profileImage} alt="Profile Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-gray-400 text-xs">No Image</span>
+                    )}
+                    {uploadingFiles.profileImage && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h4 className="text-sm font-semibold text-gray-800">Profile Image</h4>
+                    <p className="text-xs text-gray-500 mt-1 mb-2">Upload a profile image. Max 5MB (JPG, PNG).</p>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer text-xs font-semibold shadow-sm">
+                      <Plus size={14} className="text-[#3DB9A6]" />
+                      {formData.profileImage ? 'Change Image' : 'Choose Image'}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'profileImage')} disabled={uploadingFiles.profileImage} />
+                    </label>
+                    {formData.profileImage && (
+                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, profileImage: '' }))} className="ml-3 inline-flex items-center gap-1 text-red-500 hover:text-red-700 text-xs font-semibold">
+                        <X size={14} /> Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Documents Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'identityProof', label: 'Identity Proof', desc: 'Aadhaar, Passport, or Voter ID' },
+                    { key: 'qualificationCertificate', label: 'Qualification Certificate', desc: 'Degree or Diploma certificate' },
+                    { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license' },
+                    { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity insurance' }
+                  ].map((doc) => {
+                    const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate';
+                    const fileUrl = formData.documents?.[key]?.url;
+                    const isUploading = uploadingFiles[key];
+                    return (
+                      <div key={doc.key} className="border border-gray-200 rounded-xl p-4 bg-white hover:border-gray-300 transition-all flex flex-col justify-between shadow-sm">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-800">{doc.label}</h4>
+                            <p className="text-[11px] text-gray-500 mt-0.5">{doc.desc}</p>
+                          </div>
+                          {fileUrl && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-semibold rounded-full border border-green-200">
+                              <Check size={10} /> Uploaded
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+                          {fileUrl ? (
+                            <>
+                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3DB9A6] hover:underline font-semibold flex items-center gap-1">
+                                <FileText size={14} /> View File
+                              </a>
+                              <button type="button" onClick={() => setFormData(prev => ({
+                                ...prev,
+                                documents: {
+                                  ...prev.documents,
+                                  [key]: { type: prev.documents[key].type, url: '' }
+                                }
+                              }))} className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1">
+                                <X size={14} /> Remove
+                              </button>
+                            </>
+                          ) : (
+                            <label className={`inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg transition cursor-pointer text-xs font-semibold shadow-sm w-full justify-center ${
+                              isUploading ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                            }`}>
+                              {isUploading ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-400 border-t-transparent"></div>
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Plus size={14} className="text-[#3DB9A6]" /> Upload
+                                </>
+                              )}
+                              <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, key)} disabled={isUploading} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Status</h3>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
@@ -757,9 +949,61 @@ const VendorsPage = () => {
                     <p className="text-sm text-gray-600 font-semibold">Offered Services</p>
                     <p className="font-medium text-gray-800 text-sm">
                       {viewVendor.services && viewVendor.services.length > 0 
-                        ? viewVendor.services.map((s: any) => s.serviceName).join(', ') 
+                        ? viewVendor.services.map((s: any) => s.serviceName || s).join(', ') 
                         : "None"}
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 animate-fadeIn">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Profile & Documents</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Profile image view */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      {viewVendor.profileImage ? (
+                        <img src={viewVendor.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-gray-400 text-[10px]">No Profile</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Profile Image</p>
+                      {viewVendor.profileImage ? (
+                        <a href={viewVendor.profileImage} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3DB9A6] hover:underline font-medium">View Full Image</a>
+                      ) : (
+                        <p className="text-xs text-gray-500">Not uploaded</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Documents list */}
+                  <div className="md:col-span-2 space-y-2">
+                    <p className="text-sm font-semibold text-gray-700">Uploaded Documents</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { key: 'identityProof', label: 'Identity Proof' },
+                        { key: 'qualificationCertificate', label: 'Qualification Certificate' },
+                        { key: 'businessLicense', label: 'Business License' },
+                        { key: 'insuranceCertificate', label: 'Insurance Certificate' }
+                      ].map((doc) => {
+                        const fileUrl = viewVendor.documents?.[doc.key]?.url;
+                        return (
+                          <div key={doc.key} className="p-3 border rounded-lg bg-gray-50 flex items-center justify-between text-xs shadow-xs hover:border-slate-300 transition-all">
+                            <div>
+                              <p className="font-semibold text-gray-700">{doc.label}</p>
+                              <p className="text-gray-500 text-[10px] mt-0.5">{fileUrl ? 'Available' : 'Not Uploaded'}</p>
+                            </div>
+                            {fileUrl && (
+                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-white border rounded text-[#3DB9A6] hover:bg-gray-50 font-semibold shadow-xs">
+                                View File
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

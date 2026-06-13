@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Briefcase, MapPin, CreditCard, ChevronRight, ChevronLeft, Check, Package } from 'lucide-react';
+import { User, Briefcase, MapPin, CreditCard, ChevronRight, ChevronLeft, Check, Package, Upload, FileText, X } from 'lucide-react';
 import { vendorAPI, serviceAPI } from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -35,8 +35,66 @@ const VendorRegisterPage = () => {
       ifscCode: '',
       bankName: ''
     },
-    services: [] as string[]
+    services: [] as string[],
+    profileImage: '',
+    documents: {
+      identityProof: { type: 'Identity Proof', url: '' },
+      qualificationCertificate: { type: 'Qualification Certificate', url: '' },
+      businessLicense: { type: 'Business License', url: '' },
+      insuranceCertificate: { type: 'Insurance Certificate', url: '' }
+    }
   });
+
+  const [uploadingFiles, setUploadingFiles] = useState({
+    profileImage: false,
+    identityProof: false,
+    qualificationCertificate: false,
+    businessLicense: false,
+    insuranceCertificate: false
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds 5MB limit');
+      return;
+    }
+
+    setUploadingFiles(prev => ({ ...prev, [fieldName]: true }));
+    try {
+      const response = await vendorAPI.uploadFile(file);
+      if (response.data.success) {
+        const fileUrl = response.data.data.url;
+        if (fieldName === 'profileImage') {
+          setFormData(prev => ({
+            ...prev,
+            profileImage: fileUrl
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            documents: {
+              ...prev.documents,
+              [fieldName]: {
+                type: fieldName === 'identityProof' ? 'Identity Proof' 
+                      : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
+                      : fieldName === 'businessLicense' ? 'Business License'
+                      : 'Insurance Certificate',
+                url: fileUrl
+              }
+            }
+          }));
+        }
+        toast.success(`${file.name} uploaded successfully!`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'File upload failed');
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [fieldName]: false }));
+    }
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -103,6 +161,8 @@ const VendorRegisterPage = () => {
       if (!formData.city.trim()) return 'City is required';
       if (!formData.state.trim()) return 'State is required';
       if (!/^[0-9]{6}$/.test(formData.pincode)) return 'Provide a valid 6-digit pincode';
+    } else if (currentStep === 3) {
+      if (formData.services.length === 0) return 'Please select at least one service you offer';
     }
     return null;
   };
@@ -129,9 +189,18 @@ const VendorRegisterPage = () => {
 
     setLoading(true);
     try {
+      const cleanedDocuments: any = {};
+      Object.entries(formData.documents).forEach(([key, value]: [string, any]) => {
+        if (value.url) {
+          cleanedDocuments[key] = value;
+        }
+      });
+
       const submitData = {
         ...formData,
-        experience: formData.experience ? Number(formData.experience) : 0
+        experience: formData.experience ? Number(formData.experience) : 0,
+        documents: Object.keys(cleanedDocuments).length > 0 ? cleanedDocuments : undefined,
+        profileImage: formData.profileImage || undefined
       };
 
       const response = await vendorAPI.register(submitData);
@@ -164,7 +233,8 @@ const VendorRegisterPage = () => {
                   {[
                     { step: 1, label: 'Account Info', icon: User },
                     { step: 2, label: 'Business & Address', icon: MapPin },
-                    { step: 3, label: 'Services & Banking', icon: CreditCard }
+                    { step: 3, label: 'Services & Banking', icon: CreditCard },
+                    { step: 4, label: 'Documents & Profile', icon: FileText }
                   ].map((s) => {
                     const Icon = s.icon;
                     return (
@@ -200,10 +270,10 @@ const VendorRegisterPage = () => {
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                   <div>
                     <h1 className="text-2xl font-bold text-slate-800">Become a Service Partner</h1>
-                    <p className="text-sm text-slate-500 mt-1">Complete your registration in 3 simple steps</p>
+                    <p className="text-sm text-slate-500 mt-1">Complete your registration in 4 simple steps</p>
                   </div>
                   <span className="px-3 py-1 bg-[#63D64F]/10 text-[#3DB9A6] text-xs font-semibold rounded-full uppercase tracking-wider">
-                    Step {currentStep} of 3
+                    Step {currentStep} of 4
                   </span>
                 </div>
 
@@ -427,6 +497,109 @@ const VendorRegisterPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* STEP 4: Documents & Profile Image */}
+                {currentStep === 4 && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <h3 className="text-md font-semibold text-slate-700 flex items-center gap-2 mb-4">
+                      <FileText size={18} className="text-[#3DB9A6]" /> Upload Documents & Profile Image
+                    </h3>
+
+                    {/* Profile Image Upload */}
+                    <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-200/80 flex flex-col md:flex-row items-center gap-6">
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-[#3DB9A6] bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        {formData.profileImage ? (
+                          <img src={formData.profileImage} alt="Profile Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={40} className="text-slate-400" />
+                        )}
+                        {uploadingFiles.profileImage && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 text-center md:text-left">
+                        <h4 className="text-sm font-semibold text-slate-800">Profile Image</h4>
+                        <p className="text-xs text-slate-500 mt-1 mb-3">Upload a clean professional portrait. Max 5MB (JPG, PNG).</p>
+                        <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer text-xs font-semibold shadow-sm">
+                          <Upload size={14} />
+                          {formData.profileImage ? 'Change Image' : 'Choose Image'}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'profileImage')} disabled={uploadingFiles.profileImage} />
+                        </label>
+                        {formData.profileImage && (
+                          <button type="button" onClick={() => setFormData(prev => ({ ...prev, profileImage: '' }))} className="ml-3 inline-flex items-center gap-1 text-red-500 hover:text-red-700 text-xs font-semibold">
+                            <X size={14} /> Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Documents Upload Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { key: 'identityProof', label: 'Identity Proof', desc: 'Aadhaar, Passport, or Voter ID' },
+                        { key: 'qualificationCertificate', label: 'Qualification Certificate', desc: 'Degree or Diploma certificate' },
+                        { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license document' },
+                        { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity or business insurance' }
+                      ].map((doc) => {
+                        const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate';
+                        const fileUrl = formData.documents[key].url;
+                        const isUploading = uploadingFiles[key];
+                        return (
+                          <div key={doc.key} className="border border-slate-200 rounded-xl p-4 bg-white hover:border-slate-300 transition-all flex flex-col justify-between shadow-sm">
+                            <div>
+                              <div className="flex items-start justify-between">
+                                <h4 className="text-sm font-semibold text-slate-800">{doc.label}</h4>
+                                {fileUrl && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-semibold rounded-full border border-green-200">
+                                    <Check size={10} /> Uploaded
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-500 mt-1 mb-4">{doc.desc}</p>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 mt-2 pt-3 border-t border-slate-100">
+                              {fileUrl ? (
+                                <>
+                                  <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3DB9A6] hover:underline font-semibold flex items-center gap-1">
+                                    <FileText size={14} /> View File
+                                  </a>
+                                  <button type="button" onClick={() => setFormData(prev => ({
+                                    ...prev,
+                                    documents: {
+                                      ...prev.documents,
+                                      [key]: { type: prev.documents[key].type, url: '' }
+                                    }
+                                  }))} className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1">
+                                    <X size={14} /> Remove
+                                  </button>
+                                </>
+                              ) : (
+                                <label className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition cursor-pointer text-xs font-semibold shadow-sm w-full justify-center ${
+                                  isUploading ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                }`}>
+                                  {isUploading ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-slate-400 border-t-transparent"></div>
+                                      Uploading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload size={14} /> Upload Document
+                                    </>
+                                  )}
+                                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, key)} disabled={isUploading} />
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Navigation Footer */}
@@ -440,7 +613,7 @@ const VendorRegisterPage = () => {
                   <div />
                 )}
 
-                {currentStep < 3 ? (
+                {currentStep < 4 ? (
                   <button type="button" onClick={handleNext}
                     className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition font-medium">
                     Next <ChevronRight size={18} />

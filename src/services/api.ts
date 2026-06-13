@@ -70,6 +70,15 @@ export const vendorAPI = {
   deleteVendor: (id: string) => api.delete(API_ENDPOINTS.VENDORS.BY_ID(id)),
   updateProfile: (data: any) =>
     api.put(API_ENDPOINTS.VENDORS.UPDATE_PROFILE, data),
+  uploadFile: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/vendors/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 // Service APIs
