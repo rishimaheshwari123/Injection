@@ -1,6 +1,7 @@
 import Vendor from '../models/Vendor.js';
 import Service from '../models/Service.js';
 import jwt from 'jsonwebtoken';
+import cloudinary from '../config/cloudinary.js';
 
 // Generate JWT Token
 const generateToken = (id, role) => {
@@ -798,3 +799,50 @@ export const getAllVendorsByPagination = async (req, res) => {
     });
   }
 };
+
+// @desc    Upload vendor document/image
+// @route   POST /api/vendors/upload
+// @access  Public
+export const uploadVendorFile = async (req, res) => {
+  try {
+    if (!req.files || (!req.files.file && !req.files.image)) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const uploadedFile = req.files.file || req.files.image;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+    if (!allowedTypes.includes(uploadedFile.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type. Only JPG, PNG, GIF, and PDF are allowed'
+      });
+    }
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(uploadedFile.tempFilePath, {
+      folder: 'vendor_documents',
+      resource_type: 'auto'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'File uploaded successfully',
+      data: {
+        url: result.secure_url,
+        publicId: result.public_id
+      }
+    });
+  } catch (error) {
+    console.error('Vendor upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to upload file'
+    });
+  }
+};
+

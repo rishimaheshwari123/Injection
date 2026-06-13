@@ -107,20 +107,20 @@ const vendorSchema = new mongoose.Schema({
   // Documents
   documents: {
     identityProof: {
-      type: String,
-      url: String
+      type: { type: String },
+      url: { type: String }
     },
     qualificationCertificate: {
-      type: String,
-      url: String
+      type: { type: String },
+      url: { type: String }
     },
     businessLicense: {
-      type: String,
-      url: String
+      type: { type: String },
+      url: { type: String }
     },
     insuranceCertificate: {
-      type: String,
-      url: String
+      type: { type: String },
+      url: { type: String }
     }
   },
   

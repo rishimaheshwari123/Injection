@@ -10,7 +10,8 @@ import {
   deleteVendor,
   updateVendorByAdmin,
   createVendorByAdmin,
-  getAllVendorsByPagination
+  getAllVendorsByPagination,
+  uploadVendorFile
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -121,6 +122,8 @@ const router = express.Router();
  *         description: Vendor already exists or validation error
  */
 router.post('/register', vendorRegister);
+router.post('/upload', uploadVendorFile);
+
 
 /**
  * @swagger
