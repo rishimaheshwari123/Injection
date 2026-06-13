@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText } from 'lucide-react';
-import { vendorAPI, serviceAPI, bookingAPI } from '../../services/api';
+import { vendorAPI, serviceAPI, bookingAPI, vendorServiceRequestAPI } from '../../services/api';
 import { setVendors, setLoading, updateVendorStatus, addVendor, updateVendor, removeVendor } from '../../store/slices/vendorSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toast } from 'react-toastify';
@@ -26,6 +26,13 @@ const VendorsPage = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [vendorBookings, setVendorBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  
+  // Service Request States
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
+  const [vendorRequests, setVendorRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [selectedServicesToRequest, setSelectedServicesToRequest] = useState<string[]>([]);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   
   console.log('VendorsPage render - vendors count:', vendors.length);
   console.log('Vendors:', vendors);
@@ -284,6 +291,78 @@ const VendorsPage = () => {
     }
   };
 
+  const handleOpenRequestsModal = async (vendor: any) => {
+    setSelectedVendor(vendor);
+    setShowRequestsModal(true);
+    setLoadingRequests(true);
+    setSelectedServicesToRequest([]);
+    try {
+      const response = await vendorServiceRequestAPI.getAllRequests();
+      if (response.data.success) {
+        const filtered = response.data.data.filter((r: any) => r.vendor?._id === vendor._id);
+        setVendorRequests(filtered);
+      }
+    } catch (error) {
+      console.error('Failed to fetch requests for vendor:', error);
+      toast.error('Failed to load service requests');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleCreateRequestOnBehalf = async () => {
+    if (selectedServicesToRequest.length === 0 || !selectedVendor) {
+      toast.error('Please select at least one service');
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      const response = await vendorServiceRequestAPI.createRequest(selectedServicesToRequest, selectedVendor._id);
+      if (response.data.success) {
+        toast.success('Service request submitted successfully!');
+        setSelectedServicesToRequest([]);
+        // Re-fetch vendor requests
+        const requestsRes = await vendorServiceRequestAPI.getAllRequests();
+        if (requestsRes.data.success) {
+          const filtered = requestsRes.data.data.filter((r: any) => r.vendor?._id === selectedVendor._id);
+          setVendorRequests(filtered);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to submit service request');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
+  const handleProcessRequestDirectly = async (requestId: string, status: 'approved' | 'rejected') => {
+    try {
+      const remarks = status === 'approved' 
+        ? 'Approved directly by admin from vendor section.' 
+        : 'Rejected directly by admin from vendor section.';
+      const response = await vendorServiceRequestAPI.processRequest(requestId, status, remarks);
+      if (response.data.success) {
+        toast.success(`Request ${status} successfully!`);
+        // Re-fetch requests
+        const requestsRes = await vendorServiceRequestAPI.getAllRequests();
+        if (requestsRes.data.success) {
+          const filtered = requestsRes.data.data.filter((r: any) => r.vendor?._id === selectedVendor._id);
+          setVendorRequests(filtered);
+        }
+        // Fetch vendors to refresh their assigned services list
+        fetchVendors(currentPage, limit, activeSearch);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to process request');
+    }
+  };
+
+  const getUnassignedServices = () => {
+    if (!selectedVendor || !servicesList) return [];
+    const assignedIds = selectedVendor.services ? selectedVendor.services.map((s: any) => (s._id || s).toString()) : [];
+    return servicesList.filter(s => s.isActive && !assignedIds.includes(s._id.toString()));
+  };
+
   const toggleDropdown = (vendorId: string) => {
     setOpenDropdown(openDropdown === vendorId ? null : vendorId);
   };
@@ -461,14 +540,17 @@ const VendorsPage = () => {
                           <MoreVertical size={20} />
                         </button>
                         {openDropdown === vendor._id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10 font-sans">
                             <button onClick={() => handleViewVendor(vendor)} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2">
                               <Eye size={16} className="text-green-600" /> View Profile
                             </button>
                             <button onClick={() => { handleOpenModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2">
                               <Edit size={16} className="text-blue-600" /> Edit Vendor
                             </button>
-                            <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2">
+                            <button onClick={() => { handleOpenRequestsModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 border-t">
+                              <FileText size={16} className="text-purple-600" /> Service Requests
+                            </button>
+                            <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 border-t">
                               {vendor.isActive ? <><UserX size={16} className="text-orange-600" /> Deactivate</> : <><UserCheck size={16} className="text-green-600" /> Activate</>}
                             </button>
                             <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t">
@@ -1071,6 +1153,140 @@ const VendorsPage = () => {
             </div>
             <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end">
               <button onClick={() => setShowViewModal(false)} className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Requests Modal */}
+      {showRequestsModal && selectedVendor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Service Requests</h2>
+                <p className="text-sm text-gray-500 mt-1">{selectedVendor.businessName} ({selectedVendor.name})</p>
+              </div>
+              <button onClick={() => { setShowRequestsModal(false); setSelectedVendor(null); }} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column - Submit New Request */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Submit Request on Behalf</h3>
+                
+                {getUnassignedServices().length === 0 ? (
+                  <p className="text-sm text-gray-500 italic py-4">All available services are already assigned to this vendor.</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600">Select services to request on behalf of this vendor:</p>
+                    <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-2">
+                      {getUnassignedServices().map((service) => (
+                        <label key={service._id} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded border border-slate-100">
+                          <input
+                            type="checkbox"
+                            checked={selectedServicesToRequest.includes(service._id)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedServicesToRequest(prev => 
+                                checked ? [...prev, service._id] : prev.filter(id => id !== service._id)
+                              );
+                            }}
+                            className="w-4 h-4 text-[#63D64F] border-gray-300 rounded focus:ring-[#63D64F]"
+                          />
+                          <div>
+                            <span className="text-sm text-gray-805 font-semibold block">{service.serviceName}</span>
+                            <span className="text-xs text-gray-500 block">{service.category} • ₹{service.basePrice}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    
+                    <button
+                      onClick={handleCreateRequestOnBehalf}
+                      disabled={submittingRequest || selectedServicesToRequest.length === 0}
+                      className="w-full py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {submittingRequest ? 'Submitting...' : 'Submit Service Request'}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Right Column - Request History */}
+              <div className="space-y-4 border-t lg:border-t-0 lg:border-l lg:pl-8 pt-6 lg:pt-0">
+                <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Request History</h3>
+                
+                {loadingRequests ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#63D64F]"></div>
+                  </div>
+                ) : vendorRequests.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic py-4">No request history found for this vendor.</p>
+                ) : (
+                  <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                    {vendorRequests.map((req) => (
+                      <div key={req._id} className="p-4 rounded-xl border border-gray-200 space-y-3 bg-slate-50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs text-gray-500 block">Date: {new Date(req.createdAt).toLocaleDateString()}</span>
+                            <span className="text-xs text-gray-500 block">Services: {req.services?.length || 0}</span>
+                          </div>
+                          <span className={`px-2 py-0.5 text-2xs font-bold rounded-full border uppercase ${
+                            req.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                            req.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                            'bg-yellow-100 text-yellow-800 border-yellow-200'
+                          }`}>
+                            {req.status}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1">
+                          {req.services?.map((s: any) => (
+                            <span key={s._id} className="text-3xs px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-700 font-medium">
+                              {s.serviceName || 'Service'}
+                            </span>
+                          ))}
+                        </div>
+
+                        {req.adminRemarks && (
+                          <div className="text-xs italic bg-white p-2 border rounded-md text-gray-600">
+                            "{req.adminRemarks}"
+                          </div>
+                        )}
+
+                        {req.status === 'pending' && (
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              onClick={() => handleProcessRequestDirectly(req._id, 'approved')}
+                              className="flex-1 py-1 px-3 bg-green-600 text-white rounded text-xs hover:bg-green-700 font-semibold"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleProcessRequestDirectly(req._id, 'rejected')}
+                              className="flex-1 py-1 px-3 bg-red-600 text-white rounded text-xs hover:bg-red-700 font-semibold"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end">
+              <button
+                onClick={() => { setShowRequestsModal(false); setSelectedVendor(null); }}
+                className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg"
+              >
                 Close
               </button>
             </div>

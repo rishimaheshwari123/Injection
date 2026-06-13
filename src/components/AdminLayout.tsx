@@ -1,6 +1,6 @@
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Users, Building2, Package, Calendar, LogOut, LayoutDashboard, FileText, FileBarChart, FlaskConical, Shield, HelpCircle, Menu, X, UserCog, Ticket, Headphones, MessageSquare, Image, Briefcase, BookOpen, Settings } from 'lucide-react';
+import { Users, Building2, Package, Calendar, LogOut, LayoutDashboard, FileText, FileBarChart, FlaskConical, Shield, HelpCircle, Menu, X, UserCog, Ticket, Headphones, MessageSquare, Image, Briefcase, BookOpen, Settings, ClipboardList } from 'lucide-react';
 import { logout } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
 import { toast } from 'react-toastify';
@@ -25,6 +25,7 @@ const AdminLayout = () => {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', permission: 'dashboard' },
     { path: '/admin/users', icon: Users, label: 'Users', permission: 'users' },
     { path: '/admin/vendors', icon: Building2, label: 'Vendors', permission: 'vendors' },
+    { path: '/admin/vendor-service-requests', icon: ClipboardList, label: 'Service Requests', permission: 'vendors' },
     { path: '/admin/services', icon: Package, label: 'Services', permission: 'services' },
     { path: '/admin/bookings', icon: Calendar, label: 'Bookings', permission: 'bookings' },
     { path: '/admin/prescriptions', icon: FileText, label: 'Prescriptions', permission: 'prescriptions' },

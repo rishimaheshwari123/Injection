@@ -42,7 +42,8 @@ const doc = {
     { name: 'Contact', description: 'Contact inquiries' },
     { name: 'Advertisements', description: 'Advertisement management' },
     { name: 'Jobs', description: 'Job postings' },
-    { name: 'Blogs', description: 'Blog management' }
+    { name: 'Blogs', description: 'Blog management' },
+    { name: 'Vendor Service Requests', description: 'Vendor service assignment requests' }
   ]
 };
 
@@ -63,7 +64,8 @@ const TAG_MAP = [
   { prefix: '/api/contact', tag: 'Contact' },
   { prefix: '/api/advertisements', tag: 'Advertisements' },
   { prefix: '/api/jobs', tag: 'Jobs' },
-  { prefix: '/api/blogs', tag: 'Blogs' }
+  { prefix: '/api/blogs', tag: 'Blogs' },
+  { prefix: '/api/vendor-service-requests', tag: 'Vendor Service Requests' }
 ];
 
 function assignTagsFromPaths(outputFile) {

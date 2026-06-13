@@ -72,4 +72,15 @@ export const API_ENDPOINTS = {
     TOGGLE_STATUS: (id: string) => `/blogs/${id}/toggle-status`,
     TOGGLE_FEATURED: (id: string) => `/blogs/${id}/toggle-featured`,
   },
+
+  // Vendor Service Requests
+  VENDOR_SERVICE_REQUESTS: {
+    BASE: "/vendor-service-requests",
+    CREATE: "/vendor-service-requests/create",
+    GET_ALL: "/vendor-service-requests/getAll",
+    MY_REQUESTS: "/vendor-service-requests/my-requests",
+    BY_ID: (id: string) => `/vendor-service-requests/${id}`,
+    PROCESS: (id: string) => `/vendor-service-requests/${id}/process`,
+  },
 };
+

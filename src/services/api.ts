@@ -250,4 +250,18 @@ export const adminSettingAPI = {
   deleteSetting: (id: string) => api.delete(`/admin-settings/${id}`),
 };
 
+// Vendor Service Request APIs
+export const vendorServiceRequestAPI = {
+  createRequest: (services: string[], vendorId?: string) =>
+    api.post(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.CREATE, { services, vendorId }),
+  getMyRequests: () =>
+    api.get(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.MY_REQUESTS),
+  getAllRequests: (params?: any) =>
+    api.get(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.GET_ALL, { params }),
+  getRequestById: (id: string) =>
+    api.get(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.BY_ID(id)),
+  processRequest: (id: string, status: string, adminRemarks?: string) =>
+    api.put(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.PROCESS(id), { status, adminRemarks }),
+};
+
 export default api;

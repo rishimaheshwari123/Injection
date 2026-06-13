@@ -39,6 +39,7 @@ import PermissionGuard from './components/PermissionGuard'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
 import VendorRegisterPage from './pages/VendorRegisterPage'
+import VendorServiceRequestsPage from './pages/admin/VendorServiceRequestsPage'
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -82,6 +83,7 @@ function App() {
           <Route index element={<PermissionGuard permission="dashboard"><DashboardPage /></PermissionGuard>} />
           <Route path="users" element={<PermissionGuard permission="users"><UsersPage /></PermissionGuard>} />
           <Route path="vendors" element={<PermissionGuard permission="vendors"><VendorsPage /></PermissionGuard>} />
+          <Route path="vendor-service-requests" element={<PermissionGuard permission="vendors"><VendorServiceRequestsPage /></PermissionGuard>} />
           <Route path="services" element={<PermissionGuard permission="services"><ServicesAdminPage /></PermissionGuard>} />
           <Route path="bookings" element={<PermissionGuard permission="bookings"><BookingsPage /></PermissionGuard>} />
           <Route path="prescriptions" element={<PermissionGuard permission="prescriptions"><PrescriptionsPage /></PermissionGuard>} />
