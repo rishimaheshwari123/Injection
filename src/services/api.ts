@@ -243,11 +243,11 @@ export const blogAPI = {
 };
 
 export const adminSettingAPI = {
-  getAllSettings: () => api.get("/admin-settings"),
+  getAllSettings: () => api.get("/admin-settings/all"),
   getSettingById: (id: string) => api.get(`/admin-settings/${id}`),
-  createSetting: (data: any) => api.post("/admin-settings", data),
-  updateSetting: (id: string, data: any) => api.put(`/admin-settings/${id}`, data),
-  deleteSetting: (id: string) => api.delete(`/admin-settings/${id}`),
+  createSetting: (data: any) => api.post("/admin-settings/create", data),
+  updateSetting: (id: string, data: any) => api.put(`/admin-settings/update/${id}`, data),
+  deleteSetting: (id: string) => api.delete(`/admin-settings/delete/${id}`),
 };
 
 // Vendor Service Request APIs
