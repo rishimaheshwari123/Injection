@@ -297,10 +297,11 @@ const BookingsPage = () => {
     );
     const grandTotal = subtotal;
 
-    const vendorId =
+    const vendorId = formData.vendorId || (
       formData.selectedServices.length > 0
         ? formData.selectedServices[0].vendorId
-        : null;
+        : null
+    );
 
     try {
       // Create multiple bookings for each date-time slot
@@ -1099,6 +1100,7 @@ const BookingsPage = () => {
         onSubmit={handleCreateBooking}
         services={services}
         users={users}
+        vendors={vendors}
         onServiceDetailClick={(service) => {
           setSelectedService(service);
           setShowServiceDetailModal(true);

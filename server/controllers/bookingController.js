@@ -54,8 +54,11 @@ export const createBooking = async (req, res) => {
       vendorId
     } = req.body;
 
-    // Get userId from JWT token
-    const userId = req.user._id;
+    // Get userId from JWT token. If admin is creating booking, allow using the userId passed in request body if it is a valid ObjectId.
+    let userId = req.user._id;
+    if (req.user && req.user.role === 'admin' && req.body.userId && /^[0-9a-fA-F]{24}$/.test(req.body.userId)) {
+      userId = req.body.userId;
+    }
 
     // Validate required fields
     if (!patientName || !age || !sex || !address || !pincode || !currentLocation || !email) {
@@ -124,8 +127,9 @@ export const createBooking = async (req, res) => {
       userId,
       vendorId: vendorId || null,
 
-      // Status
-      bookingStatus: 'pending'
+      // Status - If a vendor is assigned at creation, mark as accepted, otherwise pending
+      bookingStatus: vendorId ? 'accepted' : 'pending',
+      acceptedAt: vendorId ? new Date() : null
     });
 
     // Populate user and vendor details
@@ -234,95 +238,14 @@ export const getBookingById = async (req, res) => {
   }
 };
 
-// @desc    Get all available bookings (pending) for vendor's services
-// @route   GET /api/bookings/available
-// @access  Private/Vendor
-export const getAvailableBookings = async (req, res) => {
-  try {
-    // First, get all services created by this vendor
-    const Service = (await import('../models/Service.js')).default;
-    const vendorServices = await Service.find({ vendorId: req.vendor._id }).select('_id');
-    const serviceIds = vendorServices.map(service => service._id);
 
-    // Find bookings that have vendor's services and are pending
-    const bookings = await Booking.find({
-      bookingStatus: 'pending',
-      vendorId: null,
-      'selectedServices.serviceId': { $in: serviceIds }
-    })
-      .populate('userId', 'name phone')
-      .populate('selectedServices.serviceId', 'serviceName category')
-      .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
 
-// @desc    Vendor accepts booking
-// @route   PUT /api/bookings/:id/accept
-// @access  Private/Vendor
-export const acceptBooking = async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found'
-      });
-    }
-
-    // Check if booking is still pending
-    if (booking.bookingStatus !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking is not available for acceptance'
-      });
-    }
-
-    // Check if already accepted by another vendor
-    if (booking.vendorId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking already accepted by another vendor'
-      });
-    }
-
-    // Accept booking
-    booking.vendorId = req.vendor._id;
-    booking.bookingStatus = 'accepted';
-    booking.acceptedAt = new Date();
-    await booking.save();
-
-    await booking.populate('userId', 'name email phone');
-    await booking.populate('vendorId', 'name phone businessName');
-
-    res.status(200).json({
-      success: true,
-      message: 'Booking accepted successfully',
-      data: booking
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
 
 // @desc    Get vendor's accepted bookings
 // @route   GET /api/bookings/vendor/me
 // @access  Private/Vendor
-export const getVendorBookings = async (req, res) => {
+export const getVendorAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ vendorId: req.vendor._id })
       .populate('userId', 'name email phone address')

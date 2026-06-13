@@ -3,9 +3,6 @@ import {
   createBooking,
   getUserBookings,
   getBookingById,
-  getAvailableBookings,
-  acceptBooking,
-  getVendorBookings,
   startService,
   completeService,
   cancelBooking,
@@ -15,8 +12,8 @@ import {
   deleteBooking,
   addNoteToBooking,
   updatePrescription,
-  addPrescription,
-  updatePrescriptionSummary
+  updatePrescriptionSummary,
+  getVendorAllBookings
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -27,15 +24,13 @@ router.post('/create', protect, createBooking);
 
 router.get('/user/me', protect, getUserBookings);
 
-router.get('/available', protect, vendorOnly, getAvailableBookings);
 
-router.get('/vendor/me', protect, vendorOnly, getVendorBookings);
+router.get('/vendor/me', protect, vendorOnly, getVendorAllBookings);
 
 router.get('/admin/all', protect, adminOnly, getAllBookings);
 
 router.get('/:id', protect, getBookingById);
 
-router.put('/:id/accept', protect, vendorOnly, acceptBooking);
 
 router.put('/:id/start', protect, vendorOnly, startService);
 

@@ -8,10 +8,11 @@ interface CreateBookingModalProps {
   onSubmit: (data: any) => Promise<void>;
   services: any[];
   users: any[];
+  vendors: any[];
   onServiceDetailClick: (service: any) => void;
 }
 
-const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServiceDetailClick }: CreateBookingModalProps) => {
+const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors, onServiceDetailClick }: CreateBookingModalProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [bookingType, setBookingType] = useState<'self' | 'others'>('self');
   const [selectedUser, setSelectedUser] = useState('');
@@ -46,7 +47,8 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
     preferredDate: '',
     preferredTime: '',
     staffPreference: 'Any Available',
-    serviceLocation: 'At Home'
+    serviceLocation: 'At Home',
+    vendorId: ''
   });
 
   // Multiple date-time slots state
@@ -141,7 +143,8 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
         preferredDate: '',
         preferredTime: '',
         staffPreference: 'Any Available',
-        serviceLocation: 'At Home'
+        serviceLocation: 'At Home',
+        vendorId: ''
       });
       setDateTimeSlots([{ date: '', time: '' }]);
       setBookingType('self');
@@ -575,6 +578,25 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, onServic
                 <option value="Any Available">Any Available</option>
                 <option value="Male Staff">Male Staff</option>
                 <option value="Female Staff">Female Staff</option>
+              </select>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign Vendor (Optional)
+              </label>
+              <select
+                name="vendorId"
+                value={formData.vendorId}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+              >
+                <option value="">Auto Assign (Based on service default)</option>
+                {vendors && vendors.map((vendor: any) => (
+                  <option key={vendor._id} value={vendor._id}>
+                    {vendor.businessName || vendor.name} ({vendor.email})
+                  </option>
+                ))}
               </select>
             </div>
           </div>
