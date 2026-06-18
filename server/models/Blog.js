@@ -123,7 +123,7 @@ const blogSchema = new mongoose.Schema({
 });
 
 // Indexes
-blogSchema.index({ slug: 1 });
+// Note: slug field already has unique: true, so no need for separate index
 blogSchema.index({ status: 1, isActive: 1 });
 blogSchema.index({ category: 1, status: 1 });
 blogSchema.index({ author: 1 });

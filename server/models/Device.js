@@ -52,7 +52,7 @@ const deviceSchema = new mongoose.Schema({
 });
 
 // Indexing for quick lookups
-deviceSchema.index({ token: 1 });
+// Note: token field already has unique: true, so no need for separate index
 deviceSchema.index({ userId: 1 });
 deviceSchema.index({ vendorId: 1 });
 deviceSchema.index({ userType: 1 });
