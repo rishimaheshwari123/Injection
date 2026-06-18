@@ -34,6 +34,7 @@ import JobsPage from './pages/admin/JobsPage'
 import JobApplicationsPage from './pages/admin/JobApplicationsPage'
 import BlogsPage from './pages/admin/BlogsPage'
 import SettingsPage from './pages/admin/SettingsPage'
+import NotificationsPage from './pages/admin/NotificationsPage'
 import SupportPage from './pages/SupportPage'
 import PermissionGuard from './components/PermissionGuard'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
@@ -100,6 +101,7 @@ function App() {
           <Route path="job-applications" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
           <Route path="job-applications/:jobId" element={<PermissionGuard permission="dashboard"><JobApplicationsPage /></PermissionGuard>} />
           <Route path="blogs" element={<PermissionGuard permission="dashboard"><BlogsPage /></PermissionGuard>} />
+          <Route path="notifications" element={<PermissionGuard permission="dashboard"><NotificationsPage /></PermissionGuard>} />
           <Route path="settings" element={<PermissionGuard permission="dashboard"><SettingsPage /></PermissionGuard>} />
         </Route>
       </Routes>

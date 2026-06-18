@@ -1,5 +1,6 @@
 import Booking from '../models/Booking.js';
 import Coupon from '../models/Coupon.js';
+import { sendToUser, sendToVendor } from './notificationController.js';
 
 // Helper function to generate unique coupon code
 const generateCouponCode = () => {
@@ -173,6 +174,23 @@ export const createBooking = async (req, res) => {
     } catch (couponError) {
       console.error('Error creating auto-coupon:', couponError);
       // Don't fail the booking if coupon creation fails
+    }
+
+    // Send push notification for Admin-created booking
+    if (req.user && req.user.role === 'admin') {
+      sendToUser(userId, {
+        title: 'New Booking Created',
+        body: `A new booking has been created for you by Admin. Booking ID: ${booking._id}`,
+        data: { bookingId: booking._id.toString(), type: 'admin_booking' }
+      });
+
+      if (booking.vendorId) {
+        sendToVendor(booking.vendorId, {
+          title: 'Booking Assigned',
+          body: `A new booking has been assigned to you by Admin. Booking ID: ${booking._id}`,
+          data: { bookingId: booking._id.toString(), type: 'admin_booking_assigned' }
+        });
+      }
     }
 
     res.status(201).json({

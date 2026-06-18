@@ -36,6 +36,10 @@ const vendorSchema = new mongoose.Schema({
     enum: ['Male', 'Female', 'Other'],
     default: 'Male'
   },
+  role: {
+    type: String,
+    default: 'vendor'
+  },
   
   // Business Information
   businessName: {

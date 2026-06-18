@@ -264,4 +264,28 @@ export const vendorServiceRequestAPI = {
     api.put(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.PROCESS(id), { status, adminRemarks }),
 };
 
+// Notification APIs
+export const notificationAPI = {
+  getStats: () => api.get("/notifications/stats"),
+  getDevices: (params?: any) => api.get("/notifications/devices", { params }),
+  getTopics: () => api.get("/notifications/topics"),
+  createTopic: (data: any) => api.post("/notifications/topics", data),
+  deleteTopic: (id: string) => api.delete(`/notifications/topics/${id}`),
+  subscribeToTopic: (topicKey: string, deviceIds: string[], customTokens?: string[]) =>
+    api.post("/notifications/topics/subscribe", { topicKey, deviceIds, customTokens }),
+  unsubscribeFromTopic: (topicKey: string, deviceIds: string[]) =>
+    api.post("/notifications/topics/unsubscribe", { topicKey, deviceIds }),
+  sendNotification: (data: { title: string; body: string; targetCategory: string; imageUrl?: string }) =>
+    api.post("/notifications/send", data),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return api.post("/notifications/upload-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+};
+
 export default api;

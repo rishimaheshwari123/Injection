@@ -24,6 +24,7 @@ import blogRoutes from './routes/blogRoutes.js';
 import adminSettingRoutes from './routes/adminSettingRoutes.js';
 import userBookingRoutes from './routes/userBookingRoutes.js';
 import vendorServiceRequestRoutes from './routes/vendorServiceRequestRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import fs from 'fs';
 
 // Load env vars
@@ -82,6 +83,7 @@ app.use('/api/blogs', blogRoutes);
 app.use('/api/admin-settings', adminSettingRoutes);
 app.use('/api/user-bookings', userBookingRoutes);
 app.use('/api/vendor-service-requests', vendorServiceRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

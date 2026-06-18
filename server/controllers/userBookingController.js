@@ -2,6 +2,7 @@ import Booking from '../models/Booking.js';
 import Vendor from '../models/Vendor.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
+import { sendToUser } from './notificationController.js';
 
 // Helper function to generate unique coupon code
 const generateCouponCode = () => {
@@ -287,6 +288,13 @@ export const acceptUserBooking = async (req, res) => {
 
     await booking.populate('userId', 'name email phone');
     await booking.populate('vendorId', 'name businessName phone email');
+
+    // Send push notification to user that booking has been accepted
+    sendToUser(booking.userId._id || booking.userId, {
+      title: 'Booking Accepted',
+      body: `Your booking has been accepted by ${booking.vendorId.businessName || booking.vendorId.name}. ID: ${booking._id}`,
+      data: { bookingId: booking._id.toString(), type: 'booking_accepted' }
+    });
 
     res.status(200).json({
       success: true,
