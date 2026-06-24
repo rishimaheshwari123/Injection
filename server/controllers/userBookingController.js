@@ -2,7 +2,7 @@ import Booking from '../models/Booking.js';
 import Vendor from '../models/Vendor.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
-import { sendToUser } from './notificationController.js';
+import { sendToUser, sendToVendor } from './notificationController.js';
 
 // Helper function to generate unique coupon code
 const generateCouponCode = () => {
@@ -174,16 +174,45 @@ export const createUserBooking = async (req, res) => {
 
     const matchingVendors = await Vendor.find(vendorQuery);
 
-    // Create notifications for matched vendors (can be multiple vendors)
+    // Create single notification with multiple vendor IDs
     if (matchingVendors.length > 0) {
-      const notifications = matchingVendors.map(vendor => ({
-        vendorId: vendor._id,
+      const matchedVendorIds = matchingVendors.map(vendor => vendor._id);
+      
+      // Create vendorStatus array for tracking individual vendor read/accept status
+      const vendorStatus = matchedVendorIds.map(vendorId => ({
+        vendorId: vendorId,
+        isRead: false,
+        isAccepted: false
+      }));
+      
+      await Notification.create({
+        vendorId: matchedVendorIds,
         bookingId: booking._id,
         message: `New booking available in your service area (${pincode}) matching your staff gender preference.`,
-        type: 'new_booking'
-      }));
-      await Notification.insertMany(notifications);
-      console.log(`Notified ${matchingVendors.length} vendors for booking ${booking._id}`);
+        type: 'new_booking',
+        vendorStatus: vendorStatus
+      });
+      
+      console.log(`Created notification for ${matchingVendors.length} vendors for booking ${booking._id}`);
+      console.log(`Matched Vendor IDs: ${JSON.stringify(matchedVendorIds)}`);
+      
+      // Send FCM push notifications to all matched vendors
+      for (const vendor of matchingVendors) {
+        await sendToVendor(vendor._id, {
+          title: 'New Booking Available',
+          body: `New booking request in your area (${pincode}). Patient: ${patientName}`,
+          data: { 
+            bookingId: booking._id.toString(), 
+            type: 'new_booking',
+            pincode: pincode,
+            patientName: patientName,
+            services: selectedServices.length.toString(),
+            timeSlot: preferredTimeSlot
+          }
+        });
+      }
+      
+      console.log(`FCM push notifications sent to ${matchingVendors.length} vendors`);
     }
 
     res.status(201).json({
@@ -274,17 +303,23 @@ export const acceptUserBooking = async (req, res) => {
     booking.acceptedAt = new Date();
     await booking.save();
 
-    // Update this vendor's notification to accepted and read
+    // Remove accepting vendor from notification's vendorId array
+    // And update their status in vendorStatus array
     await Notification.updateOne(
-      { bookingId, vendorId: req.vendor._id },
-      { $set: { isAccepted: true, isRead: true } }
+      { bookingId },
+      { 
+        $pull: { 
+          vendorId: req.vendor._id,
+          vendorStatus: { vendorId: req.vendor._id }
+        }
+      }
     );
 
-    // Delete or clear notifications for other vendors for this booking
-    await Notification.deleteMany({
-      bookingId,
-      vendorId: { $ne: req.vendor._id }
-    });
+    // Check if notification still has vendors, if not delete it
+    const notification = await Notification.findOne({ bookingId });
+    if (notification && notification.vendorId.length === 0) {
+      await Notification.deleteOne({ bookingId });
+    }
 
     await booking.populate('userId', 'name email phone');
     await booking.populate('vendorId', 'name businessName phone email');
@@ -309,14 +344,22 @@ export const acceptUserBooking = async (req, res) => {
   }
 };
 
-// @desc    Mark notification as read
+// @desc    Mark notification as read for specific vendor
 // @route   PUT /api/user-bookings/notifications/:id/read
 // @access  Private/Vendor
 export const markNotificationRead = async (req, res) => {
   try {
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, vendorId: req.vendor._id },
-      { isRead: true },
+      { 
+        _id: req.params.id, 
+        vendorId: req.vendor._id,
+        'vendorStatus.vendorId': req.vendor._id
+      },
+      { 
+        $set: { 
+          'vendorStatus.$.isRead': true 
+        }
+      },
       { new: true }
     );
 

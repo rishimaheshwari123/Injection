@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
 const notificationSchema = new mongoose.Schema({
-  vendorId: {
+  vendorId: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Vendor',
     required: true
-  },
+  }],
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Booking',
@@ -20,6 +20,21 @@ const notificationSchema = new mongoose.Schema({
     enum: ['new_booking', 'booking_update', 'general'],
     default: 'new_booking'
   },
+  vendorStatus: [{
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vendor'
+    },
+    isRead: {
+      type: Boolean,
+      default: false
+    },
+    isAccepted: {
+      type: Boolean,
+      default: false
+    }
+  }],
+  // Legacy fields (kept for backward compatibility, but not used in new system)
   isRead: {
     type: Boolean,
     default: false
