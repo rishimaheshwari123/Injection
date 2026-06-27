@@ -72,10 +72,10 @@ export const vendorAPI = {
     api.put(API_ENDPOINTS.VENDORS.UPDATE_PROFILE, data),
   uploadFile: (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/vendors/upload', formData, {
+    formData.append("file", file);
+    return api.post("/vendors/upload", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
@@ -239,21 +239,55 @@ export const blogAPI = {
     api.put(API_ENDPOINTS.BLOGS.TOGGLE_STATUS(id)),
   toggleFeaturedStatus: (id: string) =>
     api.put(API_ENDPOINTS.BLOGS.TOGGLE_FEATURED(id)),
-  likeBlog: (id: string) => api.put(API_ENDPOINTS.BLOGS.LIKE(id),),
+  likeBlog: (id: string) => api.put(API_ENDPOINTS.BLOGS.LIKE(id)),
+};
+
+// Gallery APIs
+export const galleryAPI = {
+  getGallery: () => api.get("/gallery"),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return api.post("/gallery/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  deleteImage: (publicId: string) => api.delete(`/gallery/${encodeURIComponent(publicId)}`),
+};
+
+// Hero APIs
+export const heroAPI = {
+  getHero: () => api.get("/hero"),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return api.post("/hero/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  deleteImage: (publicId: string) => api.delete(`/hero/${encodeURIComponent(publicId)}`),
 };
 
 export const adminSettingAPI = {
   getAllSettings: () => api.get("/admin-settings/all"),
   getSettingById: (id: string) => api.get(`/admin-settings/${id}`),
   createSetting: (data: any) => api.post("/admin-settings/create", data),
-  updateSetting: (id: string, data: any) => api.put(`/admin-settings/update/${id}`, data),
+  updateSetting: (id: string, data: any) =>
+    api.put(`/admin-settings/update/${id}`, data),
   deleteSetting: (id: string) => api.delete(`/admin-settings/delete/${id}`),
 };
 
 // Vendor Service Request APIs
 export const vendorServiceRequestAPI = {
   createRequest: (services: string[], vendorId?: string) =>
-    api.post(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.CREATE, { services, vendorId }),
+    api.post(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.CREATE, {
+      services,
+      vendorId,
+    }),
   getMyRequests: () =>
     api.get(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.MY_REQUESTS),
   getAllRequests: (params?: any) =>
@@ -261,7 +295,10 @@ export const vendorServiceRequestAPI = {
   getRequestById: (id: string) =>
     api.get(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.BY_ID(id)),
   processRequest: (id: string, status: string, adminRemarks?: string) =>
-    api.put(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.PROCESS(id), { status, adminRemarks }),
+    api.put(API_ENDPOINTS.VENDOR_SERVICE_REQUESTS.PROCESS(id), {
+      status,
+      adminRemarks,
+    }),
 };
 
 // Notification APIs
@@ -271,12 +308,24 @@ export const notificationAPI = {
   getTopics: () => api.get("/notifications/topics"),
   createTopic: (data: any) => api.post("/notifications/topics", data),
   deleteTopic: (id: string) => api.delete(`/notifications/topics/${id}`),
-  subscribeToTopic: (topicKey: string, deviceIds: string[], customTokens?: string[]) =>
-    api.post("/notifications/topics/subscribe", { topicKey, deviceIds, customTokens }),
+  subscribeToTopic: (
+    topicKey: string,
+    deviceIds: string[],
+    customTokens?: string[],
+  ) =>
+    api.post("/notifications/topics/subscribe", {
+      topicKey,
+      deviceIds,
+      customTokens,
+    }),
   unsubscribeFromTopic: (topicKey: string, deviceIds: string[]) =>
     api.post("/notifications/topics/unsubscribe", { topicKey, deviceIds }),
-  sendNotification: (data: { title: string; body: string; targetCategory: string; imageUrl?: string }) =>
-    api.post("/notifications/send", data),
+  sendNotification: (data: {
+    title: string;
+    body: string;
+    targetCategory: string;
+    imageUrl?: string;
+  }) => api.post("/notifications/send", data),
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append("image", file);

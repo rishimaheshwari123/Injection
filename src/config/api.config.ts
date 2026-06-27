@@ -1,5 +1,3 @@
-// API Configuration
-// Backend URL - Change this when deploying to production
 export const API_CONFIG = {
   // BASE_URL: "http://localhost:8080/api",
   // BASE_URL: "https://injection-hkgt.onrender.com/api",
@@ -84,4 +82,3 @@ export const API_ENDPOINTS = {
     PROCESS: (id: string) => `/vendor-service-requests/${id}/process`,
   },
 };
-

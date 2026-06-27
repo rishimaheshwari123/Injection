@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { galleryAPI, heroAPI } from "../services/api";
 import logo from "../assets/logo.jpeg";
 import s1 from "../assets/s1.jpeg";
 import s2 from "../assets/s2.jpeg";
@@ -35,6 +36,13 @@ const HomePage = () => {
   // Slider state
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  // Gallery state
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [gallerySlide, setGallerySlide] = useState(0);
+
+  // Hero state
+  const [heroImages, setHeroImages] = useState<string[]>([]);
 
   const slides = [
     {
@@ -57,21 +65,90 @@ const HomePage = () => {
     },
   ];
 
+  // Determine active slides
+  const activeSlides =
+    heroImages.length > 0 ? heroImages.map((url) => ({ image: url })) : slides;
+
   // Auto-scroll functionality
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [activeSlides.length]);
+
+  // Fetch gallery
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const response = await galleryAPI.getGallery();
+        if (response.data.data.images) {
+          setGalleryImages(
+            response.data.data.images.map((img: any) => img.url),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch gallery:", error);
+      }
+    };
+
+    fetchGallery();
+  }, []);
+
+  // Fetch hero
+  useEffect(() => {
+    const fetchHero = async () => {
+      try {
+        const response = await heroAPI.getHero();
+        if (response.data.data.images && response.data.data.images.length > 0) {
+          setHeroImages(response.data.data.images.map((img: any) => img.url));
+        }
+      } catch (error) {
+        console.error("Failed to fetch hero:", error);
+      }
+    };
+
+    fetchHero();
+  }, []);
+
+  // Calculate number of slides needed for 3 images per view
+  const totalGallerySlides = Math.ceil(galleryImages.length / 3);
+
+  // Gallery auto-scroll
+  useEffect(() => {
+    if (totalGallerySlides > 1) {
+      const timer = setInterval(() => {
+        setGallerySlide((prev) => (prev + 1) % totalGallerySlides);
+      }, 5000);
+
+      return () => clearInterval(timer);
+    }
+  }, [totalGallerySlides]);
+
+  // Gallery navigation
+  const nextGallerySlide = () => {
+    if (totalGallerySlides > 0) {
+      setGallerySlide((prev) => (prev + 1) % totalGallerySlides);
+    }
+  };
+
+  const prevGallerySlide = () => {
+    if (totalGallerySlides > 0) {
+      setGallerySlide(
+        (prev) => (prev - 1 + totalGallerySlides) % totalGallerySlides,
+      );
+    }
+  };
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentSlide(
+      (prev) => (prev - 1 + activeSlides.length) % activeSlides.length,
+    );
   };
 
   const goToSlide = (index: number) => {
@@ -166,7 +243,7 @@ const HomePage = () => {
       <section className="relative w-full flex items-center justify-center overflow-hidden bg-white">
         {/* Slider Images */}
         <div className="relative w-full z-0 max-h-[600px] md:max-h-[700px]">
-          {slides.map((slide, index) => (
+          {activeSlides.map((slide, index) => (
             <div
               key={index}
               className={`transition-opacity duration-1000 ${
@@ -209,7 +286,7 @@ const HomePage = () => {
 
         {/* Slide Indicators */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
-          {slides.map((_, index) => (
+          {activeSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
@@ -257,7 +334,7 @@ const HomePage = () => {
                 }}
               >
                 {/* First set of images */}
-                {[s1, s2, s3, s4, s5,s6,s7].map((img, idx) => (
+                {[s1, s2, s3, s4, s5, s6, s7].map((img, idx) => (
                   <div
                     key={`set1-${idx}`}
                     className="flex-shrink-0 w-80 h-60 bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300 flex items-center justify-center p-4"
@@ -270,7 +347,7 @@ const HomePage = () => {
                   </div>
                 ))}
                 {/* Duplicate set for seamless loop */}
-                {[s1, s2, s3, s4, s5,s6,s7].map((img, idx) => (
+                {[s1, s2, s3, s4, s5, s6, s7].map((img, idx) => (
                   <div
                     key={`set2-${idx}`}
                     className="flex-shrink-0 w-80 h-60 bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100 hover:shadow-2xl transition-shadow duration-300 flex items-center justify-center p-4"
@@ -302,6 +379,86 @@ const HomePage = () => {
           </motion.p>
         </div>
       </section>
+
+      {/* Gallery Section */}
+      {galleryImages.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="w-[90vw] mx-auto ">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                Our Gallery
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+            </motion.div>
+
+            <div className="relative">
+              <div className="relative w-full max-w-7xl mx-auto">
+                {/* Gallery Slider */}
+                <div className="relative overflow-hidden rounded-2xl">
+                  <div
+                    className="flex transition-transform duration-500 ease-in-out"
+                    style={{
+                      transform: `translateX(-${gallerySlide * (100 / 3)}%)`,
+                    }}
+                  >
+                    {galleryImages.map((img, index) => (
+                      <div key={index} className="w-1/3 flex-shrink-0 px-2">
+                        <img
+                          src={img}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-full h-64 md:h-80 object-cover rounded-xl shadow-lg"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {galleryImages.length > 3 && (
+                    <>
+                      <button
+                        onClick={prevGallerySlide}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm text-gray-800 p-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        <ChevronLeft size={32} />
+                      </button>
+                      <button
+                        onClick={nextGallerySlide}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm text-gray-800 p-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        <ChevronRight size={32} />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Slide Indicators */}
+                {galleryImages.length > 3 && (
+                  <div className="flex justify-center mt-8 space-x-2">
+                    {Array.from({
+                      length: Math.ceil(galleryImages.length / 3),
+                    }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setGallerySlide(index)}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          index === gallerySlide
+                            ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] scale-125"
+                            : "bg-gray-400 hover:bg-gray-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* About Section with Doctor Image */}
       <section className="py-5 bg-white">
