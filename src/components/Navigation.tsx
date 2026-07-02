@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "../assets/logo.jpeg";
+import logo from "../assets/logo.png";
 
 const Navigation = () => {
   const location = useLocation();

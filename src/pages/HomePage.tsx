@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { galleryAPI, heroAPI } from "../services/api";
-import logo from "../assets/logo.jpeg";
+import logo from "../assets/logo.png";
 import s1 from "../assets/s1.jpeg";
 import s2 from "../assets/s2.jpeg";
 import s3 from "../assets/s3.jpeg";
