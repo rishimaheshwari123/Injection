@@ -298,7 +298,7 @@ const DashboardPage = () => {
                       {booking.bookingStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">₹{booking.grandTotal.toLocaleString('en-IN')}</td>
+                  <td className="px-6 py-4 text-sm text-gray-800">₹{(booking.subtotal || booking.grandTotal).toLocaleString('en-IN')}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(booking.createdAt).toLocaleDateString('en-IN')}
                   </td>

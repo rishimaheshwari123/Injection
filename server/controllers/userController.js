@@ -231,7 +231,7 @@ export const userLogin = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
+    const users = await User.find({ isActive: { $ne: false } }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -817,11 +817,13 @@ export const deleteUser = async (req, res) => {
       });
     }
 
-    await user.deleteOne();
+    // Soft delete: set isActive to false instead of deleting
+    user.isActive = false;
+    await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deactivated successfully'
     });
   } catch (error) {
     res.status(500).json({
@@ -892,7 +894,7 @@ export const getAllUsersByPagination = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    let query = {};
+    let query = { isActive: { $ne: false } };
 
     if (search) {
       query.$or = [

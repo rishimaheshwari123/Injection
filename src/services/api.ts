@@ -145,6 +145,8 @@ export const bookingAPI = {
   ) => api.put(`/bookings/${id}/reschedule`, { newDate, newTime, reason }),
   updateBookingStatus: (id: string, status: string) =>
     api.put(API_ENDPOINTS.BOOKINGS.UPDATE_STATUS(id), { status }),
+  updateBooking: (id: string, bookingData: any) =>
+    api.put(`/bookings/${id}`, bookingData),
   addBookingNote: (id: string, text: string) =>
     api.post(`/bookings/${id}/notes`, { text }),
   updatePrescription: (
@@ -158,6 +160,10 @@ export const bookingAPI = {
     }),
   updatePrescriptionSummary: (id: string, summary: string) =>
     api.put(`/bookings/${id}/prescription-summary`, { summary }),
+  updateRequestedItems: (id: string, requestedItems: any[]) =>
+    api.put(`/bookings/${id}/requested-items`, { requestedItems }),
+  updateRequestedItemStatus: (id: string, itemId: string, status: string) =>
+    api.put(`/bookings/${id}/requested-items/${itemId}/status`, { status }),
 };
 
 // Prescription APIs

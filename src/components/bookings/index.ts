@@ -9,3 +9,4 @@ export { default as AddPrescriptionModal } from './AddPrescriptionModal';
 export { default as RescheduleBookingModal } from './RescheduleBookingModal';
 export { default as CancelBookingModal } from './CancelBookingModal';
 export { default as PrescriptionSummaryModal } from './PrescriptionSummaryModal';
+export { default as RequestedItemsModal } from './RequestedItemsModal';

@@ -310,7 +310,24 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-  }
+  },
+  requestedItems: [{
+    itemName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'brought', 'unavailable'],
+      default: 'pending'
+    }
+  }]
 }, {
   timestamps: true
 });

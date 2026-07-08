@@ -1,4 +1,7 @@
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
+import User from '../models/User.js';
+import Vendor from '../models/Vendor.js';
 import Coupon from '../models/Coupon.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
 
@@ -52,7 +55,10 @@ export const createBooking = async (req, res) => {
       estimatedDuration,
 
       // Vendor Reference
-      vendorId
+      vendorId,
+
+      // Requested Items (Injection, Drip, Medicine)
+      requestedItems
     } = req.body;
 
     // Get userId from JWT token. If admin is creating booking, allow using the userId passed in request body if it is a valid ObjectId.
@@ -114,8 +120,8 @@ export const createBooking = async (req, res) => {
 
       // Pricing
       subtotal,
-      gstAmount,
-      grandTotal,
+      gstAmount: 0,
+      grandTotal: subtotal,
 
       // Preferences
       freeComplimentaryService: freeComplimentaryService || 'None',
@@ -546,11 +552,40 @@ export const getAllBookings = async (req, res) => {
     }
 
     if (search) {
+      // Find matching users (by name or patientId)
+      const matchedUsers = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { patientId: { $regex: search, $options: 'i' } }
+        ]
+      }).distinct('_id');
+
+      // Find matching vendors (by name, businessName, or vendorId)
+      const matchedVendors = await Vendor.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { businessName: { $regex: search, $options: 'i' } },
+          { vendorId: { $regex: search, $options: 'i' } }
+        ]
+      }).distinct('_id');
+
       query.$or = [
         { patientName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { alternateMobile: { $regex: search, $options: 'i' } }
+        { alternateMobile: { $regex: search, $options: 'i' } },
+        { 'selectedServices.serviceName': { $regex: search, $options: 'i' } },
+        { userId: { $in: matchedUsers } },
+        { vendorId: { $in: matchedVendors } }
       ];
+
+      // If search is a valid MongoDB ObjectId
+      if (mongoose.Types.ObjectId.isValid(search)) {
+        query.$or.push(
+          { _id: search },
+          { userId: search },
+          { vendorId: search }
+        );
+      }
     }
 
     const totalBookings = await Booking.countDocuments(query);
@@ -640,6 +675,105 @@ export const updateBookingStatus = async (req, res) => {
     });
   }
 };
+
+// @desc    Update booking (Admin)
+// @route   PUT /api/bookings/:id
+// @access  Private/Admin
+export const updateBooking = async (req, res) => {
+  try {
+    const {
+      patientName,
+      age,
+      sex,
+      address,
+      pincode,
+      currentLocation,
+      alternateMobile,
+      email,
+      selectedServices,
+      additionalRequirements,
+      hasInsurance,
+      insurancePolicyNumber,
+      subtotal,
+      freeComplimentaryService,
+      preferredTimeSlot,
+      staffPreference,
+      serviceLocation,
+      estimatedDuration,
+      vendorId,
+      userId
+    } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Update patient information
+    if (patientName !== undefined) booking.patientName = patientName;
+    if (age !== undefined) booking.age = age;
+    if (sex !== undefined) booking.sex = sex;
+    if (address !== undefined) booking.address = address;
+    if (pincode !== undefined) booking.pincode = pincode;
+    if (currentLocation !== undefined) booking.currentLocation = currentLocation;
+    if (alternateMobile !== undefined) booking.alternateMobile = alternateMobile;
+    if (email !== undefined) booking.email = email;
+
+    // Update selected services
+    if (selectedServices !== undefined) {
+      booking.selectedServices = selectedServices;
+    }
+
+    // Additional info
+    if (additionalRequirements !== undefined) booking.additionalRequirements = additionalRequirements;
+    if (hasInsurance !== undefined) booking.hasInsurance = hasInsurance;
+    if (insurancePolicyNumber !== undefined) booking.insurancePolicyNumber = insurancePolicyNumber;
+
+    // Pricing (force GST to 0 and grandTotal to subtotal)
+    if (subtotal !== undefined) {
+      booking.subtotal = subtotal;
+      booking.gstAmount = 0;
+      booking.grandTotal = subtotal;
+    }
+
+    // Preferences
+    if (freeComplimentaryService !== undefined) booking.freeComplimentaryService = freeComplimentaryService;
+    if (preferredTimeSlot !== undefined) booking.preferredTimeSlot = preferredTimeSlot;
+    if (staffPreference !== undefined) booking.staffPreference = staffPreference;
+    if (serviceLocation !== undefined) booking.serviceLocation = serviceLocation;
+    if (estimatedDuration !== undefined) booking.estimatedDuration = estimatedDuration;
+
+    // References
+    if (vendorId !== undefined) booking.vendorId = vendorId || null;
+    if (userId !== undefined && /^[0-9a-fA-F]{24}$/.test(userId)) {
+      booking.userId = userId;
+    }
+
+    await booking.save();
+
+    // Populate user and vendor details before returning
+    await booking.populate('userId', 'name email phone');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking updated successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 
 // @desc    Delete booking (Admin)
 // @route   DELETE /api/bookings/:id
@@ -827,6 +961,132 @@ export const updatePrescriptionSummary = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Prescription summary updated successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+export const updateRequestedItems = async (req, res) => {
+  try {
+    const { requestedItems } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check authorization: only the user who created it, or admin, or assigned vendor
+    const isOwner = booking.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    const isVendor = booking.vendorId && booking.vendorId.toString() === req.user._id.toString();
+
+    if (!isOwner && !isAdmin && !isVendor) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update requested items for this booking'
+      });
+    }
+
+    // Validate requestedItems format
+    if (!Array.isArray(requestedItems)) {
+      return res.status(400).json({
+        success: false,
+        message: 'requestedItems must be an array'
+      });
+    }
+
+    // Clean and validate items
+    const formattedItems = requestedItems.map(item => {
+      const { itemName, quantity, status } = item;
+      return {
+        itemName: itemName ? itemName.trim() : '',
+        quantity: Number(quantity) || 1,
+        status: status || 'pending'
+      };
+    }).filter(item => item.itemName !== '');
+
+    booking.requestedItems = formattedItems;
+    await booking.save();
+
+    // Populate user and vendor details before returning
+    await booking.populate('userId', 'name email phone');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Requested items updated successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+export const updateRequestedItemStatus = async (req, res) => {
+  try {
+    const { status } = req.body; // 'pending', 'brought', 'unavailable'
+
+    if (!['pending', 'brought', 'unavailable'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status value'
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check authorization: only admin or assigned vendor can update status
+    const isAdmin = req.user.role === 'admin';
+    const isVendor = booking.vendorId && booking.vendorId.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isVendor) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update status of requested items'
+      });
+    }
+
+    const item = booking.requestedItems.id(req.params.itemId);
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: 'Item not found in booking'
+      });
+    }
+
+    item.status = status;
+    await booking.save();
+
+    // Populate user and vendor details before returning
+    await booking.populate('userId', 'name email phone');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Item status updated successfully',
       data: booking
     });
   } catch (error) {

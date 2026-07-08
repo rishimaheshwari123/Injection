@@ -237,7 +237,7 @@ export const vendorLogin = async (req, res) => {
 // @access  Private/Admin
 export const getAllVendors = async (req, res) => {
   try {
-    const vendors = await Vendor.find().populate('services', 'serviceName category').sort({ createdAt: -1 });
+    const vendors = await Vendor.find({ isActive: { $ne: false } }).populate('services', 'serviceName category').sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -432,11 +432,13 @@ export const deleteVendor = async (req, res) => {
     // Pull vendor ID from all associated services' vendors arrays
     await Service.updateMany({ vendors: vendor._id }, { $pull: { vendors: vendor._id } });
 
-    await vendor.deleteOne();
+    // Soft delete: set isActive to false instead of deleting
+    vendor.isActive = false;
+    await vendor.save();
 
     res.status(200).json({
       success: true,
-      message: 'Vendor deleted successfully'
+      message: 'Vendor deactivated successfully'
     });
   } catch (error) {
     res.status(500).json({
@@ -763,7 +765,7 @@ export const getAllVendorsByPagination = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    let query = {};
+    let query = { isActive: { $ne: false } };
 
     if (search) {
       query.$or = [

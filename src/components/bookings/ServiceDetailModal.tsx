@@ -43,7 +43,7 @@ const ServiceDetailModal = ({ show, onClose, service, onAddToBooking }: ServiceD
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-1">Category</p>
-              <p className="font-semibold text-gray-800">{service.category}</p>
+              <p className="font-semibold text-gray-800">{typeof service.category === 'object' ? (service.category?.name || "N/A") : (service.category || "N/A")}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-1">Base Price</p>

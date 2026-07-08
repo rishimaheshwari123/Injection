@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Settings, Upload, Trash2, Edit2, Heart, Plus, Loader2, Image, FileText, CheckCircle2, X } from 'lucide-react';
+import { Settings, Upload, Trash2, Edit2, Plus, Loader2, Image, FileText, CheckCircle2, X } from 'lucide-react';
 import { adminSettingAPI, prescriptionAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 

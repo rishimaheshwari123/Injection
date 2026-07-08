@@ -482,7 +482,7 @@ export default function UserDetailsPage() {
                           {booking.vendorId?.businessName || booking.vendorId?.name || 'N/A'}
                         </td>
                         <td className="px-4 py-3.5 text-xs text-gray-800 font-semibold">
-                          ₹{booking.grandTotal || booking.finalAmount || booking.amount || 0}
+                           ₹{booking.subtotal || booking.grandTotal || booking.finalAmount || booking.amount || 0}
                         </td>
                         <td className="px-4 py-3.5">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${

@@ -9,11 +9,14 @@ import {
   rescheduleBooking,
   getAllBookings,
   updateBookingStatus,
+  updateBooking,
   deleteBooking,
   addNoteToBooking,
   updatePrescription,
   updatePrescriptionSummary,
-  getVendorAllBookings
+  getVendorAllBookings,
+  updateRequestedItems,
+  updateRequestedItemStatus
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -46,7 +49,10 @@ router.post('/:id/notes', protect, adminOnly, addNoteToBooking);
 
 router.put('/:id/prescription', protect, adminOnly, updatePrescription);
 router.put('/:id/prescription-summary', protect, adminOnly, updatePrescriptionSummary);
-
+router.put('/:id', protect, adminOnly, updateBooking);
 router.delete('/:id', protect, adminOnly, deleteBooking);
+
+router.put('/:id/requested-items', protect, updateRequestedItems);
+router.put('/:id/requested-items/:itemId/status', protect, updateRequestedItemStatus);
 
 export default router;
