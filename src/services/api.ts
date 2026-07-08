@@ -48,6 +48,18 @@ export const userAPI = {
   updateProfile: (data: any) =>
     api.put(API_ENDPOINTS.USERS.UPDATE_PROFILE, data),
   getMe: () => api.get(API_ENDPOINTS.USERS.ME),
+  uploadUserFile: (file: File, folder?: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (folder) {
+      formData.append("folder", folder);
+    }
+    return api.post("/users/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };
 
 // Vendor APIs
@@ -85,6 +97,8 @@ export const vendorAPI = {
 export const serviceAPI = {
   getAllServices: () => api.get("/services/admin/all"),
   getPublicServices: () => api.get("/services"),
+  getPaginatedServices: (params?: any) =>
+    api.get("/services/admin/paginated", { params }),
   getServiceById: (id: string) => api.get(API_ENDPOINTS.SERVICES.BY_ID(id)),
   getVendorServices: () => api.get(API_ENDPOINTS.SERVICES.BY_VENDOR),
   createService: (serviceData: any) =>
@@ -102,6 +116,12 @@ export const serviceAPI = {
   },
 };
 
+// Category APIs
+export const categoryAPI = {
+  getAllCategories: () => api.get("/categories"),
+  createCategory: (name: string) => api.post("/categories", { name }),
+};
+
 // Booking APIs
 export const bookingAPI = {
   getAllBookings: (params?: any) =>
@@ -109,7 +129,7 @@ export const bookingAPI = {
   getBookingById: (id: string) => api.get(API_ENDPOINTS.BOOKINGS.BY_ID(id)),
   createBooking: (bookingData: any) =>
     api.post(API_ENDPOINTS.BOOKINGS.CREATE, bookingData),
-  getUserBookings: () => api.get(API_ENDPOINTS.BOOKINGS.USER_BOOKINGS),
+  getUserBookings: (params?: any) => api.get(API_ENDPOINTS.BOOKINGS.USER_BOOKINGS, { params }),
   getVendorBookings: () => api.get(API_ENDPOINTS.BOOKINGS.VENDOR_BOOKINGS),
   getAvailableBookings: () => api.get(API_ENDPOINTS.BOOKINGS.AVAILABLE),
   acceptBooking: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.ACCEPT(id)),

@@ -12,7 +12,8 @@ import {
   updateService,
   deleteService,
   toggleServiceStatus,
-  getServicesByCategory
+  getServicesByCategory,
+  adminGetAllServicesByPagination
 } from '../controllers/serviceController.js';
 import { protect, vendorOnly, adminOnly } from '../middleware/auth.js';
 
@@ -23,6 +24,7 @@ router.post('/admin/create', protect, adminOnly, adminCreateService);
 router.post('/upload-image', protect, adminOnly, uploadServiceImage);
 
 router.get('/admin/all', protect, adminOnly, adminGetAllServices);
+router.get('/admin/paginated', protect, adminOnly, adminGetAllServicesByPagination);
 
 router.put('/admin/:id', protect, adminOnly, adminUpdateService);
 

@@ -11,6 +11,7 @@ interface VendorServiceRequest {
     businessName: string;
     email: string;
     phone: string;
+    vendorId?: string;
   };
   services: Array<{
     _id: string;
@@ -119,6 +120,7 @@ export default function VendorServiceRequestsPage() {
       req.vendor?.businessName?.toLowerCase().includes(term) ||
       req.vendor?.email?.toLowerCase().includes(term) ||
       req.vendor?.phone?.includes(term) ||
+      req.vendor?.vendorId?.toLowerCase().includes(term) ||
       req.services?.some(s => s.serviceName.toLowerCase().includes(term))
     );
   });
@@ -138,7 +140,7 @@ export default function VendorServiceRequestsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by vendor, business, service..."
+              placeholder="Search by Vendor ID, vendor, business, service..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none"
@@ -195,6 +197,11 @@ export default function VendorServiceRequestsPage() {
                   {filteredRequests.map((req) => (
                     <tr key={req._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
+                        {req.vendor?.vendorId && (
+                          <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] mb-1">
+                            {req.vendor.vendorId}
+                          </div>
+                        )}
                         <div className="text-sm font-semibold text-gray-900">{req.vendor?.businessName}</div>
                         <div className="text-sm text-gray-600">{req.vendor?.name}</div>
                         <div className="text-xs text-gray-500">{req.vendor?.email}</div>

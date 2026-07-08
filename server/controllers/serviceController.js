@@ -86,31 +86,21 @@ export const adminCreateService = async (req, res) => {
     const finalVendors = Array.isArray(vendors) ? vendors : (vendors ? [vendors] : []);
 
     // Validate category
-    const validCategories = [
-      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
-      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
-      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
-      'Community Survey', 'Awareness Activities', 'Lab-based Training',
-      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
-      'Dissertation Program', 'Placement Services', 'Blood Collection',
-      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
-      'Physiotherapy Session', 'Other'
-    ];
-    if (!validCategories.includes(category)) {
+    const Category = (await import('../models/Category.js')).default;
+    let targetCategory = null;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      targetCategory = await Category.findById(category);
+    } else {
+      targetCategory = await Category.findOne({ name: { $regex: new RegExp(`^${category}$`, 'i') } });
+    }
+
+    if (!targetCategory) {
       return res.status(400).json({
         success: false,
         message: 'Invalid category'
       });
     }
-
-    // Validate service type
-    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
-    if (serviceType && !validServiceTypes.includes(serviceType)) {
-      return res.status(400).json({
-        success: false,
-        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
-      });
-    }
+    const finalCategory = targetCategory._id;
 
     // Validate base price
     if (basePrice < 0) {
@@ -124,7 +114,7 @@ export const adminCreateService = async (req, res) => {
     const service = await Service.create({
       serviceName,
       description,
-      category,
+      category: finalCategory,
       basePrice,
       duration: duration || 45,
       serviceType: serviceType || 'At Home',
@@ -205,31 +195,21 @@ export const createService = async (req, res) => {
     }
 
     // Validate category
-    const validCategories = [
-      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
-      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
-      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
-      'Community Survey', 'Awareness Activities', 'Lab-based Training',
-      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
-      'Dissertation Program', 'Placement Services', 'Blood Collection',
-      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
-      'Physiotherapy Session', 'Other'
-    ];
-    if (!validCategories.includes(category)) {
+    const Category = (await import('../models/Category.js')).default;
+    let targetCategory = null;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      targetCategory = await Category.findById(category);
+    } else {
+      targetCategory = await Category.findOne({ name: { $regex: new RegExp(`^${category}$`, 'i') } });
+    }
+
+    if (!targetCategory) {
       return res.status(400).json({
         success: false,
         message: 'Invalid category'
       });
     }
-
-    // Validate service type
-    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
-    if (serviceType && !validServiceTypes.includes(serviceType)) {
-      return res.status(400).json({
-        success: false,
-        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
-      });
-    }
+    const finalCategory = targetCategory._id;
 
     // Validate base price
     if (basePrice < 0) {
@@ -243,7 +223,7 @@ export const createService = async (req, res) => {
     const service = await Service.create({
       serviceName,
       description,
-      category,
+      category: finalCategory,
       basePrice,
       duration: duration || 45,
       serviceType: serviceType || 'At Home',
@@ -302,6 +282,7 @@ export const adminGetAllServices = async (req, res) => {
         path: 'vendors',
         select: 'name businessName phone email city state rating isActive isVerified verificationStatus'
       })
+      .populate('category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -324,6 +305,7 @@ export const getAllServices = async (req, res) => {
   try {
     const services = await Service.find()
       .populate('vendors', 'name businessName phone email rating')
+      .populate('category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -346,7 +328,8 @@ export const getAllServices = async (req, res) => {
 export const getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('vendors', 'name businessName phone email address city state pincode rating totalReviews');
+      .populate('vendors', 'name businessName phone email address city state pincode rating totalReviews')
+      .populate('category');
 
     if (!service) {
       return res.status(404).json({
@@ -373,6 +356,7 @@ export const getServiceById = async (req, res) => {
 export const getVendorServices = async (req, res) => {
   try {
     const services = await Service.find({ vendors: req.vendor._id })
+      .populate('category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -398,6 +382,7 @@ export const getServicesByVendorId = async (req, res) => {
       isActive: true
     })
       .populate('vendors', 'name businessName phone email')
+      .populate('category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -454,31 +439,25 @@ export const adminUpdateService = async (req, res) => {
     }
 
     // Validate category if provided
-    const validCategories = [
-      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
-      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
-      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
-      'Community Survey', 'Awareness Activities', 'Lab-based Training',
-      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
-      'Dissertation Program', 'Placement Services', 'Blood Collection',
-      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
-      'Physiotherapy Session', 'Other'
-    ];
-    if (category && !validCategories.includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid category'
-      });
+    let finalCategory = undefined;
+    if (category !== undefined) {
+      const Category = (await import('../models/Category.js')).default;
+      let targetCategory = null;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        targetCategory = await Category.findById(category);
+      } else {
+        targetCategory = await Category.findOne({ name: { $regex: new RegExp(`^${category}$`, 'i') } });
+      }
+
+      if (!targetCategory) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid category'
+        });
+      }
+      finalCategory = targetCategory._id;
     }
 
-    // Validate service type if provided
-    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
-    if (serviceType && !validServiceTypes.includes(serviceType)) {
-      return res.status(400).json({
-        success: false,
-        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
-      });
-    }
 
     // Validate base price if provided
     if (basePrice !== undefined && basePrice < 0) {
@@ -491,7 +470,7 @@ export const adminUpdateService = async (req, res) => {
     // Update fields only if provided
     if (serviceName !== undefined) service.serviceName = serviceName;
     if (description !== undefined) service.description = description;
-    if (category !== undefined) service.category = category;
+    if (category !== undefined) service.category = finalCategory;
     if (basePrice !== undefined) service.basePrice = basePrice;
     if (duration !== undefined) service.duration = duration;
     if (serviceType !== undefined) service.serviceType = serviceType;
@@ -569,31 +548,25 @@ export const updateService = async (req, res) => {
     }
 
     // Validate category if provided
-    const validCategories = [
-      'Home Injections', 'IV Drip Services', 'Wound Dressing', 'Day Care at Home',
-      'Patient Monitoring', 'Old Age Patient Care', '24 HR Patient Care',
-      'Field Survey Service', 'Data Collection Service', 'Field Sample Collection',
-      'Community Survey', 'Awareness Activities', 'Lab-based Training',
-      'BSC/MSC Training', 'DMLT Training', 'Nursing Training',
-      'Dissertation Program', 'Placement Services', 'Blood Collection',
-      'BP/Sugar Monitoring', 'ECG at Home', 'Catheter Care',
-      'Physiotherapy Session', 'Other'
-    ];
-    if (category && !validCategories.includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid category'
-      });
+    let finalCategory = undefined;
+    if (category !== undefined) {
+      const Category = (await import('../models/Category.js')).default;
+      let targetCategory = null;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        targetCategory = await Category.findById(category);
+      } else {
+        targetCategory = await Category.findOne({ name: { $regex: new RegExp(`^${category}$`, 'i') } });
+      }
+
+      if (!targetCategory) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid category'
+        });
+      }
+      finalCategory = targetCategory._id;
     }
 
-    // Validate service type if provided
-    const validServiceTypes = ['At Home', 'At Clinic', 'Both'];
-    if (serviceType && !validServiceTypes.includes(serviceType)) {
-      return res.status(400).json({
-        success: false,
-        message: `Service type must be one of: ${validServiceTypes.join(', ')}`
-      });
-    }
 
     // Validate base price if provided
     if (basePrice !== undefined && basePrice < 0) {
@@ -606,7 +579,7 @@ export const updateService = async (req, res) => {
     // Update fields only if provided
     if (serviceName !== undefined) service.serviceName = serviceName;
     if (description !== undefined) service.description = description;
-    if (category !== undefined) service.category = category;
+    if (category !== undefined) service.category = finalCategory;
     if (basePrice !== undefined) service.basePrice = basePrice;
     if (duration !== undefined) service.duration = duration;
     if (serviceType !== undefined) service.serviceType = serviceType;
@@ -711,11 +684,21 @@ export const toggleServiceStatus = async (req, res) => {
 // @access  Public
 export const getServicesByCategory = async (req, res) => {
   try {
+    const Category = (await import('../models/Category.js')).default;
+    let categoryQuery = req.params.category;
+    if (!mongoose.Types.ObjectId.isValid(categoryQuery)) {
+      const cat = await Category.findOne({ name: { $regex: new RegExp(`^${categoryQuery}$`, 'i') } });
+      if (cat) {
+        categoryQuery = cat._id;
+      }
+    }
+
     const services = await Service.find({
-      category: req.params.category,
+      category: categoryQuery,
       isActive: true
     })
       .populate('vendors', 'name businessName phone email city state rating')
+      .populate('category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -730,3 +713,73 @@ export const getServicesByCategory = async (req, res) => {
     });
   }
 };
+
+// @desc    Get all services with pagination and search (Admin)
+// @route   GET /api/services/admin/paginated
+// @access  Private/Admin
+export const adminGetAllServicesByPagination = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    let query = {};
+
+    if (search) {
+      const Category = (await import('../models/Category.js')).default;
+      const Vendor = (await import('../models/Vendor.js')).default;
+
+      // Find matching categories by name
+      const matchingCategories = await Category.find({
+        name: { $regex: search, $options: 'i' }
+      });
+      const categoryIds = matchingCategories.map(c => c._id);
+
+      // Find matching vendors
+      const matchingVendors = await Vendor.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { businessName: { $regex: search, $options: 'i' } }
+        ]
+      });
+      const vendorIds = matchingVendors.map(v => v._id);
+
+      query.$or = [
+        { serviceName: { $regex: search, $options: 'i' } },
+        { category: { $in: categoryIds } },
+        { vendors: { $in: vendorIds } }
+      ];
+    }
+
+    const totalServices = await Service.countDocuments(query);
+    const totalPages = Math.ceil(totalServices / limitNum);
+
+    const services = await Service.find(query)
+      .populate({
+        path: 'vendors',
+        select: 'name businessName phone email city state rating isActive isVerified verificationStatus'
+      })
+      .populate('category')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    res.status(200).json({
+      success: true,
+      count: services.length,
+      totalServices,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      data: services
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+

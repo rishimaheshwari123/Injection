@@ -211,7 +211,9 @@ export const createBooking = async (req, res) => {
 // @access  Private/User
 export const getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user._id })
+    const queryUserId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
+
+    const bookings = await Booking.find({ userId: queryUserId })
       .populate('vendorId', 'name phone businessName')
       .sort({ createdAt: -1 });
 
@@ -495,13 +497,17 @@ export const rescheduleBooking = async (req, res) => {
 // @access  Private/Admin
 export const getAllBookings = async (req, res) => {
   try {
-    const { status, date, page = 1, limit = 10, search, prescriptionStatus, reportStatus, vendorId } = req.query;
+    const { status, date, page = 1, limit = 10, search, prescriptionStatus, reportStatus, vendorId, userId } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
     let query = {};
+
+    if (userId) {
+      query.userId = userId;
+    }
 
     if (vendorId) {
       query.vendorId = vendorId;

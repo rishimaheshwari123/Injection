@@ -1,7 +1,13 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import Counter from './Counter.js';
 
 const userSchema = new mongoose.Schema({
+  patientId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   name: {
     type: String,
     required: [true, 'Name is required'],
@@ -84,16 +90,16 @@ const userSchema = new mongoose.Schema({
     default: 'Unknown'
   },
   allergies: [{
-    type: String,
-    trim: true
+    name: { type: String, trim: true },
+    since: { type: String, trim: true }
   }],
   chronicDiseases: [{
-    type: String,
-    trim: true
+    name: { type: String, trim: true },
+    since: { type: String, trim: true }
   }],
   currentMedications: [{
-    type: String,
-    trim: true
+    name: { type: String, trim: true },
+    since: { type: String, trim: true }
   }],
   
   // Emergency Contact
@@ -155,11 +161,49 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  medicalReport: {
+    type: String,
+    default: null
+  },
+  bloodReport: {
+    type: String,
+    default: null
+  },
+  historyDocument: {
+    type: String,
+    default: null
+  },
+  otherDocument: {
+    type: String,
+    default: null
+  },
   lastLoginAt: {
     type: Date
   }
 }, {
   timestamps: true
+});
+
+// Generate unique patientId/userId before saving using Counter model
+userSchema.pre('save', async function(next) {
+  if (this.isNew && !this.patientId) {
+    try {
+      const prefix = 'PAT';
+      
+      // Atomically increment sequence for this prefix
+      const counter = await Counter.findOneAndUpdate(
+        { id: prefix },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+
+      const formattedNum = String(counter.seq).padStart(3, '0');
+      this.patientId = `${prefix}${formattedNum}`;
+    } catch (error) {
+      return next(error);
+    }
+  }
+  next();
 });
 
 // Hash password before saving

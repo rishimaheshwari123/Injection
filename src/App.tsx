@@ -17,7 +17,9 @@ import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardPage from "./pages/admin/DashboardPage";
 import UsersPage from "./pages/admin/UsersPage";
+import UserDetailsPage from "./pages/admin/UserDetailsPage";
 import VendorsPage from "./pages/admin/VendorsPage";
+import VendorDetailsPage from "./pages/admin/VendorDetailsPage";
 import ServicesAdminPage from "./pages/admin/ServicesPage";
 import BookingsPage from "./pages/admin/BookingsPage";
 import PrescriptionsPage from "./pages/admin/PrescriptionsPage";
@@ -194,10 +196,26 @@ function App() {
             }
           />
           <Route
+            path="users/:id"
+            element={
+              <PermissionGuard permission="users">
+                <UserDetailsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
             path="vendors"
             element={
               <PermissionGuard permission="vendors">
                 <VendorsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="vendors/:id"
+            element={
+              <PermissionGuard permission="vendors">
+                <VendorDetailsPage />
               </PermissionGuard>
             }
           />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText } from 'lucide-react';
-import { vendorAPI, serviceAPI, bookingAPI, vendorServiceRequestAPI } from '../../services/api';
+import { vendorAPI, serviceAPI, vendorServiceRequestAPI } from '../../services/api';
 import { setVendors, setLoading, updateVendorStatus, addVendor, updateVendor, removeVendor } from '../../store/slices/vendorSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toast } from 'react-toastify';
@@ -8,6 +9,7 @@ import * as XLSX from 'xlsx';
 
 const VendorsPage = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { vendors, loading } = useAppSelector((state: any) => state.vendors);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
@@ -21,11 +23,7 @@ const VendorsPage = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [viewVendor, setViewVendor] = useState<any>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [vendorBookings, setVendorBookings] = useState<any[]>([]);
-  const [loadingBookings, setLoadingBookings] = useState(false);
   
   // Service Request States
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -54,8 +52,7 @@ const VendorsPage = () => {
     documents: {
       identityProof: { type: 'Identity Proof', url: '' },
       qualificationCertificate: { type: 'Qualification Certificate', url: '' },
-      businessLicense: { type: 'Business License', url: '' },
-      insuranceCertificate: { type: 'Insurance Certificate', url: '' }
+      businessLicense: { type: 'Business License', url: '' }
     }
   });
   const [serviceAreas, setServiceAreas] = useState<string[]>([]);
@@ -65,8 +62,7 @@ const VendorsPage = () => {
     profileImage: false,
     identityProof: false,
     qualificationCertificate: false,
-    businessLicense: false,
-    insuranceCertificate: false
+    businessLicense: false
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -96,8 +92,7 @@ const VendorsPage = () => {
               [fieldName]: {
                 type: fieldName === 'identityProof' ? 'Identity Proof' 
                       : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
-                      : fieldName === 'businessLicense' ? 'Business License'
-                      : 'Insurance Certificate',
+                      : 'Business License',
                 url: fileUrl
               }
             }
@@ -235,10 +230,6 @@ const VendorsPage = () => {
           businessLicense: { 
             type: 'Business License', 
             url: vendor.documents?.businessLicense?.url || '' 
-          },
-          insuranceCertificate: { 
-            type: 'Insurance Certificate', 
-            url: vendor.documents?.insuranceCertificate?.url || '' 
           }
         },
         profileImage: vendor.profileImage || ''
@@ -264,8 +255,7 @@ const VendorsPage = () => {
         documents: {
           identityProof: { type: 'Identity Proof', url: '' },
           qualificationCertificate: { type: 'Qualification Certificate', url: '' },
-          businessLicense: { type: 'Business License', url: '' },
-          insuranceCertificate: { type: 'Insurance Certificate', url: '' }
+          businessLicense: { type: 'Business License', url: '' }
         }
       });
       setServiceAreas([]);
@@ -273,22 +263,8 @@ const VendorsPage = () => {
     setShowModal(true);
   };
 
-  const handleViewVendor = async (vendor: any) => {
-    setViewVendor(vendor);
-    setShowViewModal(true);
-    setOpenDropdown(null);
-    setLoadingBookings(true);
-    setVendorBookings([]);
-    try {
-      const response = await bookingAPI.getAllBookings({ vendorId: vendor._id, limit: 1000 });
-      if (response.data.success) {
-        setVendorBookings(response.data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch bookings for vendor:', error);
-    } finally {
-      setLoadingBookings(false);
-    }
+  const handleViewVendor = (vendor: any) => {
+    navigate(`/admin/vendors/${vendor._id}`);
   };
 
   const handleOpenRequestsModal = async (vendor: any) => {
@@ -429,6 +405,7 @@ const VendorsPage = () => {
   const handleExportToExcel = () => {
     try {
       const excelData = filteredVendors.map((vendor: any) => ({
+        'Vendor ID': vendor.vendorId || '',
         'Business Name': vendor.businessName, 'Owner': vendor.name, 'Email': vendor.email,
         'Phone': vendor.phone, 'Type': vendor.businessType, 'City': vendor.city,
         'State': vendor.state, 'Status': vendor.isActive ? 'Active' : 'Inactive',
@@ -447,33 +424,48 @@ const VendorsPage = () => {
   const filteredVendors = vendors;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <>
+      <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-800">Vendors Management</h1>
-        <div className="flex items-center gap-4">
-          <button onClick={() => handleOpenModal()} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg">
-            <Plus size={20} /> Add Vendor
-          </button>
-          <button onClick={handleExportToExcel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <div className="flex items-center gap-3">
+          <button onClick={handleExportToExcel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             <Download size={20} /> Export
           </button>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input type="text" placeholder="Search vendors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none" />
-            </div>
-            <button onClick={handleSearch} className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all font-medium">
-              Search
-            </button>
-            {activeSearch && (
-              <button onClick={handleClearSearch} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
-                Clear
-              </button>
-            )}
-          </div>
+          <button onClick={() => handleOpenModal()} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all font-medium">
+            <Plus size={20} /> Add Vendor
+          </button>
         </div>
+      </div>
+
+      {/* Search Bar - Full Width Row */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by Vendor ID, Name, Email, or Phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm"
+          />
+        </div>
+        <button
+          onClick={handleSearch}
+          className="px-6 py-2.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm"
+        >
+          Search
+        </button>
+        {activeSearch && (
+          <button
+            onClick={handleClearSearch}
+            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -482,11 +474,12 @@ const VendorsPage = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-md ">
-          <div className="">
-            <table className="w-full">
+          <div className="bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[1100px] divide-y divide-gray-200">
               <thead className="bg-gray-50 border-b">
                 <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Vendor ID</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Business Info</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Owner</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Contact</th>
@@ -499,6 +492,15 @@ const VendorsPage = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredVendors.map((vendor: any) => (
                   <tr key={vendor._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">
+                      {vendor.vendorId ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc]">
+                          {vendor.vendorId}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-800">{vendor.businessName}</p>
                       <p className="text-sm text-gray-600">{vendor.city}, {vendor.state}</p>
@@ -670,6 +672,7 @@ const VendorsPage = () => {
         </div>
       </>
     )}
+      </div>
 
       {/* Create/Edit Modal */}
       {showModal && (
@@ -805,7 +808,7 @@ const VendorsPage = () => {
                           {service.serviceName}
                         </span>
                         <span className="text-xs text-gray-500 block">
-                          {service.category} - ₹{service.basePrice}
+                          {typeof service.category === 'object' ? (service.category?.name || "N/A") : (service.category || "N/A")} - ₹{service.basePrice}
                         </span>
                       </div>
                     </label>
@@ -910,10 +913,9 @@ const VendorsPage = () => {
                   {[
                     { key: 'identityProof', label: 'Identity Proof', desc: 'Aadhaar, Passport, or Voter ID' },
                     { key: 'qualificationCertificate', label: 'Qualification Certificate', desc: 'Degree or Diploma certificate' },
-                    { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license' },
-                    { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity insurance' }
+                    { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license' }
                   ].map((doc) => {
-                    const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate';
+                    const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense';
                     const fileUrl = formData.documents?.[key]?.url;
                     const isUploading = uploadingFiles[key];
                     return (
@@ -1008,157 +1010,6 @@ const VendorsPage = () => {
         </div>
       )}
 
-      {/* View Modal */}
-      {showViewModal && viewVendor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">Vendor Details</h2>
-              <button onClick={() => setShowViewModal(false)} className="text-gray-500 hover:text-gray-700"><X size={24} /></button>
-            </div>
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Business Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><p className="text-sm text-gray-600">Business Name</p><p className="font-medium text-gray-800">{viewVendor.businessName}</p></div>
-                  <div><p className="text-sm text-gray-600">Business Type</p><p className="font-medium text-gray-800">{viewVendor.businessType}</p></div>
-                  <div><p className="text-sm text-gray-600">Owner Name</p><p className="font-medium text-gray-800">{viewVendor.name}</p></div>
-                  <div><p className="text-sm text-gray-600">Email</p><p className="font-medium text-gray-800">{viewVendor.email}</p></div>
-                  <div><p className="text-sm text-gray-600">Phone</p><p className="font-medium text-gray-800">{viewVendor.phone}</p></div>
-                  <div><p className="text-sm text-gray-600">Gender</p><p className="font-medium text-gray-800">{viewVendor.gender || 'Male'}</p></div>
-                  <div className="md:col-span-2"><p className="text-sm text-gray-600">Address</p><p className="font-medium text-gray-800">{viewVendor.address}, {viewVendor.city}, {viewVendor.state} - {viewVendor.pincode}</p></div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600 font-semibold">Offered Services</p>
-                    <p className="font-medium text-gray-800 text-sm">
-                      {viewVendor.services && viewVendor.services.length > 0 
-                        ? viewVendor.services.map((s: any) => s.serviceName || s).join(', ') 
-                        : "None"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t pt-4 animate-fadeIn">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Profile & Documents</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Profile image view */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      {viewVendor.profileImage ? (
-                        <img src={viewVendor.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-gray-400 text-[10px]">No Profile</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">Profile Image</p>
-                      {viewVendor.profileImage ? (
-                        <a href={viewVendor.profileImage} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3DB9A6] hover:underline font-medium">View Full Image</a>
-                      ) : (
-                        <p className="text-xs text-gray-500">Not uploaded</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Documents list */}
-                  <div className="md:col-span-2 space-y-2">
-                    <p className="text-sm font-semibold text-gray-700">Uploaded Documents</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        { key: 'identityProof', label: 'Identity Proof' },
-                        { key: 'qualificationCertificate', label: 'Qualification Certificate' },
-                        { key: 'businessLicense', label: 'Business License' },
-                        { key: 'insuranceCertificate', label: 'Insurance Certificate' }
-                      ].map((doc) => {
-                        const fileUrl = viewVendor.documents?.[doc.key]?.url;
-                        return (
-                          <div key={doc.key} className="p-3 border rounded-lg bg-gray-50 flex items-center justify-between text-xs shadow-xs hover:border-slate-300 transition-all">
-                            <div>
-                              <p className="font-semibold text-gray-700">{doc.label}</p>
-                              <p className="text-gray-500 text-[10px] mt-0.5">{fileUrl ? 'Available' : 'Not Uploaded'}</p>
-                            </div>
-                            {fileUrl && (
-                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-white border rounded text-[#3DB9A6] hover:bg-gray-50 font-semibold shadow-xs">
-                                View File
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Booked Services (Booking History)</h3>
-                {loadingBookings ? (
-                  <div className="flex items-center justify-center py-6">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#63D64F]"></div>
-                  </div>
-                ) : vendorBookings.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Patient</th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Services</th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Total Price</th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Date / Slot</th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-700">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {vendorBookings.map((booking: any) => (
-                          <tr key={booking._id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2">
-                              <p className="font-medium text-gray-800">{booking.patientName}</p>
-                              <p className="text-xs text-gray-500">{booking.email}</p>
-                            </td>
-                            <td className="px-4 py-2">
-                              <ul className="list-disc list-inside">
-                                {booking.selectedServices?.map((item: any, idx: number) => (
-                                  <li key={idx} className="text-xs text-gray-700">
-                                    {item.serviceName} x{item.quantity}
-                                  </li>
-                                ))}
-                              </ul>
-                            </td>
-                            <td className="px-4 py-2 text-gray-800 font-semibold">
-                              ₹{booking.grandTotal}
-                            </td>
-                            <td className="px-4 py-2 text-xs text-gray-600">
-                              {booking.preferredTimeSlot}
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                                booking.bookingStatus === 'accepted' ? 'bg-blue-100 text-blue-800' :
-                                booking.bookingStatus === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                                booking.bookingStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {booking.bookingStatus}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic py-2">No bookings associated with this vendor.</p>
-                )}
-              </div>
-            </div>
-            <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end">
-              <button onClick={() => setShowViewModal(false)} className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Service Requests Modal */}
       {showRequestsModal && selectedVendor && (
@@ -1200,7 +1051,7 @@ const VendorsPage = () => {
                           />
                           <div>
                             <span className="text-sm text-gray-805 font-semibold block">{service.serviceName}</span>
-                            <span className="text-xs text-gray-500 block">{service.category} • ₹{service.basePrice}</span>
+                            <span className="text-xs text-gray-500 block">{typeof service.category === 'object' ? (service.category?.name || "N/A") : (service.category || "N/A")} • ₹{service.basePrice}</span>
                           </div>
                         </label>
                       ))}
@@ -1293,7 +1144,7 @@ const VendorsPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

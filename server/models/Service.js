@@ -13,34 +13,9 @@ const serviceSchema = new mongoose.Schema({
     trim: true
   },
   category: {
-    type: String,
-    required: [true, 'Category is required'],
-    enum: [
-      'Home Injections',
-      'IV Drip Services',
-      'Wound Dressing',
-      'Day Care at Home',
-      'Patient Monitoring',
-      'Old Age Patient Care',
-      '24 HR Patient Care',
-      'Field Survey Service',
-      'Data Collection Service',
-      'Field Sample Collection',
-      'Community Survey',
-      'Awareness Activities',
-      'Lab-based Training',
-      'BSC/MSC Training',
-      'DMLT Training',
-      'Nursing Training',
-      'Dissertation Program',
-      'Placement Services',
-      'Blood Collection',
-      'BP/Sugar Monitoring',
-      'ECG at Home',
-      'Catheter Care',
-      'Physiotherapy Session',
-      'Other'
-    ]
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: [true, 'Category is required']
   },
   
   // Pricing
@@ -57,7 +32,6 @@ const serviceSchema = new mongoose.Schema({
   },
   serviceType: {
     type: String,
-    enum: ['At Home', 'At Clinic', 'Both'],
     default: 'At Home'
   },
   

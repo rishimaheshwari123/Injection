@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Settings, Upload, Trash2, Edit2, Plus, Loader2, Image, FileText, CheckCircle2, X } from 'lucide-react';
+import { Settings, Upload, Trash2, Edit2, Heart, Plus, Loader2, Image, FileText, CheckCircle2, X } from 'lucide-react';
 import { adminSettingAPI, prescriptionAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -170,7 +170,7 @@ const SettingsPage = () => {
           const updatedSetting = res.data.data;
           toast.success('Configuration updated successfully!');
           setShowModal(false);
-          
+
           setSettings((prev) => {
             let updated = prev.map((item) =>
               item._id === updatedSetting._id ? updatedSetting : item
@@ -182,7 +182,7 @@ const SettingsPage = () => {
             }
             return updated;
           });
-          
+
           fetchSettings(false);
         }
       } else {
@@ -192,7 +192,7 @@ const SettingsPage = () => {
           const newSetting = res.data.data;
           toast.success('Configuration added successfully!');
           setShowModal(false);
-          
+
           setSettings((prev) => {
             let updated = [newSetting, ...prev];
             if (newSetting.isActive) {
@@ -202,7 +202,7 @@ const SettingsPage = () => {
             }
             return updated;
           });
-          
+
           fetchSettings(false);
         }
       }
@@ -292,9 +292,8 @@ const SettingsPage = () => {
           {settings.map((item) => (
             <div
               key={item._id}
-              className={`bg-white rounded-xl overflow-hidden shadow-md border-2 transition-all hover:shadow-xl flex flex-col justify-between ${
-                item.isActive ? 'border-[#63D64F]' : 'border-gray-200'
-              }`}
+              className={`bg-white rounded-xl overflow-hidden shadow-md border-2 transition-all hover:shadow-xl flex flex-col justify-between ${item.isActive ? 'border-[#63D64F]' : 'border-gray-200'
+                }`}
             >
               {/* Card Header */}
               <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">

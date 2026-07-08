@@ -1,19 +1,89 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import cloudinary from '../config/cloudinary.js';
 
-// Generate JWT Token
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
 };
 
-// @desc    Register user (User or Admin)
-// @route   POST /api/users/register
-// @access  Public
+const uploadToCloudinary = async (file, folder = 'patients') => {
+  if (!file) return null;
+  try {
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder,
+      resource_type: 'auto'
+    });
+    return result.secure_url;
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw new Error('Failed to upload file to Cloudinary: ' + error.message);
+  }
+};
+
 export const userRegister = async (req, res) => {
   try {
-    const { name, email, password, phone, gender, age, address, pincode, role } = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      gender,
+      age,
+      address,
+      pincode,
+      alternateMobile,
+      currentLocation,
+      hasInsurance,
+      insurancePolicyNumber,
+      insuranceProvider,
+      insuranceExpiryDate,
+      bloodGroup,
+      allergies,
+      chronicDiseases,
+      currentMedications,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      additionalNotes,
+      preferredLanguage,
+      role,
+      isActive,
+      isStaff,
+      permissions,
+      profileImage,
+      medicalReport,
+      bloodReport,
+      historyDocument,
+      otherDocument
+    } = req.body;
+
+    // Validation
+    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    // Phone validation
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid phone number (7 to 15 digits)'
+      });
+    }
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -24,7 +94,37 @@ export const userRegister = async (req, res) => {
       });
     }
 
-    // Create user - if role is provided and is 'admin', use it, otherwise default to 'user'
+    // Parse JSON arrays/objects
+    let parsedAllergies = [];
+    let parsedChronicDiseases = [];
+    let parsedCurrentMedications = [];
+    let parsedPermissions = undefined;
+
+    try {
+      parsedAllergies = typeof allergies === 'string' ? JSON.parse(allergies) : (allergies || []);
+    } catch (e) {
+      console.error('Error parsing allergies:', e);
+    }
+
+    try {
+      parsedChronicDiseases = typeof chronicDiseases === 'string' ? JSON.parse(chronicDiseases) : (chronicDiseases || []);
+    } catch (e) {
+      console.error('Error parsing chronicDiseases:', e);
+    }
+
+    try {
+      parsedCurrentMedications = typeof currentMedications === 'string' ? JSON.parse(currentMedications) : (currentMedications || []);
+    } catch (e) {
+      console.error('Error parsing currentMedications:', e);
+    }
+
+    try {
+      parsedPermissions = typeof permissions === 'string' ? JSON.parse(permissions) : permissions;
+    } catch (e) {
+      console.error('Error parsing permissions:', e);
+    }
+
+    // Create user
     const user = await User.create({
       name,
       email,
@@ -34,7 +134,30 @@ export const userRegister = async (req, res) => {
       age,
       address,
       pincode,
-      role: role === 'admin' ? 'admin' : 'user'
+      alternateMobile: alternateMobile || '',
+      currentLocation: currentLocation || '',
+      hasInsurance: hasInsurance === 'true' || hasInsurance === true,
+      insurancePolicyNumber: insurancePolicyNumber || '',
+      insuranceProvider: insuranceProvider || '',
+      insuranceExpiryDate: insuranceExpiryDate || null,
+      bloodGroup: bloodGroup || 'Unknown',
+      allergies: parsedAllergies,
+      chronicDiseases: parsedChronicDiseases,
+      currentMedications: parsedCurrentMedications,
+      emergencyContactName: emergencyContactName || '',
+      emergencyContactPhone: emergencyContactPhone || '',
+      emergencyContactRelation: emergencyContactRelation || '',
+      additionalNotes: additionalNotes || '',
+      preferredLanguage: preferredLanguage || 'English',
+      role: role === 'admin' ? 'admin' : 'user',
+      isActive: isActive === 'false' || isActive === false ? false : true,
+      isStaff: isStaff === 'true' || isStaff === true ? true : false,
+      permissions: parsedPermissions,
+      profileImage: profileImage || null,
+      medicalReport: medicalReport || null,
+      bloodReport: bloodReport || null,
+      historyDocument: historyDocument || null,
+      otherDocument: otherDocument || null
     });
 
     const token = generateToken(user._id, user.role);
@@ -55,9 +178,7 @@ export const userRegister = async (req, res) => {
   }
 };
 
-// @desc    Login user (User or Admin)
-// @route   POST /api/users/login
-// @access  Public
+
 export const userLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -108,9 +229,6 @@ export const userLogin = async (req, res) => {
   }
 };
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private/Admin
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
@@ -128,9 +246,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// @desc    Get single user by ID
-// @route   GET /api/users/:id
-// @access  Private/Admin
+
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -154,12 +270,37 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
+
 export const updateUserProfile = async (req, res) => {
   try {
-    const updateData = req.body;
+    const {
+      name,
+      phone,
+      gender,
+      age,
+      address,
+      pincode,
+      alternateMobile,
+      currentLocation,
+      hasInsurance,
+      insurancePolicyNumber,
+      insuranceProvider,
+      insuranceExpiryDate,
+      bloodGroup,
+      allergies,
+      chronicDiseases,
+      currentMedications,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      additionalNotes,
+      preferredLanguage,
+      profileImage,
+      medicalReport,
+      bloodReport,
+      historyDocument,
+      otherDocument
+    } = req.body;
 
     const user = await User.findById(req.user._id);
 
@@ -170,21 +311,79 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Update all allowed fields
-    const allowedFields = [
-      'name', 'phone', 'gender', 'age', 'address', 'pincode', 
-      'alternateMobile', 'currentLocation', 'hasInsurance', 
-      'insurancePolicyNumber', 'insuranceProvider', 'insuranceExpiryDate',
-      'bloodGroup', 'allergies', 'chronicDiseases', 'currentMedications',
-      'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
-      'additionalNotes', 'preferredLanguage', 'profileImage'
-    ];
-
-    allowedFields.forEach(field => {
-      if (updateData[field] !== undefined) {
-        user[field] = updateData[field];
+    // Validation for allowed fields if passed
+    if (name !== undefined && !name) {
+      return res.status(400).json({ success: false, message: 'Name cannot be empty' });
+    }
+    if (phone !== undefined && !phone) {
+      return res.status(400).json({ success: false, message: 'Phone number cannot be empty' });
+    }
+    if (phone !== undefined) {
+      const phoneRegex = /^\+?[0-9]{7,15}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ success: false, message: 'Please provide a valid phone number' });
       }
-    });
+    }
+    if (gender !== undefined && !gender) {
+      return res.status(400).json({ success: false, message: 'Gender cannot be empty' });
+    }
+    if (age !== undefined && !age) {
+      return res.status(400).json({ success: false, message: 'Age cannot be empty' });
+    }
+    if (address !== undefined && !address) {
+      return res.status(400).json({ success: false, message: 'Address cannot be empty' });
+    }
+    if (pincode !== undefined && !pincode) {
+      return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
+
+    // Update fields if provided, otherwise preserve existing values
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (gender !== undefined) user.gender = gender;
+    if (age !== undefined) user.age = age;
+    if (address !== undefined) user.address = address;
+    if (pincode !== undefined) user.pincode = pincode;
+    if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
+    if (currentLocation !== undefined) user.currentLocation = currentLocation;
+    if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
+    if (insurancePolicyNumber !== undefined) user.insurancePolicyNumber = insurancePolicyNumber;
+    if (insuranceProvider !== undefined) user.insuranceProvider = insuranceProvider;
+    if (insuranceExpiryDate !== undefined) user.insuranceExpiryDate = insuranceExpiryDate;
+    if (bloodGroup !== undefined) user.bloodGroup = bloodGroup;
+    if (emergencyContactName !== undefined) user.emergencyContactName = emergencyContactName;
+    if (emergencyContactPhone !== undefined) user.emergencyContactPhone = emergencyContactPhone;
+    if (emergencyContactRelation !== undefined) user.emergencyContactRelation = emergencyContactRelation;
+    if (additionalNotes !== undefined) user.additionalNotes = additionalNotes;
+    if (preferredLanguage !== undefined) user.preferredLanguage = preferredLanguage;
+    if (profileImage !== undefined) user.profileImage = profileImage;
+    if (medicalReport !== undefined) user.medicalReport = medicalReport;
+    if (bloodReport !== undefined) user.bloodReport = bloodReport;
+    if (historyDocument !== undefined) user.historyDocument = historyDocument;
+    if (otherDocument !== undefined) user.otherDocument = otherDocument;
+
+    // Handle nested medical items
+    if (allergies !== undefined) {
+      try {
+        user.allergies = typeof allergies === 'string' ? JSON.parse(allergies) : allergies;
+      } catch (e) {
+        console.error('Error parsing allergies:', e);
+      }
+    }
+    if (chronicDiseases !== undefined) {
+      try {
+        user.chronicDiseases = typeof chronicDiseases === 'string' ? JSON.parse(chronicDiseases) : chronicDiseases;
+      } catch (e) {
+        console.error('Error parsing chronicDiseases:', e);
+      }
+    }
+    if (currentMedications !== undefined) {
+      try {
+        user.currentMedications = typeof currentMedications === 'string' ? JSON.parse(currentMedications) : currentMedications;
+      } catch (e) {
+        console.error('Error parsing currentMedications:', e);
+      }
+    }
 
     await user.save();
 
@@ -201,15 +400,46 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-// @desc    Create user/patient (Admin)
-// @route   POST /api/users/admin/create
-// @access  Private/Admin
+
 export const createUserByAdmin = async (req, res) => {
   try {
-    const userData = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      gender,
+      age,
+      address,
+      pincode,
+      alternateMobile,
+      currentLocation,
+      hasInsurance,
+      insurancePolicyNumber,
+      insuranceProvider,
+      insuranceExpiryDate,
+      bloodGroup,
+      allergies,
+      chronicDiseases,
+      currentMedications,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      additionalNotes,
+      preferredLanguage,
+      role,
+      isActive,
+      isStaff,
+      permissions,
+      profileImage,
+      medicalReport,
+      bloodReport,
+      historyDocument,
+      otherDocument
+    } = req.body;
 
     // Check if user already exists
-    const userExists = await User.findOne({ email: userData.email });
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -217,8 +447,97 @@ export const createUserByAdmin = async (req, res) => {
       });
     }
 
+    // Validation
+    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    // Phone validation
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid phone number (7 to 15 digits)'
+      });
+    }
+
+    // Parse JSON arrays/objects
+    let parsedAllergies = [];
+    let parsedChronicDiseases = [];
+    let parsedCurrentMedications = [];
+    let parsedPermissions = undefined;
+
+    try {
+      parsedAllergies = typeof allergies === 'string' ? JSON.parse(allergies) : (allergies || []);
+    } catch (e) {
+      console.error('Error parsing allergies:', e);
+    }
+
+    try {
+      parsedChronicDiseases = typeof chronicDiseases === 'string' ? JSON.parse(chronicDiseases) : (chronicDiseases || []);
+    } catch (e) {
+      console.error('Error parsing chronicDiseases:', e);
+    }
+
+    try {
+      parsedCurrentMedications = typeof currentMedications === 'string' ? JSON.parse(currentMedications) : (currentMedications || []);
+    } catch (e) {
+      console.error('Error parsing currentMedications:', e);
+    }
+
+    try {
+      parsedPermissions = typeof permissions === 'string' ? JSON.parse(permissions) : permissions;
+    } catch (e) {
+      console.error('Error parsing permissions:', e);
+    }
+
     // Create user with all provided data
-    const user = await User.create(userData);
+    const user = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      gender,
+      age,
+      address,
+      pincode,
+      alternateMobile: alternateMobile || '',
+      currentLocation: currentLocation || '',
+      hasInsurance: hasInsurance === 'true' || hasInsurance === true,
+      insurancePolicyNumber: insurancePolicyNumber || '',
+      insuranceProvider: insuranceProvider || '',
+      insuranceExpiryDate: insuranceExpiryDate || null,
+      bloodGroup: bloodGroup || 'Unknown',
+      allergies: parsedAllergies,
+      chronicDiseases: parsedChronicDiseases,
+      currentMedications: parsedCurrentMedications,
+      emergencyContactName: emergencyContactName || '',
+      emergencyContactPhone: emergencyContactPhone || '',
+      emergencyContactRelation: emergencyContactRelation || '',
+      additionalNotes: additionalNotes || '',
+      preferredLanguage: preferredLanguage || 'English',
+      role: role || 'user',
+      isActive: isActive === 'false' || isActive === false ? false : true,
+      isStaff: isStaff === 'true' || isStaff === true ? true : false,
+      permissions: parsedPermissions,
+      profileImage: profileImage || null,
+      medicalReport: medicalReport || null,
+      bloodReport: bloodReport || null,
+      historyDocument: historyDocument || null,
+      otherDocument: otherDocument || null
+    });
 
     res.status(201).json({
       success: true,
@@ -233,12 +552,42 @@ export const createUserByAdmin = async (req, res) => {
   }
 };
 
-// @desc    Update user/patient by admin
-// @route   PUT /api/users/:id
-// @access  Private/Admin
 export const updateUserByAdmin = async (req, res) => {
   try {
-    const updateData = req.body;
+    const {
+      name,
+      email,
+      phone,
+      gender,
+      age,
+      address,
+      pincode,
+      alternateMobile,
+      currentLocation,
+      hasInsurance,
+      insurancePolicyNumber,
+      insuranceProvider,
+      insuranceExpiryDate,
+      bloodGroup,
+      allergies,
+      chronicDiseases,
+      currentMedications,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      additionalNotes,
+      preferredLanguage,
+      role,
+      isActive,
+      isStaff,
+      permissions,
+      profileImage,
+      medicalReport,
+      bloodReport,
+      historyDocument,
+      otherDocument
+    } = req.body;
+
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -248,25 +597,104 @@ export const updateUserByAdmin = async (req, res) => {
       });
     }
 
-    // Update all fields except password (use separate endpoint for password)
-    const allowedFields = [
-      'name', 'email', 'phone', 'gender', 'age', 'address', 'pincode',
-      'alternateMobile', 'currentLocation', 'hasInsurance',
-      'insurancePolicyNumber', 'insuranceProvider', 'insuranceExpiryDate',
-      'bloodGroup', 'allergies', 'chronicDiseases', 'currentMedications',
-      'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
-      'additionalNotes', 'preferredLanguage', 'profileImage', 'role', 'isActive', 'isStaff'
-    ];
-
-    allowedFields.forEach(field => {
-      if (updateData[field] !== undefined) {
-        user[field] = updateData[field];
+    // Validation for required fields if they are passed
+    if (name !== undefined && !name) {
+      return res.status(400).json({ success: false, message: 'Name cannot be empty' });
+    }
+    if (email !== undefined && !email) {
+      return res.status(400).json({ success: false, message: 'Email cannot be empty' });
+    }
+    if (email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
       }
-    });
+      const emailTaken = await User.findOne({ email, _id: { $ne: user._id } });
+      if (emailTaken) {
+        return res.status(400).json({ success: false, message: 'Email is already in use by another account' });
+      }
+    }
+    if (phone !== undefined && !phone) {
+      return res.status(400).json({ success: false, message: 'Phone number cannot be empty' });
+    }
+    if (phone !== undefined) {
+      const phoneRegex = /^\+?[0-9]{7,15}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ success: false, message: 'Please provide a valid phone number' });
+      }
+    }
+    if (gender !== undefined && !gender) {
+      return res.status(400).json({ success: false, message: 'Gender cannot be empty' });
+    }
+    if (age !== undefined && !age) {
+      return res.status(400).json({ success: false, message: 'Age cannot be empty' });
+    }
+    if (address !== undefined && !address) {
+      return res.status(400).json({ success: false, message: 'Address cannot be empty' });
+    }
+    if (pincode !== undefined && !pincode) {
+      return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
 
-    // Handle permissions separately as it's a nested object
-    if (updateData.permissions) {
-      user.permissions = updateData.permissions;
+    // Update fields if provided, otherwise preserve existing
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = phone;
+    if (gender !== undefined) user.gender = gender;
+    if (age !== undefined) user.age = age;
+    if (address !== undefined) user.address = address;
+    if (pincode !== undefined) user.pincode = pincode;
+    if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
+    if (currentLocation !== undefined) user.currentLocation = currentLocation;
+    if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
+    if (insurancePolicyNumber !== undefined) user.insurancePolicyNumber = insurancePolicyNumber;
+    if (insuranceProvider !== undefined) user.insuranceProvider = insuranceProvider;
+    if (insuranceExpiryDate !== undefined) user.insuranceExpiryDate = insuranceExpiryDate;
+    if (bloodGroup !== undefined) user.bloodGroup = bloodGroup;
+    if (emergencyContactName !== undefined) user.emergencyContactName = emergencyContactName;
+    if (emergencyContactPhone !== undefined) user.emergencyContactPhone = emergencyContactPhone;
+    if (emergencyContactRelation !== undefined) user.emergencyContactRelation = emergencyContactRelation;
+    if (additionalNotes !== undefined) user.additionalNotes = additionalNotes;
+    if (preferredLanguage !== undefined) user.preferredLanguage = preferredLanguage;
+    if (role !== undefined) user.role = role;
+    if (isActive !== undefined) user.isActive = isActive === 'false' || isActive === false ? false : true;
+    if (isStaff !== undefined) user.isStaff = isStaff === 'true' || isStaff === true ? true : false;
+    if (profileImage !== undefined) user.profileImage = profileImage;
+    if (medicalReport !== undefined) user.medicalReport = medicalReport;
+    if (bloodReport !== undefined) user.bloodReport = bloodReport;
+    if (historyDocument !== undefined) user.historyDocument = historyDocument;
+    if (otherDocument !== undefined) user.otherDocument = otherDocument;
+
+    // Handle nested medical items
+    if (allergies !== undefined) {
+      try {
+        user.allergies = typeof allergies === 'string' ? JSON.parse(allergies) : allergies;
+      } catch (e) {
+        console.error('Error parsing allergies:', e);
+      }
+    }
+    if (chronicDiseases !== undefined) {
+      try {
+        user.chronicDiseases = typeof chronicDiseases === 'string' ? JSON.parse(chronicDiseases) : chronicDiseases;
+      } catch (e) {
+        console.error('Error parsing chronicDiseases:', e);
+      }
+    }
+    if (currentMedications !== undefined) {
+      try {
+        user.currentMedications = typeof currentMedications === 'string' ? JSON.parse(currentMedications) : currentMedications;
+      } catch (e) {
+        console.error('Error parsing currentMedications:', e);
+      }
+    }
+
+    // Handle permissions separately
+    if (permissions !== undefined) {
+      try {
+        user.permissions = typeof permissions === 'string' ? JSON.parse(permissions) : permissions;
+      } catch (e) {
+        console.error('Error parsing permissions:', e);
+      }
     }
 
     await user.save();
@@ -284,9 +712,44 @@ export const updateUserByAdmin = async (req, res) => {
   }
 };
 
-// @desc    Activate user account
-// @route   PUT /api/users/:id/activate
-// @access  Private/Admin
+
+// @desc    Upload user file (profile image or documents) to Cloudinary
+// @route   POST /api/users/upload
+// @access  Private
+export const uploadUserFile = async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No files were uploaded.'
+      });
+    }
+
+    const file = req.files.file;
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a file under "file" key.'
+      });
+    }
+
+    const folder = req.body.folder || 'patients';
+    const fileUrl = await uploadToCloudinary(file, folder);
+
+    res.status(200).json({
+      success: true,
+      message: 'File uploaded successfully',
+      url: fileUrl
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
 export const activateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -314,9 +777,7 @@ export const activateUser = async (req, res) => {
   }
 };
 
-// @desc    Deactivate user account
-// @route   PUT /api/users/:id/deactivate
-// @access  Private/Admin
+
 export const deactivateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -344,9 +805,7 @@ export const deactivateUser = async (req, res) => {
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private/Admin
+
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -372,9 +831,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// @desc    Toggle user status (activate/deactivate)
-// @route   PUT /api/users/:id/toggle-status
-// @access  Private/Admin
+
 export const toggleUserStatus = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -402,9 +859,7 @@ export const toggleUserStatus = async (req, res) => {
   }
 };
 
-// @desc    Get current user
-// @route   GET /api/users/me
-// @access  Private
+
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -428,9 +883,7 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Get all users with pagination and search (Admin)
-// @route   GET /api/users/admin/paginated
-// @access  Private/Admin
+
 export const getAllUsersByPagination = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
@@ -443,6 +896,7 @@ export const getAllUsersByPagination = async (req, res) => {
 
     if (search) {
       query.$or = [
+        { patientId: { $regex: search, $options: 'i' } },
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } }

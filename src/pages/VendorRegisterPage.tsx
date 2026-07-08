@@ -452,7 +452,7 @@ const VendorRegisterPage = () => {
                               )}
                               <div>
                                 <p className="text-sm font-semibold text-slate-800">{service.serviceName}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">{service.category} - ₹{service.basePrice}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{typeof service.category === 'object' ? (service.category?.name || "N/A") : (service.category || "N/A")} - ₹{service.basePrice}</p>
                               </div>
                             </label>
                           ))}

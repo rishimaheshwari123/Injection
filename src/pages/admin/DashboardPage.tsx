@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Building2, Package, Calendar, TrendingUp, FlaskConical, IndianRupee } from 'lucide-react';
 import { dashboardAPI } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -8,6 +9,7 @@ import {
 } from 'recharts';
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +79,10 @@ const DashboardPage = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/users')}
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Total Users</p>
@@ -87,7 +92,10 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/vendors')}
+          className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm">Total Vendors</p>
@@ -97,7 +105,10 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/services')}
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Total Services</p>
@@ -107,7 +118,10 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/bookings')}
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm">Total Bookings</p>
@@ -120,7 +134,10 @@ const DashboardPage = () => {
 
       {/* Revenue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/bookings')}
+          className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-teal-100 text-sm">Booking Revenue</p>
@@ -133,7 +150,10 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/lab-partners')}
+          className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-pink-100 text-sm">Lab Revenue</p>
@@ -146,7 +166,10 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+        <div 
+          onClick={() => navigate('/admin/bookings')}
+          className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-indigo-100 text-sm">Total Revenue</p>
@@ -261,7 +284,7 @@ const DashboardPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {stats.recentBookings.map((booking: any) => (
+              {stats.recentBookings.slice(0, 3).map((booking: any) => (
                 <tr key={booking._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm text-gray-800">{booking.patientName}</td>
                   <td className="px-6 py-4">
@@ -284,10 +307,23 @@ const DashboardPage = () => {
             </tbody>
           </table>
         </div>
+        {stats.recentBookings.length > 3 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => navigate('/admin/bookings')}
+              className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+            >
+              Show More Bookings
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Lab Entries Card */}
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div 
+        onClick={() => navigate('/admin/lab-partners')}
+        className="bg-white rounded-xl shadow-md p-6 cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all duration-300"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">Lab Partner Entries</h3>

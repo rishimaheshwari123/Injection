@@ -140,7 +140,7 @@ export const getMyServiceRequests = async (req, res) => {
 // @access  Private/Admin
 export const getAllServiceRequests = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, vendor } = req.query;
     let query = {};
 
     if (status) {
@@ -153,11 +153,15 @@ export const getAllServiceRequests = async (req, res) => {
       query.status = status;
     }
 
+    if (vendor) {
+      query.vendor = vendor;
+    }
+
     const requests = await VendorServiceRequest.find(query)
-      .populate('vendor', 'name businessName email phone')
+      .populate('vendor', 'name businessName email phone vendorId')
       .populate('services', 'serviceName category basePrice duration')
       .populate('processedBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
 
     res.status(200).json({
       success: true,

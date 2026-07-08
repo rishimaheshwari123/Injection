@@ -12,7 +12,8 @@ import {
   getMe,
   createUserByAdmin,
   updateUserByAdmin,
-  getAllUsersByPagination
+  getAllUsersByPagination,
+  uploadUserFile
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -21,6 +22,8 @@ const router = express.Router();
 router.post('/register', userRegister);
 
 router.post('/login', userLogin);
+
+router.post('/upload', protect, uploadUserFile);
 
 router.get('/me', protect, getMe);
 

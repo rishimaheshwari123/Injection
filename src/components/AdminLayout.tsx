@@ -191,7 +191,7 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <aside
-        className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-white shadow-lg fixed h-full flex flex-col transition-all duration-300`}
+        className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-white shadow-lg fixed top-0 left-0 h-screen flex flex-col transition-all duration-300 z-30`}
       >
         <div className="p-6 border-b flex items-center justify-between">
           {!sidebarCollapsed && (
@@ -221,11 +221,10 @@ const AdminLayout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg mb-2 transition-colors ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg mb-2 transition-colors ${isActive
+                  ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+                  }`}
                 title={sidebarCollapsed ? item.label : ""}
               >
                 <Icon size={24} className="flex-shrink-0" />
@@ -252,7 +251,7 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 ${sidebarCollapsed ? "ml-20" : "ml-64"} p-8 transition-all duration-300`}
+        className={`flex-1 ${sidebarCollapsed ? "ml-20" : "ml-64"} p-3 transition-[margin] duration-300`}
       >
         <Outlet />
       </main>

@@ -27,13 +27,130 @@ import vendorServiceRequestRoutes from './routes/vendorServiceRequestRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import heroRoutes from './routes/heroRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 import fs from 'fs';
 
 // Load env vars
 dotenv.config();
 
 // Connect to database
-connectDB();
+connectDB().then(async () => {
+  try {
+    const User = (await import('./models/User.js')).default;
+    const Counter = (await import('./models/Counter.js')).default;
+
+    // Synchronize Counter collection for 'PAT' prefix with max existing PAT numbers in db
+    const prefix = 'PAT';
+    const users = await User.find({ patientId: { $regex: '^' + prefix } });
+    let maxSeq = 0;
+    for (const u of users) {
+      if (u.patientId) {
+        const matches = u.patientId.match(/\d+/);
+        if (matches) {
+          const num = parseInt(matches[0]);
+          if (num > maxSeq) {
+            maxSeq = num;
+          }
+        }
+      }
+    }
+    
+    // Update/Upsert the Counter with the maximum found sequence
+    const existingCounter = await Counter.findOne({ id: prefix });
+    if (!existingCounter || existingCounter.seq < maxSeq) {
+      await Counter.findOneAndUpdate(
+        { id: prefix },
+        { $set: { seq: maxSeq } },
+        { upsert: true, new: true }
+      );
+      console.log(`Synchronized Counter for ${prefix} to seq: ${maxSeq}`);
+    }
+
+    // Find users without PAT ID (including null, empty, or starting with USR)
+    const usersWithoutPatId = await User.find({ 
+      $or: [
+        { patientId: { $exists: false } }, 
+        { patientId: null }, 
+        { patientId: "" },
+        { patientId: { $regex: '^USR' } }
+      ] 
+    }).sort({ createdAt: 1 });
+    
+    if (usersWithoutPatId.length > 0) {
+      console.log(`Found ${usersWithoutPatId.length} users/patients without PAT ID. Generating IDs using Counter...`);
+      for (const user of usersWithoutPatId) {
+        const counter = await Counter.findOneAndUpdate(
+          { id: prefix },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
+
+        const formattedNum = String(counter.seq).padStart(3, '0');
+        user.patientId = `${prefix}${formattedNum}`;
+        await user.save();
+      }
+      console.log('User IDs migration to PAT sequence completed successfully!');
+    }
+
+    // Synchronize Counter collection for 'VND' prefix with max existing VND numbers in db
+    const Vendor = (await import('./models/Vendor.js')).default;
+    const vndPrefix = 'VND';
+    const vendors = await Vendor.find({ vendorId: { $regex: '^' + vndPrefix } });
+    let maxVndSeq = 0;
+    for (const v of vendors) {
+      if (v.vendorId) {
+        const matches = v.vendorId.match(/\d+/);
+        if (matches) {
+          const num = parseInt(matches[0]);
+          if (num > maxVndSeq) {
+            maxVndSeq = num;
+          }
+        }
+      }
+    }
+    
+    const existingVndCounter = await Counter.findOne({ id: vndPrefix });
+    if (!existingVndCounter || existingVndCounter.seq < maxVndSeq) {
+      await Counter.findOneAndUpdate(
+        { id: vndPrefix },
+        { $set: { seq: maxVndSeq } },
+        { upsert: true, new: true }
+      );
+      console.log(`Synchronized Counter for ${vndPrefix} to seq: ${maxVndSeq}`);
+    }
+
+    // Find vendors without VND ID
+    const vendorsWithoutId = await Vendor.find({ 
+      $or: [
+        { vendorId: { $exists: false } }, 
+        { vendorId: null }, 
+        { vendorId: "" }
+      ] 
+    }).sort({ createdAt: 1 });
+    
+    if (vendorsWithoutId.length > 0) {
+      console.log(`Found ${vendorsWithoutId.length} vendors without VND ID. Generating IDs using Counter...`);
+      for (const vendor of vendorsWithoutId) {
+        const counter = await Counter.findOneAndUpdate(
+          { id: vndPrefix },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
+
+        const formattedNum = String(counter.seq).padStart(3, '0');
+        vendor.vendorId = `${vndPrefix}${formattedNum}`;
+        await vendor.save();
+      }
+      console.log('Vendor IDs migration to VND sequence completed successfully!');
+    }
+
+    // Run category migration/seeding
+    const { migrateCategories } = await import('./scripts/categoryMigration.js');
+    await migrateCategories();
+  } catch (error) {
+    console.error('Error migrating IDs:', error.message);
+  }
+});
 
 const app = express();
 
@@ -88,6 +205,7 @@ app.use('/api/vendor-service-requests', vendorServiceRequestRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/hero', heroRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

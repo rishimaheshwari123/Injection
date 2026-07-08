@@ -1,8 +1,13 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import Counter from './Counter.js';
 
 const vendorSchema = new mongoose.Schema({
   // Basic Information
+  vendorId: {
+    type: String,
+    unique: true
+  },
   name: {
     type: String,
     required: [true, 'Vendor name is required'],
@@ -121,10 +126,6 @@ const vendorSchema = new mongoose.Schema({
     businessLicense: {
       type: { type: String },
       url: { type: String }
-    },
-    insuranceCertificate: {
-      type: { type: String },
-      url: { type: String }
     }
   },
   
@@ -201,6 +202,28 @@ const vendorSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Generate unique vendorId before saving using Counter model
+vendorSchema.pre('save', async function(next) {
+  if (this.isNew && !this.vendorId) {
+    try {
+      const prefix = 'VND';
+      
+      // Atomically increment sequence for this prefix
+      const counter = await Counter.findOneAndUpdate(
+        { id: prefix },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+
+      const formattedNum = String(counter.seq).padStart(3, '0');
+      this.vendorId = `${prefix}${formattedNum}`;
+    } catch (error) {
+      return next(error);
+    }
+  }
+  next();
 });
 
 // Hash password before saving
