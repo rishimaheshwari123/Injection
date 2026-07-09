@@ -41,7 +41,8 @@ const VendorRegisterPage = () => {
       identityProof: { type: 'Identity Proof', url: '' },
       qualificationCertificate: { type: 'Qualification Certificate', url: '' },
       businessLicense: { type: 'Business License', url: '' },
-      insuranceCertificate: { type: 'Insurance Certificate', url: '' }
+      insuranceCertificate: { type: 'Insurance Certificate', url: '' },
+      policeVerification: { type: 'Police Verification', url: '' }
     }
   });
 
@@ -50,7 +51,8 @@ const VendorRegisterPage = () => {
     identityProof: false,
     qualificationCertificate: false,
     businessLicense: false,
-    insuranceCertificate: false
+    insuranceCertificate: false,
+    policeVerification: false
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -81,7 +83,9 @@ const VendorRegisterPage = () => {
                 type: fieldName === 'identityProof' ? 'Identity Proof' 
                       : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
                       : fieldName === 'businessLicense' ? 'Business License'
-                      : 'Insurance Certificate',
+                      : fieldName === 'insuranceCertificate' ? 'Insurance Certificate'
+                      : fieldName === 'policeVerification' ? 'Police Verification'
+                      : 'Document',
                 url: fileUrl
               }
             }
@@ -541,9 +545,10 @@ const VendorRegisterPage = () => {
                         { key: 'identityProof', label: 'Identity Proof', desc: 'Aadhaar, Passport, or Voter ID' },
                         { key: 'qualificationCertificate', label: 'Qualification Certificate', desc: 'Degree or Diploma certificate' },
                         { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license document' },
-                        { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity or business insurance' }
+                        { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity or business insurance' },
+                        { key: 'policeVerification', label: 'Police Verification Document', desc: 'Clearance certificate or verification report' }
                       ].map((doc) => {
-                        const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate';
+                        const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate' | 'policeVerification';
                         const fileUrl = formData.documents[key].url;
                         const isUploading = uploadingFiles[key];
                         return (

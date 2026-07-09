@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Shield, FileText, Download, Clock, Building2, Landmark, Briefcase } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Shield, FileText, Clock, Building2, Landmark, Briefcase } from 'lucide-react';
 import { vendorAPI, bookingAPI, vendorServiceRequestAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -13,6 +13,28 @@ export default function VendorDetailsPage() {
   const [serviceRequests, setServiceRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [rejectingDoc, setRejectingDoc] = useState<{ key: string; reason: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const handleVerifyDocument = async (documentKey: string, status: string, rejectionReason?: string) => {
+    try {
+      setActionLoading(documentKey);
+      const response = await vendorAPI.verifyDocument(id!, documentKey, status, rejectionReason);
+      if (response.data && response.data.success) {
+        toast.success(`Document verification status updated successfully`);
+        // Refresh details
+        await fetchVendorDetails();
+        setRejectingDoc(null);
+      } else {
+        toast.error('Failed to update document status');
+      }
+    } catch (error: any) {
+      console.error('Error verifying document:', error);
+      toast.error(error.response?.data?.message || 'Error updating document status');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -305,48 +327,153 @@ export default function VendorDetailsPage() {
 
           {/* Uploaded Documents */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
-              <FileText size={18} className="text-blue-500" /> Uploaded Documents
+            <h3 className="text-lg font-bold text-gray-800 mb-6 pb-2 border-b flex items-center gap-2">
+              <FileText size={18} className="text-[#3DB9A6]" /> Uploaded Documents & Verification
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Identity Proof */}
-              <div className="border border-slate-100 rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-between text-center min-h-[120px]">
-                <FileText className="text-blue-500 mb-2" size={24} />
-                <span className="text-xs font-bold text-gray-700">Identity Proof</span>
-                {vendor.documents?.identityProof?.url ? (
-                  <a href={vendor.documents.identityProof.url} target="_blank" rel="noopener noreferrer" className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all">
-                    <Download size={12} /> View File
-                  </a>
-                ) : (
-                  <span className="mt-2.5 text-xs text-gray-400 italic">Not Uploaded</span>
-                )}
-              </div>
+            <div className="space-y-4">
+              {[
+                { key: 'identityProof', label: 'Identity Proof', color: 'blue' },
+                { key: 'qualificationCertificate', label: 'Qualification Certificate', color: 'green' },
+                { key: 'businessLicense', label: 'Business License', color: 'amber' },
+                { key: 'insuranceCertificate', label: 'Insurance Certificate', color: 'purple' },
+                { key: 'policeVerification', label: 'Police Verification', color: 'red' }
+              ].map((docItem) => {
+                const doc = vendor.documents?.[docItem.key];
+                const hasFile = !!doc?.url;
+                const status = doc?.status || 'pending';
+                const isRejecting = rejectingDoc?.key === docItem.key;
+                const isLoading = actionLoading === docItem.key;
 
-              {/* Qualification Certificate */}
-              <div className="border border-slate-100 rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-between text-center min-h-[120px]">
-                <FileText className="text-green-500 mb-2" size={24} />
-                <span className="text-xs font-bold text-gray-700">Qualification Certificate</span>
-                {vendor.documents?.qualificationCertificate?.url ? (
-                  <a href={vendor.documents.qualificationCertificate.url} target="_blank" rel="noopener noreferrer" className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all">
-                    <Download size={12} /> View File
-                  </a>
-                ) : (
-                  <span className="mt-2.5 text-xs text-gray-400 italic">Not Uploaded</span>
-                )}
-              </div>
+                let iconColor = 'text-blue-500 bg-blue-50';
+                if (docItem.color === 'green') iconColor = 'text-green-500 bg-green-50';
+                if (docItem.color === 'amber') iconColor = 'text-amber-500 bg-amber-50';
+                if (docItem.color === 'purple') iconColor = 'text-purple-500 bg-purple-50';
+                if (docItem.color === 'red') iconColor = 'text-red-500 bg-red-50';
 
-              {/* Business License */}
-              <div className="border border-slate-100 rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-between text-center min-h-[120px]">
-                <FileText className="text-amber-500 mb-2" size={24} />
-                <span className="text-xs font-bold text-gray-700">Business License</span>
-                {vendor.documents?.businessLicense?.url ? (
-                  <a href={vendor.documents.businessLicense.url} target="_blank" rel="noopener noreferrer" className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 bg-white border border-slate-200 text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition-all">
-                    <Download size={12} /> View File
-                  </a>
-                ) : (
-                  <span className="mt-2.5 text-xs text-gray-400 italic">Not Uploaded</span>
-                )}
-              </div>
+                return (
+                  <div key={docItem.key} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all gap-4">
+                    
+                    {/* Left: Icon + Label + View File */}
+                    <div className="flex items-center gap-4 min-w-[250px]">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconColor}`}>
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800">{docItem.label}</h4>
+                        {hasFile ? (
+                          <a 
+                            href={doc.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs text-[#3DB9A6] hover:underline font-semibold mt-1 inline-flex items-center gap-1"
+                          >
+                            View Document
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Not Uploaded</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle: Status and Rejection Notes */}
+                    <div className="flex-1">
+                      {hasFile ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-gray-500">Status:</span>
+                            {status === 'approved' ? (
+                              <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200">
+                                Approved
+                              </span>
+                            ) : status === 'rejected' ? (
+                              <span className="px-2.5 py-0.5 bg-red-100 text-red-800 text-xs font-bold rounded-full border border-red-200">
+                                Rejected
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200 animate-pulse">
+                                Pending Review
+                              </span>
+                            )}
+                          </div>
+
+                          {status === 'rejected' && doc.rejectionReason && (
+                            <div className="bg-red-50 text-red-800 text-xs p-2.5 rounded-lg border border-red-100 max-w-xl">
+                              <span className="font-bold">Rejection Reason:</span> {doc.rejectionReason}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">No document file to verify</span>
+                      )}
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="min-w-[180px] flex justify-end">
+                      {hasFile && (
+                        <>
+                          {!isRejecting ? (
+                            <div className="flex gap-2">
+                              {status !== 'approved' && (
+                                <button
+                                  onClick={() => handleVerifyDocument(docItem.key, 'approved')}
+                                  disabled={isLoading}
+                                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-xs transition-colors shadow-xs"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              {status !== 'rejected' && (
+                                <button
+                                  onClick={() => setRejectingDoc({ key: docItem.key, reason: '' })}
+                                  disabled={isLoading}
+                                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg text-xs transition-colors shadow-xs"
+                                >
+                                  Reject
+                                </button>
+                              )}
+                              {(status === 'approved' || status === 'rejected') && (
+                                <button
+                                  onClick={() => handleVerifyDocument(docItem.key, 'pending')}
+                                  disabled={isLoading}
+                                  className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-xs transition-colors"
+                                >
+                                  Reset Status
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="w-full max-w-xs space-y-2">
+                              <textarea
+                                placeholder="Type rejection reason..."
+                                value={rejectingDoc.reason}
+                                onChange={(e) => setRejectingDoc({ ...rejectingDoc, reason: e.target.value })}
+                                className="w-full text-xs p-2 border rounded-lg outline-none focus:ring-1 focus:ring-red-500 h-16 resize-none bg-white"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleVerifyDocument(docItem.key, 'rejected', rejectingDoc.reason)}
+                                  disabled={isLoading}
+                                  className="flex-grow py-1.5 bg-red-500 text-white font-bold rounded-lg text-xs hover:bg-red-600"
+                                >
+                                  Submit Reject
+                                </button>
+                                <button
+                                  onClick={() => setRejectingDoc(null)}
+                                  disabled={isLoading}
+                                  className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs hover:bg-slate-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })}
             </div>
           </div>
 

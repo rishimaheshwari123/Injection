@@ -167,7 +167,10 @@ export const vendorRegister = async (req, res) => {
       success: true,
       message: 'Vendor registered successfully. Your account is pending admin verification.',
       data: {
-        vendor,
+        vendor: {
+          ...vendor.toObject(),
+          role: 'vendor'
+        },
         token
       }
     });
@@ -220,7 +223,10 @@ export const vendorLogin = async (req, res) => {
       success: true,
       message: 'Login successful',
       data: {
-        vendor,
+        vendor: {
+          ...vendor.toObject(),
+          role: 'vendor'
+        },
         token
       }
     });
@@ -845,6 +851,68 @@ export const uploadVendorFile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to upload file'
+    });
+  }
+};
+
+// @desc    Verify vendor document
+// @route   PUT /api/vendors/:id/verify-document
+// @access  Private/Admin
+export const verifyVendorDocument = async (req, res) => {
+  try {
+    const { documentKey, status, rejectionReason } = req.body;
+    
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification status'
+      });
+    }
+
+    const docKeys = ['identityProof', 'qualificationCertificate', 'businessLicense', 'insuranceCertificate', 'policeVerification'];
+    if (!docKeys.includes(documentKey)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid document key'
+      });
+    }
+
+    const vendor = await Vendor.findById(req.params.id);
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    if (!vendor.documents) {
+      vendor.documents = {};
+    }
+    if (!vendor.documents[documentKey]) {
+      vendor.documents[documentKey] = { type: documentKey, url: '' };
+    }
+
+    // Set values
+    vendor.documents[documentKey].status = status;
+    if (status === 'rejected') {
+      vendor.documents[documentKey].rejectionReason = rejectionReason || 'Rejected by Admin';
+    } else {
+      vendor.documents[documentKey].rejectionReason = '';
+    }
+
+    // Mark as modified to ensure mongoose saves subdocument changes correctly
+    vendor.markModified('documents');
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Document status has been set to ${status}`,
+      data: vendor
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 };

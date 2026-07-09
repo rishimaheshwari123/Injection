@@ -116,16 +116,34 @@ const vendorSchema = new mongoose.Schema({
   // Documents
   documents: {
     identityProof: {
-      type: { type: String },
-      url: { type: String }
+      type: { type: String, default: 'Identity Proof' },
+      url: { type: String },
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      rejectionReason: { type: String, default: '' }
     },
     qualificationCertificate: {
-      type: { type: String },
-      url: { type: String }
+      type: { type: String, default: 'Qualification Certificate' },
+      url: { type: String },
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      rejectionReason: { type: String, default: '' }
     },
     businessLicense: {
-      type: { type: String },
-      url: { type: String }
+      type: { type: String, default: 'Business License' },
+      url: { type: String },
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      rejectionReason: { type: String, default: '' }
+    },
+    insuranceCertificate: {
+      type: { type: String, default: 'Insurance Certificate' },
+      url: { type: String },
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      rejectionReason: { type: String, default: '' }
+    },
+    policeVerification: {
+      type: { type: String, default: 'Police Verification' },
+      url: { type: String },
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      rejectionReason: { type: String, default: '' }
     }
   },
   
@@ -223,6 +241,33 @@ vendorSchema.pre('save', async function(next) {
       return next(error);
     }
   }
+  next();
+});
+
+// Reset document status to pending and clear rejection reason if url is modified
+vendorSchema.pre('save', async function(next) {
+  const docKeys = ['identityProof', 'qualificationCertificate', 'businessLicense', 'insuranceCertificate', 'policeVerification'];
+  
+  let originalDoc = null;
+  if (!this.isNew) {
+    try {
+      originalDoc = await this.constructor.findById(this._id).select('documents');
+    } catch (err) {
+      console.error('Error fetching original vendor for pre-save check:', err);
+    }
+  }
+
+  docKeys.forEach(key => {
+    const newUrl = (this.documents && this.documents[key] && this.documents[key].url) ? this.documents[key].url.toString() : '';
+    const oldUrl = (originalDoc && originalDoc.documents && originalDoc.documents[key] && originalDoc.documents[key].url) ? originalDoc.documents[key].url.toString() : '';
+    
+    if (newUrl !== oldUrl) {
+      if (this.documents && this.documents[key]) {
+        this.documents[key].status = 'pending';
+        this.documents[key].rejectionReason = '';
+      }
+    }
+  });
   next();
 });
 

@@ -82,6 +82,8 @@ export const vendorAPI = {
   deleteVendor: (id: string) => api.delete(API_ENDPOINTS.VENDORS.BY_ID(id)),
   updateProfile: (data: any) =>
     api.put(API_ENDPOINTS.VENDORS.UPDATE_PROFILE, data),
+  verifyDocument: (id: string, documentKey: string, status: string, rejectionReason?: string) =>
+    api.put(`/vendors/${id}/verify-document`, { documentKey, status, rejectionReason }),
   uploadFile: (file: File) => {
     const formData = new FormData();
     formData.append("file", file);

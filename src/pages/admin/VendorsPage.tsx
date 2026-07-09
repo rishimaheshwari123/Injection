@@ -52,7 +52,9 @@ const VendorsPage = () => {
     documents: {
       identityProof: { type: 'Identity Proof', url: '' },
       qualificationCertificate: { type: 'Qualification Certificate', url: '' },
-      businessLicense: { type: 'Business License', url: '' }
+      businessLicense: { type: 'Business License', url: '' },
+      insuranceCertificate: { type: 'Insurance Certificate', url: '' },
+      policeVerification: { type: 'Police Verification', url: '' }
     }
   });
   const [serviceAreas, setServiceAreas] = useState<string[]>([]);
@@ -62,7 +64,9 @@ const VendorsPage = () => {
     profileImage: false,
     identityProof: false,
     qualificationCertificate: false,
-    businessLicense: false
+    businessLicense: false,
+    insuranceCertificate: false,
+    policeVerification: false
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -92,7 +96,10 @@ const VendorsPage = () => {
               [fieldName]: {
                 type: fieldName === 'identityProof' ? 'Identity Proof' 
                       : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
-                      : 'Business License',
+                      : fieldName === 'businessLicense' ? 'Business License'
+                      : fieldName === 'insuranceCertificate' ? 'Insurance Certificate'
+                      : fieldName === 'policeVerification' ? 'Police Verification'
+                      : 'Document',
                 url: fileUrl
               }
             }
@@ -230,6 +237,14 @@ const VendorsPage = () => {
           businessLicense: { 
             type: 'Business License', 
             url: vendor.documents?.businessLicense?.url || '' 
+          },
+          insuranceCertificate: {
+            type: 'Insurance Certificate',
+            url: vendor.documents?.insuranceCertificate?.url || ''
+          },
+          policeVerification: {
+            type: 'Police Verification',
+            url: vendor.documents?.policeVerification?.url || ''
           }
         },
         profileImage: vendor.profileImage || ''
@@ -255,7 +270,9 @@ const VendorsPage = () => {
         documents: {
           identityProof: { type: 'Identity Proof', url: '' },
           qualificationCertificate: { type: 'Qualification Certificate', url: '' },
-          businessLicense: { type: 'Business License', url: '' }
+          businessLicense: { type: 'Business License', url: '' },
+          insuranceCertificate: { type: 'Insurance Certificate', url: '' },
+          policeVerification: { type: 'Police Verification', url: '' }
         }
       });
       setServiceAreas([]);
@@ -474,100 +491,141 @@ const VendorsPage = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300">
             <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[1100px] divide-y divide-gray-200">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Vendor ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Business Info</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Owner</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Contact</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Services</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredVendors.map((vendor: any) => (
-                  <tr key={vendor._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                      {vendor.vendorId ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc]">
-                          {vendor.vendorId}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-800">{vendor.businessName}</p>
-                      <p className="text-sm text-gray-600">{vendor.city}, {vendor.state}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-gray-700">{vendor.name}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700">{vendor.email}</p>
-                      <p className="text-sm text-gray-600">{vendor.phone}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                        {vendor.businessType}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {vendor.services && vendor.services.length > 0 ? (
-                          vendor.services.map((s: any) => (
-                            <span key={s._id || s} className="px-2 py-0.5 rounded bg-green-50 text-green-700 text-xs border border-green-200">
-                              {s.serviceName || s}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-400 text-xs italic">No services</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${vendor.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {vendor.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="relative">
-                        <button onClick={(e) => { e.stopPropagation(); toggleDropdown(vendor._id); }}
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <MoreVertical size={20} />
-                        </button>
-                        {openDropdown === vendor._id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10 font-sans">
-                            <button onClick={() => handleViewVendor(vendor)} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2">
-                              <Eye size={16} className="text-green-600" /> View Profile
-                            </button>
-                            <button onClick={() => { handleOpenModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2">
-                              <Edit size={16} className="text-blue-600" /> Edit Vendor
-                            </button>
-                            <button onClick={() => { handleOpenRequestsModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 border-t">
-                              <FileText size={16} className="text-purple-600" /> Service Requests
-                            </button>
-                            <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 border-t">
-                              {vendor.isActive ? <><UserX size={16} className="text-orange-600" /> Deactivate</> : <><UserCheck size={16} className="text-green-600" /> Activate</>}
-                            </button>
-                            <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t">
-                              <Trash2 size={16} /> Delete Vendor
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+               <table className="w-full min-w-[1000px] divide-y divide-slate-100">
+                <thead>
+                  <tr className="bg-slate-50/75 border-b border-slate-100">
+                    <th className="w-[8%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vendor ID</th>
+                    <th className="w-[15%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Business Info</th>
+                    <th className="w-[12%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                    <th className="w-[12%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Owner</th>
+                    <th className="w-[18%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                    <th className="w-[8%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                    <th className="w-[18%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Services</th>
+                    <th className="w-[6%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="w-[3%] px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100/80 bg-white">
+                  {filteredVendors.map((vendor: any) => (
+                    <tr 
+                      key={vendor._id} 
+                      className="hover:bg-slate-50/60 transition-colors duration-150 ease-in-out"
+                    >
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-800">
+                        {vendor.vendorId ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#eefcf9] text-[#1e8a79] border border-[#d3f6f0] shadow-xs">
+                            {vendor.vendorId}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-normal">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p 
+                          onClick={() => handleViewVendor(vendor)} 
+                          className="font-semibold text-slate-800 hover:text-[#3DB9A6] hover:underline cursor-pointer transition-colors duration-150 text-sm"
+                        >
+                          {vendor.businessName}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-slate-700">{vendor.city || '-'}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{vendor.state || '-'}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p 
+                          onClick={() => handleViewVendor(vendor)} 
+                          className="text-sm font-medium text-slate-700 hover:text-[#3DB9A6] hover:underline cursor-pointer transition-colors duration-150"
+                        >
+                          {vendor.name}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-slate-800 break-all">{vendor.email}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{vendor.phone}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                          vendor.businessType === 'Individual' 
+                            ? 'bg-sky-50 text-sky-700 border-sky-100/70' 
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-100/70'
+                        }`}>
+                          {vendor.businessType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div 
+                          onClick={() => handleViewVendor(vendor)}
+                          className="flex flex-wrap gap-1 items-center cursor-pointer max-w-[200px]"
+                        >
+                          {vendor.services && vendor.services.length > 0 ? (
+                            <>
+                              {vendor.services.slice(0, 2).map((s: any) => (
+                                <span 
+                                  key={s._id || s} 
+                                  className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80 text-xs font-semibold border border-emerald-100/80 whitespace-nowrap transition-colors"
+                                >
+                                  {s.serviceName || s}
+                                </span>
+                              ))}
+                              {vendor.services.length > 2 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold border border-slate-200 whitespace-nowrap transition-colors">
+                                  +{vendor.services.length - 2}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic">No services</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                          vendor.isActive 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                            : 'bg-rose-50 text-rose-700 border-rose-100'
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${vendor.isActive ? 'bg-emerald-500' : 'bg-rose-400'}`}></span>
+                          {vendor.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="relative">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); toggleDropdown(vendor._id); }}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                          {openDropdown === vendor._id && (
+                            <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-10 py-1 divide-y divide-slate-50 font-sans">
+                              <button onClick={() => handleViewVendor(vendor)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <Eye size={16} className="text-[#3DB9A6]" /> View Profile
+                              </button>
+                              <button onClick={() => { handleOpenModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <Edit size={16} className="text-blue-500" /> Edit Vendor
+                              </button>
+                              <button onClick={() => { handleOpenRequestsModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <FileText size={16} className="text-purple-500" /> Service Requests
+                              </button>
+                              <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                {vendor.isActive ? <><UserX size={16} className="text-orange-500" /> Deactivate</> : <><UserCheck size={16} className="text-emerald-500" /> Activate</>}
+                              </button>
+                              <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50/50 flex items-center gap-2 transition-colors">
+                                <Trash2 size={16} /> Delete Vendor
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
         {/* Pagination Controls */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-white rounded-xl shadow-sm border border-slate-100">
@@ -913,11 +971,13 @@ const VendorsPage = () => {
                   {[
                     { key: 'identityProof', label: 'Identity Proof', desc: 'Aadhaar, Passport, or Voter ID' },
                     { key: 'qualificationCertificate', label: 'Qualification Certificate', desc: 'Degree or Diploma certificate' },
-                    { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license' }
+                    { key: 'businessLicense', label: 'Business License', desc: 'Registration or Trade license' },
+                    { key: 'insuranceCertificate', label: 'Insurance Certificate', desc: 'Professional indemnity or business insurance' },
+                    { key: 'policeVerification', label: 'Police Verification Document', desc: 'Clearance certificate or verification report' }
                   ].map((doc) => {
-                    const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense';
+                    const key = doc.key as 'identityProof' | 'qualificationCertificate' | 'businessLicense' | 'insuranceCertificate' | 'policeVerification';
                     const fileUrl = formData.documents?.[key]?.url;
-                    const isUploading = uploadingFiles[key];
+                    const isUploading = (uploadingFiles as any)[key];
                     return (
                       <div key={doc.key} className="border border-gray-200 rounded-xl p-4 bg-white hover:border-gray-300 transition-all flex flex-col justify-between shadow-sm">
                         <div className="flex items-start justify-between">

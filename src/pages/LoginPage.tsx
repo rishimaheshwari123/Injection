@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
-import { authAPI } from '../services/api';
+import { authAPI, vendorAPI } from '../services/api';
 import { loginSuccess } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import Navigation from '../components/Navigation';
@@ -17,6 +17,7 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isVendor, setIsVendor] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -30,21 +31,29 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(formData.email, formData.password);
+      let response;
+      if (isVendor) {
+        response = await vendorAPI.login(formData.email, formData.password);
+      } else {
+        response = await authAPI.login(formData.email, formData.password);
+      }
       
       if (response.data.success) {
-        const { user, token } = response.data.data;
+        const { user, vendor, token } = response.data.data;
+        const loggedInUser = vendor || user;
         
         // Dispatch login action
-        dispatch(loginSuccess({ user, token }));
+        dispatch(loginSuccess({ user: loggedInUser, token }));
         
         // Show success toast
-        toast.success(`Welcome back, ${user.name}!`);
+        toast.success(`Welcome back, ${loggedInUser.name}!`);
         
         // Redirect based on role
         setTimeout(() => {
-          if (user.role === 'admin') {
+          if (loggedInUser.role === 'admin') {
             navigate('/admin');
+          } else if (loggedInUser.role === 'vendor') {
+            navigate('/vendor/profile');
           } else {
             navigate('/');
           }
@@ -62,12 +71,30 @@ const LoginPage = () => {
   <Navigation/>
     <div className="min-h-screen bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full mb-4">
             <LogIn className="text-white" size={32} />
           </div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
+        </div>
+
+        {/* Tab switch for Vendor / User login */}
+        <div className="flex border-b border-gray-100 mb-6">
+          <button
+            type="button"
+            onClick={() => setIsVendor(false)}
+            className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 text-center ${!isVendor ? 'border-[#3DB9A6] text-[#3DB9A6]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          >
+            Admin / Customer
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsVendor(true)}
+            className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 text-center ${isVendor ? 'border-[#3DB9A6] text-[#3DB9A6]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          >
+            Vendor Partner
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -82,7 +109,7 @@ const LoginPage = () => {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
-              placeholder="admin@example.com"
+              placeholder={isVendor ? "vendor@example.com" : "admin@example.com"}
             />
           </div>
 

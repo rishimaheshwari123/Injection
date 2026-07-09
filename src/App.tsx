@@ -45,6 +45,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import VendorRegisterPage from "./pages/VendorRegisterPage";
 import VendorServiceRequestsPage from "./pages/admin/VendorServiceRequestsPage";
+import VendorProfilePage from "./pages/VendorProfilePage";
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -167,6 +168,15 @@ function App() {
             <PublicLayout>
               <TermsPage />
             </PublicLayout>
+          }
+        />
+
+        <Route
+          path="/vendor/profile"
+          element={
+            <ProtectedRoute>
+              <VendorProfilePage />
+            </ProtectedRoute>
           }
         />
 

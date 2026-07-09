@@ -11,7 +11,8 @@ import {
   updateVendorByAdmin,
   createVendorByAdmin,
   getAllVendorsByPagination,
-  uploadVendorFile
+  uploadVendorFile,
+  verifyVendorDocument
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -36,6 +37,8 @@ router.put('/profile', protect, vendorOnly, updateVendorProfile);
 router.put('/:id/activate', protect, adminOnly, activateVendor);
 
 router.put('/:id/deactivate', protect, adminOnly, deactivateVendor);
+
+router.put('/:id/verify-document', protect, adminOnly, verifyVendorDocument);
 
 router.delete('/:id', protect, adminOnly, deleteVendor);
 

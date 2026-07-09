@@ -7,11 +7,11 @@ import {
   Receipt,
   Image,
   Plus,
-  Heart,
   Edit2,
   MessageSquare,
   MoreVertical,
   Upload,
+  Heart,
   X,
   ChevronLeft,
   ChevronRight,
@@ -854,13 +854,13 @@ const BookingsPage = () => {
                             {booking.requestedItems.map((item: any, idx: number) => (
                               <div key={idx} className="flex flex-wrap items-center gap-1 text-xs">
                                 <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'brought' ? 'bg-green-500' :
-                                    item.status === 'unavailable' ? 'bg-red-500' : 'bg-yellow-500'
+                                  item.status === 'unavailable' ? 'bg-red-500' : 'bg-yellow-500'
                                   }`} />
                                 <span className="font-medium text-gray-700">{item.itemName}</span>
                                 <span className="text-gray-500 font-semibold">(x{item.quantity})</span>
                                 <span className={`text-[9px] px-1 rounded-sm border uppercase font-bold scale-90 origin-left ${item.status === 'brought' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    item.status === 'unavailable' ? 'bg-red-50 text-red-700 border-red-200' :
-                                      'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                  item.status === 'unavailable' ? 'bg-red-50 text-red-700 border-red-200' :
+                                    'bg-yellow-50 text-yellow-700 border-yellow-200'
                                   }`}>
                                   {item.status}
                                 </span>
@@ -903,14 +903,14 @@ const BookingsPage = () => {
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${booking.bookingStatus === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : booking.bookingStatus === "in-progress"
-                            ? "bg-blue-100 text-blue-700"
-                            : booking.bookingStatus === "accepted"
-                              ? "bg-purple-100 text-purple-700"
-                              : booking.bookingStatus === "cancelled"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
+                        ? "bg-green-100 text-green-700"
+                        : booking.bookingStatus === "in-progress"
+                          ? "bg-blue-100 text-blue-700"
+                          : booking.bookingStatus === "accepted"
+                            ? "bg-purple-100 text-purple-700"
+                            : booking.bookingStatus === "cancelled"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
                         }`}
                     >
                       {booking.bookingStatus}
@@ -1185,8 +1185,8 @@ const BookingsPage = () => {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${currentPage === pageNum
-                          ? "bg-[#63D64F] text-white shadow-md"
-                          : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                        ? "bg-[#63D64F] text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
                         }`}
                     >
                       {pageNum}

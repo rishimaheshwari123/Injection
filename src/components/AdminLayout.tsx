@@ -251,7 +251,7 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 ${sidebarCollapsed ? "ml-20" : "ml-64"} p-3 transition-[margin] duration-300`}
+        className={`flex-1 min-w-0 ${sidebarCollapsed ? "ml-20" : "ml-64"} p-3 transition-[margin] duration-300 overflow-x-hidden`}
       >
         <Outlet />
       </main>
