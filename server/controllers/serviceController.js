@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Service from '../models/Service.js';
 import Vendor from '../models/Vendor.js';
 import cloudinary from '../config/cloudinary.js';
