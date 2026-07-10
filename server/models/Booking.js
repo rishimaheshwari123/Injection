@@ -204,6 +204,10 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  additionalAmount: {
+    type: Number,
+    default: 0
+  },
 
   // Preferences
   freeComplimentaryService: {
@@ -321,6 +325,23 @@ const bookingSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  // Runtime notes related to patient added by Vendor / Admin
+  runtimeNotes: [{
+    text: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    addedBy: {
+      type: String,
+      enum: ['Vendor', 'Admin'],
+      default: 'Vendor'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   prescriptionSummary: {
     type: String,
     trim: true,
@@ -341,6 +362,10 @@ const bookingSchema = new mongoose.Schema({
       type: String,
       enum: ['pending', 'brought', 'unavailable'],
       default: 'pending'
+    },
+    price: {
+      type: Number,
+      default: 0
     }
   }]
 }, {

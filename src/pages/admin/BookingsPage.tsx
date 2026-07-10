@@ -34,6 +34,7 @@ import {
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
+import { Link } from "react-router-dom";
 
 // Import all modal components
 import {
@@ -111,24 +112,17 @@ const BookingsPage = () => {
   const [services, setServices] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
 
+  // Fetch static dropdown lookup data once on mount
   useEffect(() => {
-    fetchBookings();
     fetchVendors();
     fetchServices();
     fetchUsers();
-  }, [currentPage, limit, statusFilter, vendorFilter]);
+  }, []);
 
-  // Debounced search
+  // Fetch bookings when pagination, filter variables, or search terms change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-      } else {
-        fetchBookings();
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    fetchBookings();
+  }, [currentPage, limit, statusFilter, vendorFilter, searchTerm]);
 
   const fetchVendors = async () => {
     try {
@@ -808,17 +802,28 @@ const BookingsPage = () => {
                 >
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-bold text-blue-600 text-sm">
-                        {booking.bookingId || 'N/A'}
-                      </p>
-                      
+                      <Link
+                        to={`/admin/bookings/${booking._id}`}
+                        className="font-bold text-blue-600 hover:text-blue-800 text-sm hover:underline cursor-pointer"
+                      >
+                        {booking.bookingId || 'NA'}
+                      </Link>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-800">
-                        {booking.patientName}
-                      </p>
+                      {booking.userId ? (
+                        <Link
+                          to={`/admin/users/${booking.userId?._id || booking.userId}`}
+                          className="font-bold text-blue-600 hover:text-blue-850 hover:underline cursor-pointer"
+                        >
+                          {booking.patientName || booking.userId?.name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium text-gray-800">
+                          {booking.patientName}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-600">{booking.email}</p>
                       <p className="text-sm text-gray-600">
                         {booking.age} years, {booking.sex}
@@ -827,14 +832,19 @@ const BookingsPage = () => {
                   </td>
                   <td className="px-6 py-4">
                     {booking.vendorId ? (
-                      <div>
-                        <p className="font-medium text-gray-800">
-                          {booking.vendorId.businessName}
+                      <Link
+                        to={`/admin/vendors/${booking.vendorId?._id || booking.vendorId}`}
+                        className="block group cursor-pointer text-left"
+                      >
+                        <p className="font-bold text-blue-600 group-hover:text-blue-800 group-hover:underline">
+                          {booking.vendorId.businessName || booking.vendorId.name}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          {booking.vendorId.name}
-                        </p>
-                      </div>
+                        {booking.vendorId.businessName && booking.vendorId.name && (
+                          <p className="text-sm text-gray-600 group-hover:text-gray-800">
+                            {booking.vendorId.name}
+                          </p>
+                        )}
+                      </Link>
                     ) : (
                       <span className="text-gray-500 text-sm">
                         Not assigned
@@ -920,6 +930,13 @@ const BookingsPage = () => {
                             onClick={() => setOpenDropdown(null)}
                           />
                           <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                            <Link
+                              to={`/admin/bookings/${booking._id}`}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-purple-600 font-semibold"
+                            >
+                              <FileText size={16} />
+                              View Details
+                            </Link>
                             <button
                               onClick={() => {
                                 setBookingToEdit(booking);

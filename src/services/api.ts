@@ -173,6 +173,8 @@ export const bookingAPI = {
     api.put(`/bookings/${id}/requested-items`, { requestedItems }),
   updateRequestedItemStatus: (id: string, itemId: string, status: string) =>
     api.put(`/bookings/${id}/requested-items/${itemId}/status`, { status }),
+  addRuntimeNote: (id: string, text: string) =>
+    api.post(`/bookings/${id}/runtime-notes`, { text }),
 };
 
 // Prescription APIs

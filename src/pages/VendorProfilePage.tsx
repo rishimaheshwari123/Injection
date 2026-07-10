@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
@@ -674,9 +674,12 @@ const VendorProfilePage = () => {
                               {booking.bookingStatus}
                             </span>
                           </div>
-                          <h4 className="text-sm font-bold text-slate-805">
+                          <Link
+                            to={`/booking/${booking._id}`}
+                            className="text-sm font-bold text-slate-800 hover:text-[#3DB9A6] hover:underline transition-colors block cursor-pointer"
+                          >
                             {booking.selectedServices?.map((s: any) => s.serviceName).join(', ') || 'Healthcare Services'}
-                          </h4>
+                          </Link>
                           <div className="text-xs text-slate-500 space-y-0.5">
                             <p><span className="font-semibold text-slate-450">Patient:</span> {booking.patientName || booking.userId?.name}</p>
                             <p><span className="font-semibold text-slate-450">Scheduled:</span> {booking.preferredTimeSlot}</p>

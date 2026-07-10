@@ -47,6 +47,7 @@ import VendorRegisterPage from "./pages/VendorRegisterPage";
 import VendorServiceRequestsPage from "./pages/admin/VendorServiceRequestsPage";
 import VendorProfilePage from "./pages/VendorProfilePage";
 import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
+import BookingDetailPage from "./pages/BookingDetailPage";
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -181,6 +182,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/booking/:id"
+          element={
+            <ProtectedRoute>
+              <BookingDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
 
 
         {/* Admin Routes */}
@@ -261,6 +271,14 @@ function App() {
             element={
               <PermissionGuard permission="bookings">
                 <BookingsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="bookings/:id"
+            element={
+              <PermissionGuard permission="bookings">
+                <BookingDetailPage />
               </PermissionGuard>
             }
           />

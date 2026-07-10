@@ -18,7 +18,8 @@ import {
   updateRequestedItems,
   updateRequestedItemStatus,
   createVendorReview,
-  createUserReview
+  createUserReview,
+  addRuntimeNote
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -58,5 +59,6 @@ router.delete('/:id', protect, adminOnly, deleteBooking);
 
 router.put('/:id/requested-items', protect, updateRequestedItems);
 router.put('/:id/requested-items/:itemId/status', protect, updateRequestedItemStatus);
+router.post('/:id/runtime-notes', protect, addRuntimeNote);
 
 export default router;

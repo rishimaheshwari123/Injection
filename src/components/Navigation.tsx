@@ -821,10 +821,14 @@ const Navigation = () => {
                               </div>
 
                               <div>
-                                <h4 className="text-sm font-bold text-slate-800">
+                                <Link
+                                  to={`/booking/${booking._id}`}
+                                  onClick={() => setMyBookingsOpen(false)}
+                                  className="text-sm font-bold text-slate-800 hover:text-[#3DB9A6] transition-colors hover:underline block"
+                                >
                                   {booking.selectedServices?.map((s: any) => s.serviceName).join(", ") || "General Service"}
-                                </h4>
-                                <p className="text-xs text-slate-500 mt-0.5">
+                                </Link>
+                                <p className="text-xs text-slate-550 mt-0.5">
                                   Scheduled for: <span className="font-semibold">{booking.preferredTimeSlot}</span>
                                 </p>
                               </div>

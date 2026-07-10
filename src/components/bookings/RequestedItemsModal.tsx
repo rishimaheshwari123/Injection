@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { X, Loader2, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useAppSelector } from '../../store/hooks';
 
 interface RequestedItem {
   _id?: string;
   itemName: string;
   quantity: number;
   status: 'pending' | 'brought' | 'unavailable';
+  price?: number;
 }
 
 interface RequestedItemsModalProps {
@@ -17,6 +19,8 @@ interface RequestedItemsModalProps {
 }
 
 const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItemsModalProps) => {
+  const { user } = useAppSelector((state: any) => state.auth);
+  const isVendorOrAdmin = user?.role === 'vendor' || user?.role === 'admin';
   const [items, setItems] = useState<RequestedItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,6 +32,7 @@ const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItem
           itemName: item.itemName,
           quantity: item.quantity || 1,
           status: item.status || 'pending',
+          price: item.price || 0,
         }))
       );
     } else {
@@ -38,7 +43,7 @@ const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItem
   const handleAddItem = () => {
     setItems((prev) => [
       ...prev,
-      { itemName: '', quantity: 1, status: 'pending' },
+      { itemName: '', quantity: 1, status: 'pending', price: 0 },
     ]);
   };
 
@@ -98,7 +103,9 @@ const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItem
         {/* Body / Item List */}
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
           <p className="text-sm text-gray-600">
-            Add items that the patient has requested the vendor to bring (e.g., medicines, disposable syringes, or IV setups).
+            {isVendorOrAdmin 
+              ? 'Add and update requested items and set their prices. Item prices will be automatically added to the booking total.'
+              : 'View items you requested the service partner to bring. Vendors/Admins will set the price when they fulfill the request.'}
           </p>
 
           <div className="space-y-3">
@@ -118,7 +125,7 @@ const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItem
                   />
                 </div>
 
-                <div className="flex items-center gap-2 justify-between">
+                <div className="flex items-center gap-2 justify-between flex-wrap sm:flex-nowrap">
                   {/* Quantity Input */}
                   <div className="w-16">
                     <input
@@ -131,17 +138,46 @@ const RequestedItemsModal = ({ show, onClose, onSubmit, booking }: RequestedItem
                     />
                   </div>
 
+                  {/* Price Input (Admin/Vendor Only) */}
+                  {isVendorOrAdmin ? (
+                    <div className="w-24 flex items-center gap-1">
+                      <span className="text-gray-500 text-sm font-semibold">₹</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.price || 0}
+                        onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                        placeholder="Price"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none bg-white font-semibold text-emerald-700"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-24 text-right px-2 py-1.5 bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700" title="Item Price">
+                      ₹{(item.price || 0)}
+                    </div>
+                  )}
+
                   {/* Status Dropdown */}
                   <div className="w-28">
-                    <select
-                      value={item.status}
-                      onChange={(e) => handleItemChange(index, 'status', e.target.value)}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none bg-white font-medium"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="brought">Brought</option>
-                      <option value="unavailable">Unavailable</option>
-                    </select>
+                    {isVendorOrAdmin ? (
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleItemChange(index, 'status', e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none bg-white font-medium text-slate-700"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="brought">Brought</option>
+                        <option value="unavailable">Unavailable</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-block w-full text-center px-2 py-1.5 text-xs font-bold uppercase rounded-lg border ${
+                        item.status === 'brought' ? 'bg-green-50 text-green-700 border-green-200' :
+                        item.status === 'unavailable' ? 'bg-red-50 text-red-700 border-red-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {item.status}
+                      </span>
+                    )}
                   </div>
 
                   {/* Delete Button */}

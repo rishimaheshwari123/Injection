@@ -30,6 +30,21 @@ const generateCouponCode = () => {
   return code;
 };
 
+// Helper to recalculate booking amount, additional requested items amount, GST, and grand total
+const recalculateBookingTotals = (booking) => {
+  const additional = booking.requestedItems.reduce((sum, item) => {
+    if (item.status === 'unavailable') return sum;
+    return sum + (item.price || 0) * (item.quantity || 1);
+  }, 0);
+  
+  booking.additionalAmount = additional;
+  booking.gstAmount = 0; // GST is always 0
+  
+  const discount = booking.appliedCoupon?.discountAmount || 0;
+  booking.grandTotal = Math.max(0, booking.subtotal + additional - discount);
+  booking.finalAmount = booking.grandTotal;
+};
+
 // @desc    Create new booking
 // @route   POST /api/bookings/create
 // @access  Private/User
@@ -270,6 +285,20 @@ export const getBookingById = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Booking not found'
+      });
+    }
+
+    // Check authorization: only user who created it, assigned vendor, or admin
+    const userIdStr = booking.userId?._id?.toString() || booking.userId?.toString();
+    const vendorIdStr = booking.vendorId?._id?.toString() || booking.vendorId?.toString();
+    const isOwner = req.user && userIdStr === req.user._id.toString();
+    const isVendor = req.vendor && vendorIdStr === req.vendor._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    if (!isOwner && !isVendor && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this booking'
       });
     }
 
@@ -757,12 +786,11 @@ export const updateBooking = async (req, res) => {
     if (hasInsurance !== undefined) booking.hasInsurance = hasInsurance;
     if (insurancePolicyNumber !== undefined) booking.insurancePolicyNumber = insurancePolicyNumber;
 
-    // Pricing (force GST to 0 and grandTotal to subtotal)
+    // Pricing (force GST to 0 and grandTotal to subtotal + additional items)
     if (subtotal !== undefined) {
       booking.subtotal = subtotal;
-      booking.gstAmount = 0;
-      booking.grandTotal = subtotal;
     }
+    recalculateBookingTotals(booking);
 
     // Preferences
     if (freeComplimentaryService !== undefined) booking.freeComplimentaryService = freeComplimentaryService;
@@ -1009,9 +1037,9 @@ export const updateRequestedItems = async (req, res) => {
     }
 
     // Check authorization: only the user who created it, or admin, or assigned vendor
-    const isOwner = booking.userId.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === 'admin';
-    const isVendor = booking.vendorId && booking.vendorId.toString() === req.user._id.toString();
+    const isOwner = req.user && booking.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isVendor = req.vendor && booking.vendorId && booking.vendorId.toString() === req.vendor._id.toString();
 
     if (!isOwner && !isAdmin && !isVendor) {
       return res.status(403).json({
@@ -1030,15 +1058,40 @@ export const updateRequestedItems = async (req, res) => {
 
     // Clean and validate items
     const formattedItems = requestedItems.map(item => {
-      const { itemName, quantity, status } = item;
+      const { _id, itemName, quantity, status, price } = item;
+      
+      // Determine what the price should be. Only admin/vendor can set it.
+      let finalPrice = 0;
+      if (isAdmin || isVendor) {
+        finalPrice = Number(price) || 0;
+      } else {
+        // Regular user: preserve existing price if it exists
+        let existingItem = null;
+        if (_id) {
+          existingItem = booking.requestedItems.id(_id);
+        }
+        if (!existingItem && itemName) {
+          existingItem = booking.requestedItems.find(ei => ei.itemName.toLowerCase().trim() === itemName.toLowerCase().trim());
+        }
+        if (existingItem) {
+          finalPrice = existingItem.price || 0;
+        }
+      }
+
       return {
+        _id: _id || new mongoose.Types.ObjectId(),
         itemName: itemName ? itemName.trim() : '',
         quantity: Number(quantity) || 1,
-        status: status || 'pending'
+        status: status || 'pending',
+        price: finalPrice
       };
     }).filter(item => item.itemName !== '');
 
     booking.requestedItems = formattedItems;
+    
+    // Recalculate billing totals
+    recalculateBookingTotals(booking);
+    
     await booking.save();
 
     // Populate user and vendor details before returning
@@ -1081,8 +1134,8 @@ export const updateRequestedItemStatus = async (req, res) => {
     }
 
     // Check authorization: only admin or assigned vendor can update status
-    const isAdmin = req.user.role === 'admin';
-    const isVendor = booking.vendorId && booking.vendorId.toString() === req.user._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isVendor = req.vendor && booking.vendorId && booking.vendorId.toString() === req.vendor._id.toString();
 
     if (!isAdmin && !isVendor) {
       return res.status(403).json({
@@ -1100,6 +1153,10 @@ export const updateRequestedItemStatus = async (req, res) => {
     }
 
     item.status = status;
+    
+    // Recalculate billing totals
+    recalculateBookingTotals(booking);
+    
     await booking.save();
 
     // Populate user and vendor details before returning
@@ -1282,6 +1339,71 @@ export const createUserReview = async (req, res) => {
       success: true,
       message: 'Review for customer submitted successfully',
       data: review
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Add runtime note to booking (Vendor/Admin)
+// @route   POST /api/bookings/:id/runtime-notes
+// @access  Private/Vendor/Admin
+export const addRuntimeNote = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || text.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Note text is required'
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check authorization: only admin or assigned vendor
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isVendor = req.vendor && booking.vendorId && booking.vendorId.toString() === req.vendor._id.toString();
+
+    if (!isAdmin && !isVendor) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add runtime notes to this booking'
+      });
+    }
+
+    // Determine who is adding the note
+    const addedBy = isAdmin ? 'Admin' : 'Vendor';
+
+    // Add runtime note
+    booking.runtimeNotes.push({
+      text: text.trim(),
+      addedBy,
+      addedAt: new Date()
+    });
+
+    await booking.save();
+
+    // Populate and return updated booking
+    await booking.populate('userId', 'name email phone');
+    if (booking.vendorId) {
+      await booking.populate('vendorId', 'name businessName phone email');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Runtime note added successfully',
+      data: booking
     });
   } catch (error) {
     res.status(500).json({
