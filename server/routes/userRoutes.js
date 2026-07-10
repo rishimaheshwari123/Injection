@@ -13,7 +13,8 @@ import {
   createUserByAdmin,
   updateUserByAdmin,
   getAllUsersByPagination,
-  uploadUserFile
+  uploadUserFile,
+  getUserReviews
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -30,6 +31,7 @@ router.get('/me', protect, getMe);
 router.get('/', protect, adminOnly, getAllUsers);
 router.get('/admin/paginated', protect, adminOnly, getAllUsersByPagination);
 
+router.get('/:id/reviews', protect, getUserReviews);
 router.get('/:id', protect, adminOnly, getUserById);
 
 router.put('/profile', protect, updateUserProfile);

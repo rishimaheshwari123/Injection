@@ -46,6 +46,7 @@ import TermsPage from "./pages/TermsPage";
 import VendorRegisterPage from "./pages/VendorRegisterPage";
 import VendorServiceRequestsPage from "./pages/admin/VendorServiceRequestsPage";
 import VendorProfilePage from "./pages/VendorProfilePage";
+import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -180,6 +181,8 @@ function App() {
           }
         />
 
+
+
         {/* Admin Routes */}
         <Route
           path="/admin"
@@ -234,6 +237,14 @@ function App() {
             element={
               <PermissionGuard permission="vendors">
                 <VendorServiceRequestsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="vendor-id-card"
+            element={
+              <PermissionGuard permission="vendors">
+                <AdminVendorIdCardPage />
               </PermissionGuard>
             }
           />

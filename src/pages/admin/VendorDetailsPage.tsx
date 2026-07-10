@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Shield, FileText, Clock, Building2, Landmark, Briefcase } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Shield, FileText, Clock, Building2, Landmark, Briefcase, Star, Award } from 'lucide-react';
 import { vendorAPI, bookingAPI, vendorServiceRequestAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -15,6 +15,10 @@ export default function VendorDetailsPage() {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [rejectingDoc, setRejectingDoc] = useState<{ key: string; reason: string } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Reviews & Rating states
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const handleVerifyDocument = async (documentKey: string, status: string, rejectionReason?: string) => {
     try {
@@ -36,11 +40,26 @@ export default function VendorDetailsPage() {
     }
   };
 
+  const fetchVendorReviews = async () => {
+    try {
+      setLoadingReviews(true);
+      const response = await vendorAPI.getReviews(id!);
+      if (response.data && response.data.success) {
+        setReviews(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading vendor reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchVendorDetails();
       fetchVendorBookings();
       fetchVendorServiceRequests();
+      fetchVendorReviews();
     }
   }, [id]);
 
@@ -88,11 +107,11 @@ export default function VendorDetailsPage() {
 
   const getServiceAssignmentDate = (serviceId: string) => {
     if (!serviceId) return new Date(vendor.createdAt).toLocaleDateString('en-IN');
-    
+
     // Find the approved service request that contains this service
-    const approvedRequest = serviceRequests.find((req: any) => 
-      req.status === 'approved' && 
-      req.services && 
+    const approvedRequest = serviceRequests.find((req: any) =>
+      req.status === 'approved' &&
+      req.services &&
       req.services.some((s: any) => {
         const idToCheck = typeof s === 'string' ? s : (s._id || s);
         return idToCheck === serviceId;
@@ -102,7 +121,7 @@ export default function VendorDetailsPage() {
     if (approvedRequest && approvedRequest.processedAt) {
       return new Date(approvedRequest.processedAt).toLocaleDateString('en-IN');
     }
-    
+
     // Fallback to vendor creation date if no approved request is found
     return new Date(vendor.createdAt).toLocaleDateString('en-IN');
   };
@@ -168,6 +187,13 @@ export default function VendorDetailsPage() {
     );
   }
 
+  // Compute rating counts dynamically
+  const ratingCounts = [0, 0, 0, 0, 0];
+  reviews.forEach((r: any) => {
+    const star = Math.min(Math.max(Math.round(r.rating || 5), 1), 5);
+    ratingCounts[star - 1]++;
+  });
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Top Bar */}
@@ -182,66 +208,127 @@ export default function VendorDetailsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Profile Card */}
-        <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center text-center h-fit">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-50 shadow-md bg-white mb-4 relative group">
-            {vendor.profileImage ? (
-              <img src={vendor.profileImage} alt={vendor.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] flex items-center justify-center text-white text-3xl font-bold">
-                {vendor.name.charAt(0).toUpperCase()}
-              </div>
+        {/* Left Profile Card & Ratings */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center text-center">
+            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-50 shadow-md bg-white mb-4 relative group">
+              {vendor.profileImage ? (
+                <img src={vendor.profileImage} alt={vendor.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] flex items-center justify-center text-white text-3xl font-bold">
+                  {vendor.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-1">{vendor.name}</h2>
+            <p className="text-xs text-gray-500 font-medium mb-3">{vendor.businessName}</p>
+
+            {vendor.vendorId && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] mb-3">
+                {vendor.vendorId}
+              </span>
             )}
+
+            <div className="flex flex-col gap-1.5 w-full items-center mb-6">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium w-full text-center ${vendor.isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                {vendor.isActive ? 'Active Account' : 'Inactive Account'}
+              </span>
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium w-full text-center ${vendor.isVerified ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                {vendor.isVerified ? 'Verified Partner' : 'Verification Pending'}
+              </span>
+            </div>
+
+            <div className="w-full border-t border-slate-100 pt-5 space-y-4 text-left">
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <Calendar className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Partner Since</p>
+                  <p className="font-semibold text-gray-800 font-mono">
+                    {new Date(vendor.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <User className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Gender</p>
+                  <p className="font-semibold text-gray-800">{vendor.gender || 'Male'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <Briefcase className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Specialization</p>
+                  <p className="font-semibold text-gray-800">{vendor.specialization || 'General Services'}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-xl font-bold text-gray-800 mb-1">{vendor.name}</h2>
-          <p className="text-xs text-gray-500 font-medium mb-3">{vendor.businessName}</p>
-          
-          {vendor.vendorId && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] mb-3">
-              {vendor.vendorId}
-            </span>
-          )}
+          {/* Ratings & Feedback Summary Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
+              <Star className="text-amber-500 fill-amber-500" size={16} /> Ratings & Feedback
+            </h3>
 
-          <div className="flex flex-col gap-1.5 w-full items-center mb-6">
-            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium w-full text-center ${vendor.isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-              {vendor.isActive ? 'Active Account' : 'Inactive Account'}
-            </span>
-            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium w-full text-center ${vendor.isVerified ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-              {vendor.isVerified ? 'Verified Partner' : 'Verification Pending'}
-            </span>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-extrabold text-slate-800">{vendor.rating ? vendor.rating.toFixed(1) : "0.0"}</div>
+                <div className="flex items-center justify-center gap-0.5 mt-1 text-amber-500">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      size={11}
+                      className={s <= Math.round(vendor.rating || 0) ? "fill-amber-500 text-amber-500" : "text-slate-200"}
+                    />
+                  ))}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 font-bold whitespace-nowrap">
+                  {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-1 border-l border-slate-100 pl-4">
+                {[5, 4, 3, 2, 1].map((stars) => {
+                  const count = ratingCounts[stars - 1] || 0;
+                  const percent = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                  return (
+                    <div key={stars} className="flex items-center gap-2 text-[10px]">
+                      <span className="w-2.5 text-slate-500 font-bold text-right">{stars}</span>
+                      <Star size={8} className="fill-amber-400 text-amber-400 flex-shrink-0" />
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full" style={{ width: `${percent}%` }} />
+                      </div>
+                      <span className="w-4 text-slate-400 text-right">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="w-full border-t border-slate-100 pt-5 space-y-4 text-left">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <Calendar className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Partner Since</p>
-                <p className="font-semibold text-gray-800 font-mono">
-                  {new Date(vendor.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
+          {/* View ID Card Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-12 h-12 bg-[#3DB9A6]/10 text-[#3DB9A6] rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Award size={24} />
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <User className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Gender</p>
-                <p className="font-semibold text-gray-800">{vendor.gender || 'Male'}</p>
-              </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Partner ID Card</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Generate and download vendor digital ID card</p>
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <Briefcase className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Specialization</p>
-                <p className="font-semibold text-gray-800">{vendor.specialization || 'General Services'}</p>
-              </div>
-            </div>
+            <button
+              onClick={() => navigate(`/admin/vendor-id-card?vendorId=${vendor._id}`)}
+              className="mt-2 w-full py-2 bg-black text-white rounded-xl text-xs font-bold hover:bg-neutral-800 transition-all shadow-xs block"
+            >
+              View ID Card
+            </button>
           </div>
         </div>
 
         {/* Right Details Grid */}
         <div className="lg:col-span-3 space-y-6">
-          
+
           {/* Business & Owner Info */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
@@ -287,7 +374,7 @@ export default function VendorDetailsPage() {
                 </p>
               </div>
             </div>
-            
+
             {vendor.bio && (
               <div className="mt-6 pt-5 border-t border-slate-100">
                 <p className="text-xs text-gray-400 mb-1">Partner Biography</p>
@@ -352,7 +439,7 @@ export default function VendorDetailsPage() {
 
                 return (
                   <div key={docItem.key} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all gap-4">
-                    
+
                     {/* Left: Icon + Label + View File */}
                     <div className="flex items-center gap-4 min-w-[250px]">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconColor}`}>
@@ -361,10 +448,10 @@ export default function VendorDetailsPage() {
                       <div>
                         <h4 className="text-sm font-bold text-slate-800">{docItem.label}</h4>
                         {hasFile ? (
-                          <a 
-                            href={doc.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-xs text-[#3DB9A6] hover:underline font-semibold mt-1 inline-flex items-center gap-1"
                           >
                             View Document
@@ -488,7 +575,7 @@ export default function VendorDetailsPage() {
                   const name = service.serviceName || service.name || (typeof service === 'string' ? service : 'N/A');
                   const serviceId = service._id || (typeof service === 'string' ? service : '');
                   const date = getServiceAssignmentDate(serviceId);
-                  
+
                   return (
                     <div
                       key={idx}
@@ -515,7 +602,7 @@ export default function VendorDetailsPage() {
             <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
               <Clock size={18} className="text-[#3DB9A6]" /> Vendor Booking History
             </h3>
-            
+
             {loadingBookings ? (
               <div className="text-center py-6">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#63D64F]"></div>
@@ -563,12 +650,11 @@ export default function VendorDetailsPage() {
                           ₹{booking.subtotal || booking.grandTotal || booking.finalAmount || booking.amount || 0}
                         </td>
                         <td className="px-4 py-3.5">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                            booking.bookingStatus === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                            booking.bookingStatus === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                            booking.bookingStatus === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                            'bg-yellow-50 text-yellow-700 border-yellow-200'
-                          }`}>
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${booking.bookingStatus === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
+                              booking.bookingStatus === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                booking.bookingStatus === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            }`}>
                             {booking.bookingStatus || 'Pending'}
                           </span>
                         </td>
@@ -579,6 +665,46 @@ export default function VendorDetailsPage() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 italic text-center py-6">No previous bookings found for this vendor.</p>
+            )}
+          </div>
+
+          {/* Client Reviews Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-5 border-b pb-3 border-slate-100 flex items-center gap-2">
+              <Star size={18} className="text-amber-500 fill-amber-500" /> Client Reviews & Feedback
+            </h3>
+            {loadingReviews ? (
+              <div className="py-8 flex justify-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3DB9A6]"></div>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">
+                No reviews submitted yet for this vendor.
+              </div>
+            ) : (
+              <div className="space-y-6 divide-y divide-slate-100">
+                {reviews.map((review, idx) => (
+                  <div key={review._id} className={`${idx > 0 ? "pt-6" : ""} flex gap-4`}>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-sm uppercase flex-shrink-0">
+                      {review.userId?.name?.charAt(0) || "U"}
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-gray-800">{review.userId?.name || "Anonymous User"}</h4>
+                          <p className="text-[10px] text-gray-400 font-semibold">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                        </div>
+                        <div className="flex gap-0.5 text-amber-500">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} size={12} className={s <= review.rating ? "fill-amber-500 text-amber-500" : "text-slate-200"} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-650 leading-relaxed font-medium bg-slate-50/50 p-3 rounded-xl border border-slate-100/50">{review.reviewText}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

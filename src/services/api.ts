@@ -60,6 +60,7 @@ export const userAPI = {
       },
     });
   },
+  getReviews: (userId: string) => api.get(`/users/${userId}/reviews`),
 };
 
 // Vendor APIs
@@ -93,6 +94,8 @@ export const vendorAPI = {
       },
     });
   },
+  getReviews: (vendorId: string) => api.get(`/vendors/${vendorId}/reviews`),
+  getIdCardDetails: (vendorId: string) => api.get(`/vendors/${vendorId}/id-card`),
 };
 
 // Service APIs
@@ -132,6 +135,10 @@ export const bookingAPI = {
   createBooking: (bookingData: any) =>
     api.post(API_ENDPOINTS.BOOKINGS.CREATE, bookingData),
   getUserBookings: (params?: any) => api.get(API_ENDPOINTS.BOOKINGS.USER_BOOKINGS, { params }),
+  submitReview: (bookingId: string, rating: number, reviewText: string) =>
+    api.post(`/bookings/${bookingId}/review/vendor`, { rating, reviewText }),
+  submitUserReview: (bookingId: string, rating: number, reviewText: string) =>
+    api.post(`/bookings/${bookingId}/review/user`, { rating, reviewText }),
   getVendorBookings: () => api.get(API_ENDPOINTS.BOOKINGS.VENDOR_BOOKINGS),
   getAvailableBookings: () => api.get(API_ENDPOINTS.BOOKINGS.AVAILABLE),
   acceptBooking: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.ACCEPT(id)),

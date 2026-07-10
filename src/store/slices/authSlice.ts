@@ -7,6 +7,8 @@ interface User {
   role: string;
   phone?: string;
   isStaff?: boolean;
+  rating?: number;
+  totalReviews?: number;
   permissions?: {
     dashboard: boolean;
     users: boolean;

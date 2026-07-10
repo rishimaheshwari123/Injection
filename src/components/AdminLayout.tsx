@@ -24,6 +24,7 @@ import {
   Settings,
   ClipboardList,
   Bell,
+  Award,
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
@@ -172,6 +173,12 @@ const AdminLayout = () => {
       icon: Settings,
       label: "Settings",
       permission: "dashboard",
+    },
+    {
+      path: "/admin/vendor-id-card",
+      icon: Award,
+      label: "Vendor ID Card",
+      permission: "vendors",
     },
   ];
 

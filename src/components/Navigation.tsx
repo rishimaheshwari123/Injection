@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   User,
@@ -15,15 +15,139 @@ import {
   BookOpen,
   Heart,
   ChevronDown,
+  Star,
+  Clock,
+  CheckCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store/store";
+import { logout } from "../store/slices/authSlice";
+import { bookingAPI, userAPI } from "../services/api";
+import { toast } from "react-toastify";
 import logo from "../assets/logo.png";
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  // My Bookings & Reviews States
+  const [myBookingsOpen, setMyBookingsOpen] = useState(false);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  const [reviewingBooking, setReviewingBooking] = useState<any | null>(null);
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Vendor reviews left for Customer states
+  const [activeTab, setActiveTab] = useState<'bookings' | 'feedback'>('bookings');
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [loadingUserReviews, setLoadingUserReviews] = useState(false);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setUserDropdownOpen(false);
+    toast.success("Logged out successfully!");
+    navigate("/login");
+  };
+
+  const fetchUserBookings = async () => {
+    try {
+      setLoadingBookings(true);
+      const res = await bookingAPI.getUserBookings();
+      if (res.data && res.data.success) {
+        setBookings(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading user bookings:", err);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const fetchUserReviews = async () => {
+    if (!user?._id) return;
+    try {
+      setLoadingUserReviews(true);
+      const res = await userAPI.getReviews(user._id);
+      if (res.data && res.data.success) {
+        setUserReviews(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading user reviews:", err);
+    } finally {
+      setLoadingUserReviews(false);
+    }
+  };
+
+  useEffect(() => {
+    if (myBookingsOpen && isAuthenticated && user?.role === "user") {
+      if (activeTab === 'bookings') {
+        fetchUserBookings();
+      } else {
+        fetchUserReviews();
+      }
+    }
+  }, [myBookingsOpen, isAuthenticated, user, activeTab]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewingBooking) return;
+
+    if (rating < 1 || rating > 5) {
+      toast.error("Please select a rating between 1 and 5 stars");
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      toast.error("Please write a review comment");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      const res = await bookingAPI.submitReview(reviewingBooking._id, rating, reviewText);
+      if (res.data && res.data.success) {
+        toast.success("Thank you for your rating & review!");
+        setReviewingBooking(null);
+        setRating(5);
+        setReviewText("");
+        // Reload list to hide rate button
+        fetchUserBookings();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Close user dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".user-dropdown")) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    if (userDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userDropdownOpen]);
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -266,10 +390,80 @@ const Navigation = () => {
 
               <Link
                 to="/contact"
-                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-300 mr-2"
               >
                 Contact Us
               </Link>
+
+              {isAuthenticated ? (
+                <div className="relative user-dropdown">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#3DB9A6]/10 text-[#3DB9A6] flex items-center justify-center font-bold text-sm">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-gray-750 max-w-[125px] truncate font-bold">{user?.name}</span>
+                    <ChevronDown size={14} className="text-gray-500" />
+                  </button>
+                  <AnimatePresence>
+                    {userDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50"
+                      >
+                        {user?.role === "admin" && (
+                          <Link
+                            to="/admin"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            Admin Panel
+                          </Link>
+                        )}
+                        {user?.role === "vendor" && (
+                          <Link
+                            to="/vendor/profile"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            Vendor Profile
+                          </Link>
+                        )}
+                        {user?.role === "user" && (
+                          <button
+                            onClick={() => {
+                              setMyBookingsOpen(true);
+                              setUserDropdownOpen(false);
+                            }}
+                            className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                          >
+                            My Bookings
+                          </button>
+                        )}
+                        <hr className="my-1 border-gray-100" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left block px-4 py-2 text-sm text-red-650 hover:bg-red-50 font-semibold"
+                        >
+                          Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-slate-50 border border-slate-200 transition-all duration-300"
+                >
+                  <User size={16} />
+                  <span>Login</span>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -398,15 +592,78 @@ const Navigation = () => {
                     delay: (navItems.length + 1) * 0.1,
                     duration: 0.3,
                   }}
-                  className="px-6 pt-6"
+                  className="px-6 pt-6 space-y-3"
                 >
                   <Link
                     to="/contact"
-                    className="flex items-center justify-center space-x-2 w-full  bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+                    className="flex items-center justify-center space-x-2 w-full bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Phone size={20} />
                     <span>Contact Us</span>
                   </Link>
+
+                  {isAuthenticated ? (
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
+                      <div className="px-2 py-1.5 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#3DB9A6]/10 text-[#3DB9A6] flex items-center justify-center font-bold text-sm">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800 leading-tight">{user?.name}</p>
+                          <p className="text-[10px] text-gray-500 leading-tight">{user?.email}</p>
+                        </div>
+                      </div>
+                      
+                      {user?.role === "admin" && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Admin Panel
+                        </Link>
+                      )}
+                      {user?.role === "vendor" && (
+                        <Link
+                          to="/vendor/profile"
+                          className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Vendor Profile
+                        </Link>
+                      )}
+                      {user?.role === "user" && (
+                        <button
+                          onClick={() => {
+                            setMyBookingsOpen(true);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
+                        >
+                          My Bookings
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center justify-center w-full bg-red-50 text-red-650 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-100 transition-all duration-300"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="flex items-center justify-center space-x-2 w-full border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all duration-300"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <User size={18} />
+                      <span>Login</span>
+                    </Link>
+                  )}
                 </motion.div>
               </div>
 
@@ -466,6 +723,310 @@ const Navigation = () => {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* My Bookings Modal */}
+      <AnimatePresence>
+        {myBookingsOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMyBookingsOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden relative z-10 border border-slate-100"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">My Bookings & History</h3>
+                  <p className="text-xs text-slate-500 mt-1">View your bookings status and rate your service partners</p>
+                </div>
+                <button
+                  onClick={() => setMyBookingsOpen(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-200/50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Tab Navigation */}
+              <div className="flex border-b border-slate-150 px-6 bg-slate-50/50">
+                <button
+                  onClick={() => setActiveTab('bookings')}
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${
+                    activeTab === 'bookings'
+                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  My Assignments & Bookings
+                </button>
+                <button
+                  onClick={() => setActiveTab('feedback')}
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all flex items-center gap-1.5 ${
+                    activeTab === 'feedback'
+                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <Star size={13} className={activeTab === 'feedback' ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} /> My Behavior Reviews ({userReviews.length})
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {activeTab === 'bookings' ? (
+                  loadingBookings ? (
+                    <div className="py-20 flex flex-col items-center justify-center gap-3">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#3DB9A6] rounded-full animate-spin" />
+                      <p className="text-sm font-medium text-slate-500">Loading your bookings...</p>
+                    </div>
+                  ) : bookings.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <Clock className="mx-auto text-slate-300 mb-3" size={48} />
+                      <p className="text-base font-bold text-slate-700">No bookings found</p>
+                      <p className="text-sm text-slate-500 mt-1">Book a healthcare service to view it here.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {bookings.map((booking) => {
+                        const isCompleted = booking.bookingStatus === "completed";
+                        return (
+                          <div key={booking._id} className="border border-slate-100 rounded-xl p-4 bg-slate-50/30 hover:bg-slate-50/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">#{booking._id.slice(-6)}</span>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  booking.bookingStatus === "completed"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                    : booking.bookingStatus === "cancelled"
+                                      ? "bg-red-50 text-red-700 border-red-100"
+                                      : booking.bookingStatus === "in-progress"
+                                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                                        : "bg-amber-50 text-amber-700 border-amber-100"
+                                }`}>
+                                  {booking.bookingStatus}
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-800">
+                                  {booking.selectedServices?.map((s: any) => s.serviceName).join(", ") || "General Service"}
+                                </h4>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                  Scheduled for: <span className="font-semibold">{booking.preferredTimeSlot}</span>
+                                </p>
+                              </div>
+
+                              {booking.vendorId && (
+                                <div className="text-xs text-slate-600 flex items-center gap-1.5 bg-slate-100/50 py-1 px-2.5 rounded-md w-fit">
+                                  <span className="font-semibold text-slate-500">Service Provider:</span>
+                                  <span className="font-bold text-[#3DB9A6]">{booking.vendorId.businessName || booking.vendorId.name}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-3 md:pt-0">
+                              <div className="text-left md:text-right">
+                                <span className="text-[10px] text-slate-400 block font-semibold">Total Amount</span>
+                                <span className="text-sm font-extrabold text-slate-800">₹{booking.grandTotal}</span>
+                              </div>
+
+                              {isCompleted && (
+                                <div>
+                                  {booking.isReviewedByCustomer ? (
+                                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                                      <CheckCircle size={14} /> Reviewed
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => setReviewingBooking(booking)}
+                                      className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-bold rounded-lg text-xs hover:shadow-md hover:scale-[1.02] transition-all"
+                                    >
+                                      Rate & Review
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
+                  loadingUserReviews ? (
+                    <div className="py-20 flex flex-col items-center justify-center gap-3">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#3DB9A6] rounded-full animate-spin" />
+                      <p className="text-sm font-medium text-slate-500">Loading reviews...</p>
+                    </div>
+                  ) : userReviews.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <Star className="mx-auto text-slate-300 mb-3 text-amber-400" size={48} />
+                      <p className="text-base font-bold text-slate-700">No behavior feedback yet</p>
+                      <p className="text-sm text-slate-500 mt-1">Reviews left for you by service providers will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Overall Average customer rating */}
+                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800">My Behavior Rating</h4>
+                          <p className="text-[11px] text-slate-550 mt-0.5">Aggregated rating from medical service providers</p>
+                        </div>
+                        <div className="text-right flex items-center gap-2">
+                          <span className="text-2xl font-black text-emerald-800">{user?.rating ? Number(user.rating).toFixed(1) : '0.0'}</span>
+                          <div className="flex gap-0.5 text-amber-500">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} size={14} className={s <= Math.round(user?.rating || 0) ? 'fill-amber-500 text-amber-500' : 'text-slate-200'} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Reviews feed */}
+                      <div className="space-y-4 divide-y divide-slate-100">
+                        {userReviews.map((review, idx) => (
+                          <div key={review._id} className={`${idx > 0 ? "pt-4" : ""} flex gap-4`}>
+                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-xs uppercase flex-shrink-0">
+                              {review.vendorId?.name?.charAt(0) || "V"}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h5 className="text-xs font-bold text-slate-800">{review.vendorId?.businessName || review.vendorId?.name || "Vendor Partner"}</h5>
+                                  <p className="text-[9px] text-slate-450 font-semibold">Reviewed on {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                                </div>
+                                <div className="flex gap-0.5 text-amber-500">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star key={s} size={10} className={s <= review.rating ? "fill-amber-500 text-amber-500" : "text-slate-200"} />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-xs text-slate-600 bg-slate-50/50 p-3 rounded-lg leading-relaxed border border-slate-100">{review.reviewText}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Review & Rating Modal */}
+      <AnimatePresence>
+        {reviewingBooking && (
+          <div className="fixed inset-0 z-55 overflow-y-auto flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setReviewingBooking(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative z-10 border border-slate-100"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-800">Rate Service Partner</h3>
+                <button
+                  onClick={() => setReviewingBooking(null)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleReviewSubmit} className="p-5 space-y-4">
+                {/* Vendor details */}
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-0.5">Rating for partner</span>
+                  <span className="text-base font-extrabold text-slate-800 text-center block">
+                    {reviewingBooking.vendorId?.businessName || reviewingBooking.vendorId?.name || "Service Partner"}
+                  </span>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {reviewingBooking.selectedServices?.map((s: any) => s.serviceName).join(", ")}
+                  </p>
+                </div>
+
+                {/* Stars selection */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 block text-center">Your Rating</label>
+                  <div className="flex items-center justify-center gap-2 py-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className="transform transition-transform hover:scale-110 focus:outline-none"
+                      >
+                        <Star
+                          size={32}
+                          className="transition-colors"
+                          fill={star <= rating ? "#FFC107" : "none"}
+                          stroke={star <= rating ? "#FFC107" : "#CBD5E1"}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-400 block text-center font-bold">
+                    {rating === 5 ? "Excellent!" : rating === 4 ? "Very Good!" : rating === 3 ? "Good" : rating === 2 ? "Fair" : "Poor"}
+                  </span>
+                </div>
+
+                {/* Comment Textarea */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 block">Your Review Comments</label>
+                  <textarea
+                    required
+                    placeholder="Describe your experience with this service partner..."
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="w-full text-sm p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] h-28 resize-none bg-slate-50/30"
+                  />
+                </div>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="w-full py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-bold rounded-xl text-sm hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  {submittingReview ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>Submit Feedback</span>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

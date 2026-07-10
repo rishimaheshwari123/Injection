@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Heart, Shield, PhoneCall, AlertTriangle, FileText, Download, Clock } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Heart, Shield, PhoneCall, AlertTriangle, FileText, Download, Clock, Star } from 'lucide-react';
 import { userAPI, bookingAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -12,11 +12,30 @@ export default function UserDetailsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  
+  // Reviews & Rating states
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  const fetchUserReviews = async () => {
+    try {
+      setLoadingReviews(true);
+      const response = await userAPI.getReviews(id!);
+      if (response.data && response.data.success) {
+        setReviews(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading user reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
       fetchUserDetails();
       fetchUserBookings();
+      fetchUserReviews();
     }
   }, [id]);
 
@@ -117,16 +136,12 @@ export default function UserDetailsPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="p-6 text-center">
-        <h2 className="text-xl font-semibold text-gray-700">User not found</h2>
-        <button onClick={() => navigate('/admin/users')} className="mt-4 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg">
-          Go Back to Users
-        </button>
-      </div>
-    );
-  }
+  // Compute rating counts dynamically
+  const ratingCounts = [0, 0, 0, 0, 0];
+  reviews.forEach((r: any) => {
+    const star = Math.min(Math.max(Math.round(r.rating || 5), 1), 5);
+    ratingCounts[star - 1]++;
+  });
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -142,50 +157,94 @@ export default function UserDetailsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Profile Card */}
-        <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center text-center h-fit">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-50 shadow-md bg-white mb-4 relative group">
-            {user.profileImage ? (
-              <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] flex items-center justify-center text-white text-3xl font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
+        {/* Left Profile Card & Ratings */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center text-center">
+            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-50 shadow-md bg-white mb-4 relative group">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] flex items-center justify-center text-white text-3xl font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <h2 className="text-xl font-bold text-gray-800 mb-1">{user.name}</h2>
+            
+            {user.patientId && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] mb-3">
+                {user.patientId}
+              </span>
             )}
+
+            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-6 ${user.isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              {user.isActive ? 'Active Patient' : 'Inactive Patient'}
+            </span>
+
+            <div className="w-full border-t border-slate-100 pt-5 space-y-4 text-left">
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <Calendar className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Member Since</p>
+                  <p className="font-semibold text-gray-800">{new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <User className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Gender & Age</p>
+                  <p className="font-semibold text-gray-800">{user.gender}, {user.age} Years</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <Shield className="text-gray-400" size={16} />
+                <div>
+                  <p className="text-xs text-gray-400">Account Role</p>
+                  <p className="font-semibold text-gray-800 capitalize">{user.role}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-xl font-bold text-gray-800 mb-1">{user.name}</h2>
-          
-          {user.patientId && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] mb-3">
-              {user.patientId}
-            </span>
-          )}
-
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-6 ${user.isActive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {user.isActive ? 'Active Patient' : 'Inactive Patient'}
-          </span>
-
-          <div className="w-full border-t border-slate-100 pt-5 space-y-4 text-left">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <Calendar className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Member Since</p>
-                <p className="font-semibold text-gray-800">{new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          {/* Ratings & Feedback Summary Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 pb-2 border-b flex items-center gap-2">
+              <Star className="text-amber-500 fill-amber-500" size={16} /> Patient Behavior Rating
+            </h3>
+            
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-extrabold text-slate-800">{user.rating ? user.rating.toFixed(1) : "0.0"}</div>
+                <div className="flex items-center justify-center gap-0.5 mt-1 text-amber-500">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star 
+                      key={s} 
+                      size={11} 
+                      className={s <= Math.round(user.rating || 0) ? "fill-amber-500 text-amber-500" : "text-slate-200"} 
+                    />
+                  ))}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 font-bold whitespace-nowrap">
+                  {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <User className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Gender & Age</p>
-                <p className="font-semibold text-gray-800">{user.gender}, {user.age} Years</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <Shield className="text-gray-400" size={16} />
-              <div>
-                <p className="text-xs text-gray-400">Account Role</p>
-                <p className="font-semibold text-gray-800 capitalize">{user.role}</p>
+              
+              <div className="flex-1 space-y-1 border-l border-slate-100 pl-4">
+                {[5, 4, 3, 2, 1].map((stars) => {
+                  const count = ratingCounts[stars - 1] || 0;
+                  const percent = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                  return (
+                    <div key={stars} className="flex items-center gap-2 text-[10px]">
+                      <span className="w-2.5 text-slate-500 font-bold text-right">{stars}</span>
+                      <Star size={8} className="fill-amber-400 text-amber-400 flex-shrink-0" />
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full" style={{ width: `${percent}%` }} />
+                      </div>
+                      <span className="w-4 text-slate-400 text-right">{count}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -501,6 +560,46 @@ export default function UserDetailsPage() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 italic text-center py-6">No previous bookings found for this patient.</p>
+            )}
+          </div>
+
+          {/* Vendor Reviews for Patient Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-5 border-b pb-3 border-slate-100 flex items-center gap-2">
+              <Star size={18} className="text-amber-500 fill-amber-500" /> Vendor Reviews & Feedback
+            </h3>
+            {loadingReviews ? (
+              <div className="py-8 flex justify-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3DB9A6]"></div>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">
+                No reviews submitted yet for this patient.
+              </div>
+            ) : (
+              <div className="space-y-6 divide-y divide-slate-100">
+                {reviews.map((review, idx) => (
+                  <div key={review._id} className={`${idx > 0 ? "pt-6" : ""} flex gap-4`}>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-sm uppercase flex-shrink-0">
+                      {review.vendorId?.name?.charAt(0) || "V"}
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-gray-800">{review.vendorId?.name || "Vendor Partner"}</h4>
+                          <p className="text-[10px] text-gray-400 font-semibold">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                        </div>
+                        <div className="flex gap-0.5 text-amber-500">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} size={12} className={s <= review.rating ? "fill-amber-500 text-amber-500" : "text-slate-200"} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-650 leading-relaxed font-medium bg-slate-50/50 p-3 rounded-xl border border-slate-100/50">{review.reviewText}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

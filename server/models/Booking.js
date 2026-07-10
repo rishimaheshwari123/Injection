@@ -240,6 +240,14 @@ const bookingSchema = new mongoose.Schema({
     enum: ['pending', 'accepted', 'in-progress', 'completed', 'cancelled'],
     default: 'pending'
   },
+  isReviewedByCustomer: {
+    type: Boolean,
+    default: false
+  },
+  isReviewedByVendor: {
+    type: Boolean,
+    default: false
+  },
   acceptedAt: {
     type: Date
   },

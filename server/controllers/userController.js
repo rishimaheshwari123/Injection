@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import UserReview from '../models/UserReview.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
 
@@ -921,6 +922,29 @@ export const getAllUsersByPagination = async (req, res) => {
       currentPage: pageNum,
       limit: limitNum,
       data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get all reviews for a user/customer
+// @route   GET /api/users/:id/reviews
+// @access  Private
+export const getUserReviews = async (req, res) => {
+  try {
+    const reviews = await UserReview.find({ userId: req.params.id })
+      .populate('vendorId', 'name businessName profileImage')
+      .populate('bookingId', 'selectedServices preferredTimeSlot bookingStatus')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      data: reviews
     });
   } catch (error) {
     res.status(500).json({

@@ -12,7 +12,9 @@ import {
   createVendorByAdmin,
   getAllVendorsByPagination,
   uploadVendorFile,
-  verifyVendorDocument
+  verifyVendorDocument,
+  getVendorReviews,
+  getVendorIdCardDetails
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -31,6 +33,9 @@ router.get('/admin/paginated', protect, adminOnly, getAllVendorsByPagination);
 router.get('/getAll',getAllVendors);
 
 router.get('/:id', getVendorById);
+
+router.get('/:id/reviews', protect, getVendorReviews);
+router.get('/:id/id-card', protect, getVendorIdCardDetails);
 
 router.put('/profile', protect, vendorOnly, updateVendorProfile);
 

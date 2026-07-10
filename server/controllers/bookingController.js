@@ -3,6 +3,8 @@ import Booking from '../models/Booking.js';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
 import Coupon from '../models/Coupon.js';
+import Review from '../models/Review.js';
+import UserReview from '../models/UserReview.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
 
 // Helper function to generate unique coupon code
@@ -1088,6 +1090,176 @@ export const updateRequestedItemStatus = async (req, res) => {
       success: true,
       message: 'Item status updated successfully',
       data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Create review for a completed booking (rating the vendor)
+// @route   POST /api/bookings/:id/review/vendor
+// @access  Private/User
+export const createVendorReview = async (req, res) => {
+  try {
+    const { rating, reviewText } = req.body;
+    const bookingId = req.params.id;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid rating between 1 and 5'
+      });
+    }
+
+    if (!reviewText || !reviewText.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide review comment text'
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify user owns this booking
+    if (booking.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to review this booking'
+      });
+    }
+
+    // Verify booking is completed
+    if (booking.bookingStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'You can only review completed bookings'
+      });
+    }
+
+    // Verify vendor is assigned
+    if (!booking.vendorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'No vendor was assigned to this booking'
+      });
+    }
+
+    // Check if review already exists
+    const existingReview = await Review.findOne({ bookingId });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this booking'
+      });
+    }
+
+    // Create review
+    const review = await Review.create({
+      bookingId,
+      vendorId: booking.vendorId,
+      userId: req.user._id,
+      rating,
+      reviewText: reviewText.trim()
+    });
+
+    // Mark booking as reviewed by customer
+    booking.isReviewedByCustomer = true;
+    await booking.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Review submitted successfully',
+      data: review
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Create review for a customer/user by a vendor (rating the patient)
+// @route   POST /api/bookings/:id/review/user
+// @access  Private/Vendor
+export const createUserReview = async (req, res) => {
+  try {
+    const { rating, reviewText } = req.body;
+    const bookingId = req.params.id;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid rating between 1 and 5'
+      });
+    }
+
+    if (!reviewText || !reviewText.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide review comment text'
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify vendor owns this booking
+    if (!booking.vendorId || booking.vendorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to review this booking'
+      });
+    }
+
+    // Verify booking is completed
+    if (booking.bookingStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'You can only review completed bookings'
+      });
+    }
+
+    // Check if review already exists
+    const existingReview = await UserReview.findOne({ bookingId });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this booking'
+      });
+    }
+
+    // Create review
+    const review = await UserReview.create({
+      bookingId,
+      vendorId: req.user._id,
+      userId: booking.userId,
+      rating,
+      reviewText: reviewText.trim()
+    });
+
+    // Mark booking as reviewed by vendor
+    booking.isReviewedByVendor = true;
+    await booking.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Review for customer submitted successfully',
+      data: review
     });
   } catch (error) {
     res.status(500).json({

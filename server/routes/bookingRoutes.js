@@ -16,7 +16,9 @@ import {
   updatePrescriptionSummary,
   getVendorAllBookings,
   updateRequestedItems,
-  updateRequestedItemStatus
+  updateRequestedItemStatus,
+  createVendorReview,
+  createUserReview
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -49,6 +51,8 @@ router.post('/:id/notes', protect, adminOnly, addNoteToBooking);
 
 router.put('/:id/prescription', protect, adminOnly, updatePrescription);
 router.put('/:id/prescription-summary', protect, adminOnly, updatePrescriptionSummary);
+router.post('/:id/review/vendor', protect, createVendorReview);
+router.post('/:id/review/user', protect, vendorOnly, createUserReview);
 router.put('/:id', protect, adminOnly, updateBooking);
 router.delete('/:id', protect, adminOnly, deleteBooking);
 

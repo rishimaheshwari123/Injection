@@ -11,7 +11,6 @@ import {
   MessageSquare,
   MoreVertical,
   Upload,
-  Heart,
   X,
   ChevronLeft,
   ChevronRight,

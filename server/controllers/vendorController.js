@@ -1,5 +1,7 @@
 import Vendor from '../models/Vendor.js';
 import Service from '../models/Service.js';
+import Review from '../models/Review.js';
+import AdminSetting from '../models/AdminSetting.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
 
@@ -908,6 +910,74 @@ export const verifyVendorDocument = async (req, res) => {
       success: true,
       message: `Document status has been set to ${status}`,
       data: vendor
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get all reviews for a vendor
+// @route   GET /api/vendors/:id/reviews
+// @access  Private
+export const getVendorReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ vendorId: req.params.id })
+      .populate('userId', 'name email profileImage')
+      .populate('bookingId', 'selectedServices preferredTimeSlot bookingStatus')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get ID Card details for a vendor
+// @route   GET /api/vendors/:id/id-card
+// @access  Private (Vendor or Admin)
+export const getVendorIdCardDetails = async (req, res) => {
+  try {
+    const vendorId = req.params.id;
+
+    // Check if requester is Admin or the Vendor themselves
+    if (req.user.role !== 'admin' && req.user._id.toString() !== vendorId) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to view this ID card details'
+      });
+    }
+
+    const vendor = await Vendor.findById(vendorId).select('-password');
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    // Retrieve the active admin setting containing logo and signature
+    const activeSetting = await AdminSetting.findOne({ isActive: true });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        vendor,
+        setting: activeSetting || {
+          title: "General Medical Services",
+          logoUrl: null,
+          signatureUrl: null
+        }
+      }
     });
   } catch (error) {
     res.status(500).json({
