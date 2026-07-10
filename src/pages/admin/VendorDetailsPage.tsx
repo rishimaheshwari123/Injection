@@ -623,8 +623,8 @@ export default function VendorDetailsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {bookings.map((booking: any) => (
                       <tr key={booking._id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3.5 text-xs font-bold text-gray-800">
-                          {booking.bookingId || booking._id.slice(-6).toUpperCase()}
+                        <td className="px-4 py-3.5 text-xs font-bold text-blue-600">
+                          {booking.bookingId || 'N/A'}
                         </td>
                         <td className="px-4 py-3.5 text-xs text-gray-700 font-semibold">
                           {booking.patientName || booking.userId?.name || 'N/A'}

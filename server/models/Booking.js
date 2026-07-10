@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
+  // Booking ID (Auto-generated)
+  bookingId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  
   // Patient Information
   patientName: {
     type: String,
@@ -344,6 +351,7 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.index({ userId: 1, bookingStatus: 1 });
 bookingSchema.index({ vendorId: 1, bookingStatus: 1 });
 bookingSchema.index({ bookingStatus: 1, createdAt: -1 });
+bookingSchema.index({ bookingId: 1 });
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

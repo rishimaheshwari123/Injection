@@ -195,6 +195,7 @@ const BookingsPage = () => {
       const excelData = bookings.map((booking: any) => {
         const dateTime = formatBookingDateTime(booking);
         return {
+          "Booking ID": booking.bookingId || "N/A",
           "Patient Name": booking.patientName,
           Age: booking.age,
           Gender: booking.sex,
@@ -202,6 +203,7 @@ const BookingsPage = () => {
           Phone: booking.alternateMobile || "N/A",
           Address: booking.address,
           Pincode: booking.pincode,
+          "Current Location": booking.currentLocation || "N/A",
           Services: booking.selectedServices
             .map((s: any) => s.serviceName)
             .join(", "),
@@ -277,20 +279,6 @@ const BookingsPage = () => {
       );
     }
   };
-
-  const filteredBookings = bookings.filter((booking: any) => {
-    const matchesSearch =
-      booking.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.bookingStatus.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "" || booking.bookingStatus === statusFilter;
-    const matchesVendor =
-      vendorFilter === "" || booking.vendorId?._id === vendorFilter;
-
-    return matchesSearch && matchesStatus && matchesVendor;
-  });
 
   // Handler for CreateBookingModal
   const handleCreateBooking = async (data: any) => {
@@ -764,7 +752,7 @@ const BookingsPage = () => {
           />
           <input
             type="text"
-            placeholder="Search by patient name, service name, vendor name, vendor ID, or patient ID..."
+            placeholder="Search by booking ID, patient name, service name, vendor name, vendor ID, patient ID, or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
@@ -790,16 +778,16 @@ const BookingsPage = () => {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Patient
+                  Booking ID
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Services
+                  Patient
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                   Vendor
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Amount
+                  Location
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                   Status
@@ -813,11 +801,19 @@ const BookingsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredBookings.map((booking: any) => (
+              {bookings.map((booking: any) => (
                 <tr
                   key={booking._id}
                   className="hover:bg-gray-50 transition-colors"
                 >
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="font-bold text-blue-600 text-sm">
+                        {booking.bookingId || 'N/A'}
+                      </p>
+                      
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-medium text-gray-800">
@@ -827,47 +823,6 @@ const BookingsPage = () => {
                       <p className="text-sm text-gray-600">
                         {booking.age} years, {booking.sex}
                       </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      {booking.selectedServices.map(
-                        (service: any, idx: number) => (
-                          <div key={idx} className="text-sm">
-                            <p className="font-medium text-gray-800">
-                              {service.serviceName}
-                            </p>
-                            <p className="text-gray-600">
-                              Qty: {service.quantity} × ₹{service.price}
-                            </p>
-                          </div>
-                        ),
-                      )}
-
-                      {booking.requestedItems && booking.requestedItems.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
-                          <p className="text-[10px] font-bold text-violet-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                            <ShoppingBag size={10} /> Requested Items
-                          </p>
-                          <div className="space-y-1">
-                            {booking.requestedItems.map((item: any, idx: number) => (
-                              <div key={idx} className="flex flex-wrap items-center gap-1 text-xs">
-                                <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'brought' ? 'bg-green-500' :
-                                  item.status === 'unavailable' ? 'bg-red-500' : 'bg-yellow-500'
-                                  }`} />
-                                <span className="font-medium text-gray-700">{item.itemName}</span>
-                                <span className="text-gray-500 font-semibold">(x{item.quantity})</span>
-                                <span className={`text-[9px] px-1 rounded-sm border uppercase font-bold scale-90 origin-left ${item.status === 'brought' ? 'bg-green-50 text-green-700 border-green-200' :
-                                  item.status === 'unavailable' ? 'bg-red-50 text-red-700 border-red-200' :
-                                    'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                  }`}>
-                                  {item.status}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -887,16 +842,25 @@ const BookingsPage = () => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div>
-                      <p className="font-bold text-gray-800">
-                        ₹{booking.subtotal}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Subtotal: ₹{booking.subtotal}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        GST: ₹0
-                      </p>
+                    <div className="space-y-1">
+                      {booking.address && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase">Address</p>
+                          <p className="text-sm text-gray-800 font-medium">{booking.address}</p>
+                          {booking.pincode && (
+                            <p className="text-xs text-gray-600">Pincode: {booking.pincode}</p>
+                          )}
+                        </div>
+                      )}
+                      {booking.currentLocation && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase">Current Location</p>
+                          <p className="text-sm text-gray-800">{booking.currentLocation}</p>
+                        </div>
+                      )}
+                      {!booking.address && !booking.currentLocation && (
+                        <span className="text-gray-400 text-sm italic">No location info</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">

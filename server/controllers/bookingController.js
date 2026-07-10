@@ -5,7 +5,20 @@ import Vendor from '../models/Vendor.js';
 import Coupon from '../models/Coupon.js';
 import Review from '../models/Review.js';
 import UserReview from '../models/UserReview.js';
+import Counter from '../models/Counter.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
+
+// Helper function to generate unique booking ID
+const getNextBookingId = async () => {
+  const counter = await Counter.findOneAndUpdate(
+    { id: 'bookingId' },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  
+  // Format: BK000001, BK000002, etc.
+  return `BK${String(counter.seq).padStart(6, '0')}`;
+};
 
 // Helper function to generate unique coupon code
 const generateCouponCode = () => {
@@ -98,8 +111,14 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    // Generate unique booking ID
+    const bookingId = await getNextBookingId();
+
     // Create booking with validated data
     const booking = await Booking.create({
+      // Booking ID
+      bookingId,
+      
       // Patient Information
       patientName,
       age,
@@ -572,9 +591,12 @@ export const getAllBookings = async (req, res) => {
       }).distinct('_id');
 
       query.$or = [
+        { bookingId: { $regex: search, $options: 'i' } },
         { patientName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { alternateMobile: { $regex: search, $options: 'i' } },
+        { address: { $regex: search, $options: 'i' } },
+        { currentLocation: { $regex: search, $options: 'i' } },
         { 'selectedServices.serviceName': { $regex: search, $options: 'i' } },
         { userId: { $in: matchedUsers } },
         { vendorId: { $in: matchedVendors } }

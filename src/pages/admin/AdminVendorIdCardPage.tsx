@@ -79,19 +79,26 @@ export default function AdminVendorIdCardPage() {
       setDownloadingPdf(true);
       const element = cardRef.current;
       const opt = {
-        margin:       0,
+        margin:       0.1,
         filename:     `${selectedVendor.name.replace(/\s+/g, '_')}_ID_Card.pdf`,
         image:        { type: 'jpeg' as const, quality: 1.0 },
         html2canvas:  { 
-          scale: 3, 
+          scale: 2.5, 
           useCORS: true, 
           logging: false, 
           letterRendering: true,
           scrollX: 0,
-          scrollY: 0
+          scrollY: 0,
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight
         },
-        jsPDF:        { unit: 'in', format: [3.333, 5.1] as [number, number], orientation: 'portrait' as const },
-        pagebreak:    { mode: ['avoid-all'] }
+        jsPDF:        { 
+          unit: 'px', 
+          format: [element.offsetWidth + 20, element.offsetHeight + 20], 
+          orientation: 'portrait' as const,
+          hotfixes: ['px_scaling']
+        },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], avoid: ['div', 'img', 'tr'] }
       };
       await html2pdf().from(element).set(opt).save();
       toast.success("ID Card PDF downloaded successfully!");
@@ -126,7 +133,14 @@ export default function AdminVendorIdCardPage() {
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%) scale(1.3);
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
+        }
+        .id-card-container {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          display: block;
         }
       ` }} />
 
@@ -203,91 +217,101 @@ export default function AdminVendorIdCardPage() {
                 <div className="print:hidden flex justify-end w-full max-w-sm">
                   <button
                     onClick={handleDownloadPDF}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-extrabold rounded-xl text-xs hover:shadow-md hover:scale-[1.02] transition-all shadow-xs"
+                    disabled={downloadingPdf}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-extrabold rounded-xl text-xs hover:shadow-md hover:scale-[1.02] transition-all shadow-xs disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    <Download size={14} /> Download / Print ID Card
+                    {downloadingPdf ? (
+                      <>
+                        <div className="inline-block animate-spin rounded-full h-3.5 w-3.5 border-2 border-white/30 border-t-white"></div>
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={14} /> Download / Print ID Card
+                      </>
+                    )}
                   </button>
                 </div>
 
                 {/* ID Badge Rendered */}
-                <div ref={cardRef} className="print-card-only w-80 h-[480px] bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-250/70 flex flex-col relative print:shadow-none print:border-slate-300">
+                <div ref={cardRef} className="print-card-only id-card-container w-80 bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-250/70 flex flex-col relative print:shadow-none print:border-slate-300" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                   {/* Card Header */}
-                  <div className="bg-gradient-to-r from-[#3DB9A6] to-[#63D64F] py-4.5 px-6 text-white text-center relative flex flex-col items-center">
+                  <div className="bg-gradient-to-r from-[#3DB9A6] to-[#63D64F] py-5 px-6 text-white text-center relative flex flex-col items-center gap-1">
                     {cardDetails.setting?.logoUrl ? (
-                      <img src={cardDetails.setting.logoUrl} alt="Logo" className="h-9 object-contain mb-1" />
+                      <img src={cardDetails.setting.logoUrl} alt="Logo" className="h-10 object-contain" />
                     ) : (
-                      <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center font-black text-md text-white mb-1">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center font-black text-lg text-white">
                         +
                       </div>
                     )}
-                    <h3 className="text-[10px] uppercase tracking-widest font-black text-[#dcffe3]">{cardDetails.setting?.title || 'General Medical Services'}</h3>
-                    <p className="text-[8px] text-white/80 font-bold tracking-wide mt-0.5">REGISTERED MEDICAL PARTNER</p>
+                    <h3 className="text-[10px] uppercase tracking-widest font-black text-white leading-tight">{cardDetails.setting?.title || 'General Medical Services'}</h3>
+                    <p className="text-[8px] text-white/90 font-bold tracking-wide">REGISTERED MEDICAL PARTNER</p>
                   </div>
 
                   {/* Card Body */}
-                  <div className="flex-1 p-5 flex flex-col items-center text-center justify-between">
+                  <div className="flex-1 p-6 flex flex-col items-center text-center">
                     {/* User Avatar */}
-                    <div className="relative mb-2">
-                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-50 flex items-center justify-center">
+                    <div className="relative mb-4">
+                      <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-50 flex items-center justify-center">
                         {cardDetails.vendor.profileImage ? (
                           <img src={cardDetails.vendor.profileImage} alt={cardDetails.vendor.name} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-2xl font-black text-slate-400 uppercase">
+                          <span className="text-3xl font-black text-slate-400 uppercase">
                             {cardDetails.vendor.name.charAt(0)}
                           </span>
                         )}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white w-6.5 h-6.5 rounded-full flex items-center justify-center border-4 border-white shadow-xs">
-                        <ShieldCheck size={12} />
+                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm">
+                        <ShieldCheck size={14} />
                       </div>
                     </div>
 
                     {/* Name details */}
-                    <div className="space-y-0.5">
-                      <h2 className="text-lg font-extrabold text-slate-800 leading-tight">{cardDetails.vendor.name}</h2>
-                      <p className="text-[11px] font-bold text-[#3DB9A6] uppercase tracking-wider">{cardDetails.vendor.specialization || 'General Partner'}</p>
-                      <p className="text-[9px] font-semibold text-slate-400 mt-0.5">{cardDetails.vendor.businessName}</p>
+                    <div className="mb-4">
+                      <h2 className="text-xl font-extrabold text-slate-800 leading-tight mb-1">{cardDetails.vendor.name}</h2>
+                      <p className="text-xs font-bold text-[#3DB9A6] uppercase tracking-wider">{cardDetails.vendor.specialization || 'General Partner'}</p>
+                      <p className="text-[10px] font-semibold text-slate-400 mt-1">{cardDetails.vendor.businessName}</p>
                     </div>
 
                     {/* Information block */}
-                    <div className="w-full bg-slate-50 border border-slate-150/70 rounded-xl p-3.5 space-y-1.5 text-left text-[11px]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Partner ID</span>
-                        <span className="font-extrabold text-slate-700 font-mono">{cardDetails.vendor.vendorId}</span>
+                    <div className="w-full bg-slate-50 border border-slate-150/70 rounded-xl p-4 space-y-2.5 text-left mb-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Partner ID</span>
+                        <span className="font-extrabold text-slate-800 font-mono text-xs">{cardDetails.vendor.vendorId}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Email</span>
-                        <span className="font-semibold text-slate-700 truncate max-w-[150px]">{cardDetails.vendor.email}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap flex-shrink-0">Email</span>
+                        <span className="font-semibold text-slate-700 text-[10px] break-all text-right leading-tight">{cardDetails.vendor.email}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Mobile</span>
-                        <span className="font-semibold text-slate-700">{cardDetails.vendor.phone}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Mobile</span>
+                        <span className="font-semibold text-slate-700 text-xs">{cardDetails.vendor.phone}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Issue Date</span>
-                        <span className="font-semibold text-slate-700">
-                          {new Date(cardDetails.vendor.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Issue Date</span>
+                        <span className="font-semibold text-slate-700 text-[11px]">
+                          {new Date(cardDetails.vendor.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}
                         </span>
                       </div>
                     </div>
 
-                    {/* Signature block (QR REMOVED: centered signature) */}
-                    <div className="w-full flex flex-col items-center mt-1">
+                    {/* Signature block */}
+                    <div className="w-full flex flex-col items-center">
                       {cardDetails.setting?.signatureUrl ? (
-                        <img src={cardDetails.setting.signatureUrl} alt="Signature" className="h-9 object-contain mb-0.5" />
+                        <img src={cardDetails.setting.signatureUrl} alt="Signature" className="h-10 object-contain mb-1" />
                       ) : (
-                        <div className="font-mono italic text-[11px] text-slate-500 font-bold mb-1 h-5 flex items-end">
+                        <div className="font-mono italic text-xs text-slate-500 font-bold mb-1 h-10 flex items-end">
                           Auth Signatory
                         </div>
                       )}
-                      <div className="w-24 border-t border-slate-350 my-0.5"></div>
-                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Authorized Sign</span>
+                      <div className="w-32 border-t-2 border-slate-300 my-1"></div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Authorized Sign</span>
                     </div>
 
                   </div>
 
                   {/* Card Bottom Strip */}
-                  <div className="h-1.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]" />
+                  <div className="h-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]" />
                 </div>
               </div>
             ) : (

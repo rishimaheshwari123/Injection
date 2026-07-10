@@ -2,7 +2,20 @@ import Booking from '../models/Booking.js';
 import Vendor from '../models/Vendor.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
+import Counter from '../models/Counter.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
+
+// Helper function to generate unique booking ID
+const getNextBookingId = async () => {
+  const counter = await Counter.findOneAndUpdate(
+    { id: 'bookingId' },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  
+  // Format: BK000001, BK000002, etc.
+  return `BK${String(counter.seq).padStart(6, '0')}`;
+};
 
 // Helper function to generate unique coupon code
 const generateCouponCode = () => {
@@ -84,8 +97,12 @@ export const createUserBooking = async (req, res) => {
       });
     }
 
+    // Generate unique booking ID
+    const bookingId = await getNextBookingId();
+
     // Create booking
     const booking = await Booking.create({
+      bookingId,
       patientName,
       age,
       sex,
