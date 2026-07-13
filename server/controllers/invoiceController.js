@@ -50,6 +50,14 @@ export const generateInvoice = async (req, res) => {
       });
     }
 
+    // Restrict invoice generation unless payment status is paid
+    if (booking.paymentStatus !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invoice can only be generated and downloaded for paid bookings'
+      });
+    }
+
     // Fetch active branding settings
     const activeSetting = await AdminSetting.findOne({ isActive: true });
     
@@ -134,28 +142,48 @@ export const generateInvoice = async (req, res) => {
          .text('Healthcare & Research Solutions')
          .text('GST No: XXXXXXXXXXXX');
 
-      // Right Column: Invoice Details (align right)
+       // Right Column: Invoice Details (align right)
       doc.fillColor(lightColor)
          .font('Helvetica')
          .fontSize(9);
       
       const detailsRightX = 350;
-      doc.text('Invoice No:', detailsRightX, detailsY, { width: 100, align: 'left' });
-      doc.font('Helvetica-Bold').fillColor(darkColor)
-         .text(`INV-${booking._id.toString().slice(-8).toUpperCase()}`, detailsRightX + 70, detailsY, { width: 130, align: 'right' });
       
-      doc.font('Helvetica').fillColor(lightColor)
-         .text('Date:', detailsRightX, detailsY + 14, { width: 100, align: 'left' });
+      doc.text('Date:', detailsRightX, detailsY, { width: 100, align: 'left' });
       doc.font('Helvetica-Bold').fillColor(darkColor)
-         .text(new Date().toLocaleDateString('en-IN'), detailsRightX + 70, detailsY + 14, { width: 130, align: 'right' });
+         .text(new Date(booking.createdAt).toLocaleDateString('en-IN'), detailsRightX + 70, detailsY, { width: 130, align: 'right' });
 
       doc.font('Helvetica').fillColor(lightColor)
-         .text('Booking ID:', detailsRightX, detailsY + 28, { width: 100, align: 'left' });
+         .text('Booking ID:', detailsRightX, detailsY + 13, { width: 100, align: 'left' });
       doc.font('Helvetica-Bold').fillColor(darkColor)
-         .text(booking._id.toString(), detailsRightX + 70, detailsY + 28, { width: 130, align: 'right' });
+         .text(booking.bookingId || `BK-${booking._id.toString().slice(-6).toUpperCase()}`, detailsRightX + 70, detailsY + 13, { width: 130, align: 'right' });
+
+      doc.font('Helvetica').fillColor(lightColor)
+         .text('Scheduled For:', detailsRightX, detailsY + 26, { width: 100, align: 'left' });
+      doc.font('Helvetica-Bold').fillColor(darkColor)
+         .text(booking.preferredTimeSlot || 'N/A', detailsRightX + 70, detailsY + 26, { width: 130, align: 'right' });
+
+      doc.font('Helvetica').fillColor(lightColor)
+         .text('Payment Status:', detailsRightX, detailsY + 39, { width: 100, align: 'left' });
+      doc.font('Helvetica-Bold').fillColor(darkColor)
+         .text((booking.paymentStatus || 'pending').toUpperCase(), detailsRightX + 70, detailsY + 39, { width: 130, align: 'right' });
+
+      if (booking.paymentMethod) {
+        doc.font('Helvetica').fillColor(lightColor)
+           .text('Payment Method:', detailsRightX, detailsY + 52, { width: 100, align: 'left' });
+        doc.font('Helvetica-Bold').fillColor(darkColor)
+           .text((booking.paymentMethod).toUpperCase(), detailsRightX + 70, detailsY + 52, { width: 130, align: 'right' });
+      }
+
+      if (booking.razorpayPaymentId) {
+        doc.font('Helvetica').fillColor(lightColor)
+           .text('Transaction ID:', detailsRightX, detailsY + 65, { width: 100, align: 'left' });
+        doc.font('Helvetica-Bold').fillColor(darkColor)
+           .text(booking.razorpayPaymentId, detailsRightX + 70, detailsY + 65, { width: 130, align: 'right' });
+      }
 
       // Move down past details
-      doc.y = detailsY + 50;
+      doc.y = detailsY + 90;
 
       // Divider line
       doc.strokeColor(borderColor)
@@ -182,6 +210,7 @@ export const generateInvoice = async (req, res) => {
       doc.font('Helvetica')
          .fontSize(9)
          .fillColor(lightColor)
+         .text(`Age / Gender: ${booking.age} yrs / ${booking.sex}`)
          .text(`Email: ${booking.email || 'N/A'}`)
          .text(`Phone: ${booking.userId?.phone || booking.alternateMobile || 'N/A'}`)
          .text(`Address: ${booking.address}, ${booking.pincode}`);
@@ -256,6 +285,27 @@ export const generateInvoice = async (req, res) => {
         yPosition += 20;
       });
 
+      // Append requested items that are not unavailable
+      let serviceIndex = booking.selectedServices.length;
+      if (booking.requestedItems && Array.isArray(booking.requestedItems)) {
+        booking.requestedItems.forEach((item) => {
+          if (item.status === 'unavailable') return;
+          
+          if (serviceIndex % 2 === 1) {
+            doc.rect(50, yPosition, 500, 20).fill('#f8fafc');
+          }
+          
+          doc.fillColor(darkColor);
+          doc.text(`${item.itemName} (Additional)`, 60, yPosition + 5, { width: 220 });
+          doc.text(item.quantity.toString(), 280, yPosition + 5, { width: 40, align: 'right' });
+          doc.text(`INR ${item.price || 0}`, 330, yPosition + 5, { width: 90, align: 'right' });
+          doc.text(`INR ${(item.price || 0) * item.quantity}`, 430, yPosition + 5, { width: 110, align: 'right' });
+          
+          yPosition += 20;
+          serviceIndex++;
+        });
+      }
+
       // Table bottom border
       doc.strokeColor(borderColor)
          .lineWidth(1)
@@ -269,13 +319,24 @@ export const generateInvoice = async (req, res) => {
       const totalsX = 330;
       doc.font('Helvetica').fontSize(9).fillColor(lightColor);
 
-      doc.text('Subtotal:', totalsX, yPosition, { width: 90, align: 'left' });
+      doc.text('Booking Subtotal:', totalsX, yPosition, { width: 90, align: 'left' });
       doc.fillColor(darkColor).text(`INR ${booking.subtotal}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
-      
       yPosition += 16;
-      doc.fillColor(lightColor).text('GST (18%):', totalsX, yPosition, { width: 90, align: 'left' });
-      doc.fillColor(darkColor).text(`INR ${booking.gstAmount}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
-      
+
+      if (booking.additionalAmount > 0) {
+        doc.fillColor(lightColor).text('Additional Items:', totalsX, yPosition, { width: 90, align: 'left' });
+        doc.fillColor(darkColor).text(`INR ${booking.additionalAmount}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
+        yPosition += 16;
+      }
+
+      if (booking.appliedCoupon && booking.appliedCoupon.discountAmount > 0) {
+        doc.fillColor(lightColor).text(`Discount (${booking.appliedCoupon.couponCode || ''}):`, totalsX, yPosition, { width: 90, align: 'left' });
+        doc.fillColor('#059669').text(`- INR ${booking.appliedCoupon.discountAmount}`, totalsX + 90, yPosition, { width: 120, align: 'right' });
+        yPosition += 16;
+      }
+
+      doc.fillColor(lightColor).text('GST (0%):', totalsX, yPosition, { width: 90, align: 'left' });
+      doc.fillColor(darkColor).text(`INR 0`, totalsX + 90, yPosition, { width: 120, align: 'right' });
       yPosition += 16;
       
       // Draw grand total box

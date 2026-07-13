@@ -61,6 +61,10 @@ export const userAPI = {
     });
   },
   getReviews: (userId: string) => api.get(`/users/${userId}/reviews`),
+  addFamilyMember: (data: any) => api.post("/users/profile/family", data),
+  deleteFamilyMember: (memberId: string) => api.delete(`/users/profile/family/${memberId}`),
+  adminAddFamilyMember: (userId: string, data: any) => api.post(`/users/${userId}/family`, data),
+  adminDeleteFamilyMember: (userId: string, memberId: string) => api.delete(`/users/${userId}/family/${memberId}`),
 };
 
 // Vendor APIs
@@ -175,6 +179,12 @@ export const bookingAPI = {
     api.put(`/bookings/${id}/requested-items/${itemId}/status`, { status }),
   addRuntimeNote: (id: string, text: string) =>
     api.post(`/bookings/${id}/runtime-notes`, { text }),
+  createRazorpayOrder: (id: string) =>
+    api.post(`/bookings/${id}/pay/razorpay-order`),
+  verifyRazorpayPayment: (id: string, paymentData: any) =>
+    api.post(`/bookings/${id}/pay/razorpay-verify`, paymentData),
+  adminCashPayment: (id: string) =>
+    api.post(`/bookings/${id}/pay/admin-cash`),
 };
 
 // Prescription APIs

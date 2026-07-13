@@ -63,7 +63,14 @@ export const createUserBooking = async (req, res) => {
       preferredTimeSlot,
       staffPreference,
       serviceLocation,
-      estimatedDuration
+      estimatedDuration,
+
+      // References
+      familyMemberId,
+
+      // Payments
+      paymentMethod,
+      paymentStatus
     } = req.body;
 
     const userId = req.user._id;
@@ -124,8 +131,11 @@ export const createUserBooking = async (req, res) => {
       serviceLocation: serviceLocation || 'At Home',
       estimatedDuration: estimatedDuration || 45,
       userId,
+      familyMemberId: familyMemberId || null,
       vendorId: null,
-      bookingStatus: 'pending'
+      bookingStatus: 'pending',
+      paymentMethod: paymentMethod || null,
+      paymentStatus: paymentStatus || 'pending'
     });
 
     // Populate user details

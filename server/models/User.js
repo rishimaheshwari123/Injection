@@ -189,7 +189,17 @@ const userSchema = new mongoose.Schema({
   totalReviews: {
     type: Number,
     default: 0
-  }
+  },
+  familyMembers: [{
+    name: { type: String, required: true, trim: true },
+    age: { type: Number, required: true },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
+    phone: { type: String, trim: true },
+    email: { type: String, trim: true },
+    relationship: { type: String, required: true, trim: true },
+    address: { type: String, trim: true },
+    pincode: { type: String, trim: true }
+  }]
 }, {
   timestamps: true
 });

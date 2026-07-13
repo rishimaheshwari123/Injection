@@ -9,6 +9,9 @@ interface User {
   isStaff?: boolean;
   rating?: number;
   totalReviews?: number;
+  address?: string;
+  pincode?: string;
+  familyMembers?: any[];
   permissions?: {
     dashboard: boolean;
     users: boolean;
@@ -69,8 +72,12 @@ const authSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
+    updateUserInState: (state, action: PayloadAction<any>) => {
+      state.user = { ...state.user, ...action.payload };
+      localStorage.setItem('user', JSON.stringify({ ...state.user, ...action.payload }));
+    },
   },
 });
 
-export const { loginSuccess, logout, setLoading } = authSlice.actions;
+export const { loginSuccess, logout, setLoading, updateUserInState } = authSlice.actions;
 export default authSlice.reducer;

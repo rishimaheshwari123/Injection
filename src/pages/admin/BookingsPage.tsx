@@ -6,6 +6,7 @@ import {
   FileText,
   Receipt,
   Image,
+  Heart,
   Plus,
   Edit2,
   MessageSquare,
@@ -15,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShoppingBag,
+  DollarSign,
 } from "lucide-react";
 import {
   bookingAPI,
@@ -50,6 +52,7 @@ import {
   CancelBookingModal,
   PrescriptionSummaryModal,
   RequestedItemsModal,
+  AdminPaymentModal,
 } from "../../components/bookings";
 
 const BookingsPage = () => {
@@ -92,6 +95,8 @@ const BookingsPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showRequestedItemsModal, setShowRequestedItemsModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<any>(null);
 
   // Selected data for modals
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -278,8 +283,8 @@ const BookingsPage = () => {
   const handleCreateBooking = async (data: any) => {
     const {
       formData,
-      bookingType,
       selectedUser,
+      selectedFamilyMemberId,
       prescriptionData,
       prescriptionFile,
       dateTimeSlots,
@@ -309,7 +314,8 @@ const BookingsPage = () => {
           ...formData,
           preferredTimeSlot,
           vendorId,
-          userId: bookingType === "self" ? selectedUser : "NEW_PATIENT",
+          userId: selectedUser,
+          familyMemberId: selectedFamilyMemberId || null,
           subtotal,
           gstAmount: 0,
           grandTotal,
@@ -787,6 +793,9 @@ const BookingsPage = () => {
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Payment
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                   Booking Date & Time
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
@@ -875,19 +884,55 @@ const BookingsPage = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${booking.bookingStatus === "completed"
-                        ? "bg-green-100 text-green-700"
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setShowStatusModal(true);
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase cursor-pointer hover:opacity-80 transition-all active:scale-95 inline-block ${booking.bookingStatus === "completed"
+                        ? "bg-green-105 text-green-700 hover:bg-green-200/50"
                         : booking.bookingStatus === "in-progress"
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-blue-105 text-blue-700 hover:bg-blue-200/50"
                           : booking.bookingStatus === "accepted"
-                            ? "bg-purple-100 text-purple-700"
+                            ? "bg-purple-105 text-purple-700 hover:bg-purple-200/50"
                             : booking.bookingStatus === "cancelled"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
+                              ? "bg-red-105 text-red-700 hover:bg-red-200/50"
+                              : "bg-yellow-105 text-yellow-700 hover:bg-yellow-200/50"
                         }`}
+                      title="Click to update status"
                     >
                       {booking.bookingStatus}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1.5 items-start">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide whitespace-nowrap inline-block ${
+                          booking.paymentStatus === "paid"
+                            ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            : booking.paymentStatus === "failed"
+                              ? "bg-rose-100 text-rose-800 border border-rose-200"
+                              : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {booking.paymentStatus || "pending"}
+                      </span>
+                      {booking.paymentStatus === "paid" && booking.paymentMethod && (
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider pl-0.5">
+                          via {booking.paymentMethod}
+                        </span>
+                      )}
+                      {booking.paymentStatus !== "paid" && (
+                        <button
+                          onClick={() => {
+                            setSelectedBookingForPayment(booking);
+                            setShowPaymentModal(true);
+                          }}
+                          className="mt-1 px-2.5 py-1 bg-gradient-to-r from-[#3DB9A6] to-[#63D64F] hover:from-[#2e9c8b] hover:to-[#52b540] text-white text-[11px] font-bold rounded-lg shadow-sm hover:shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          💸 Pay
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div>
@@ -970,6 +1015,19 @@ const BookingsPage = () => {
                               <ShoppingBag size={16} />
                               Requested Items
                             </button>
+                            {booking.paymentStatus !== "paid" && (
+                              <button
+                                onClick={() => {
+                                  setSelectedBookingForPayment(booking);
+                                  setShowPaymentModal(true);
+                                  setOpenDropdown(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-emerald-600 font-semibold"
+                              >
+                                <DollarSign size={16} />
+                                Process Payment
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 setSelectedBooking(booking);
@@ -1053,7 +1111,9 @@ const BookingsPage = () => {
                                 handleDownloadInvoice(booking._id);
                                 setOpenDropdown(null);
                               }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-purple-600"
+                              disabled={booking.paymentStatus !== "paid"}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={booking.paymentStatus !== "paid" ? "Invoice is only available for paid bookings" : ""}
                             >
                               <Receipt size={16} />
                               Download Invoice
@@ -1362,6 +1422,18 @@ const BookingsPage = () => {
         }}
         onSubmit={handleUpdateRequestedItems}
         booking={selectedBooking}
+      />
+
+      <AdminPaymentModal
+        show={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setSelectedBookingForPayment(null);
+        }}
+        onSuccess={() => {
+          fetchBookings();
+        }}
+        booking={selectedBookingForPayment}
       />
     </div>
   );

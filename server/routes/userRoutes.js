@@ -14,7 +14,9 @@ import {
   updateUserByAdmin,
   getAllUsersByPagination,
   uploadUserFile,
-  getUserReviews
+  getUserReviews,
+  addFamilyMember,
+  deleteFamilyMember
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -35,8 +37,12 @@ router.get('/:id/reviews', protect, getUserReviews);
 router.get('/:id', protect, adminOnly, getUserById);
 
 router.put('/profile', protect, updateUserProfile);
+router.post('/profile/family', protect, addFamilyMember);
+router.delete('/profile/family/:memberId', protect, deleteFamilyMember);
 
 router.post('/admin/create', protect, adminOnly, createUserByAdmin);
+router.post('/:id/family', protect, adminOnly, addFamilyMember);
+router.delete('/:id/family/:memberId', protect, adminOnly, deleteFamilyMember);
 
 router.put('/:id', protect, adminOnly, updateUserByAdmin);
 

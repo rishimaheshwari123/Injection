@@ -19,7 +19,10 @@ import {
   updateRequestedItemStatus,
   createVendorReview,
   createUserReview,
-  addRuntimeNote
+  addRuntimeNote,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  adminCashPayment
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -60,5 +63,10 @@ router.delete('/:id', protect, adminOnly, deleteBooking);
 router.put('/:id/requested-items', protect, updateRequestedItems);
 router.put('/:id/requested-items/:itemId/status', protect, updateRequestedItemStatus);
 router.post('/:id/runtime-notes', protect, addRuntimeNote);
+
+// Payment Routes
+router.post('/:id/pay/razorpay-order', protect, createRazorpayOrder);
+router.post('/:id/pay/razorpay-verify', protect, verifyRazorpayPayment);
+router.post('/:id/pay/admin-cash', protect, adminOnly, adminCashPayment);
 
 export default router;

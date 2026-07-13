@@ -16,8 +16,8 @@ interface CreateBookingModalProps {
 
 const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors, onServiceDetailClick, bookingToEdit }: CreateBookingModalProps) => {
   const [submitting, setSubmitting] = useState(false);
-  const [bookingType, setBookingType] = useState<'self' | 'others'>('self');
   const [selectedUser, setSelectedUser] = useState('');
+  const [selectedFamilyMemberId, setSelectedFamilyMemberId] = useState('self');
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [prescriptionData, setPrescriptionData] = useState({
     doctorName: '',
@@ -50,7 +50,9 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
     preferredTime: '',
     staffPreference: 'Any Available',
     serviceLocation: 'At Home',
-    vendorId: ''
+    vendorId: '',
+    paymentMethod: 'cash',
+    paymentStatus: 'pending'
   });
 
   // Multiple date-time slots state
@@ -158,26 +160,28 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
           preferredTime: timeVal,
           staffPreference: bookingToEdit.staffPreference || 'Any Available',
           serviceLocation: bookingToEdit.serviceLocation || 'At Home',
-          vendorId: typeof bookingToEdit.vendorId === 'object' ? bookingToEdit.vendorId?._id : bookingToEdit.vendorId || ''
+          vendorId: typeof bookingToEdit.vendorId === 'object' ? bookingToEdit.vendorId?._id : bookingToEdit.vendorId || '',
+          paymentMethod: bookingToEdit.paymentMethod || 'cash',
+          paymentStatus: bookingToEdit.paymentStatus || 'pending'
         });
 
         const uId = typeof bookingToEdit.userId === 'object' ? bookingToEdit.userId?._id : bookingToEdit.userId;
         const userExists = users.some((u: any) => u._id === uId);
 
         if (userExists) {
-          setBookingType('self');
           setSelectedUser(uId || '');
+          setSelectedFamilyMemberId(bookingToEdit.familyMemberId || 'self');
         } else {
-          setBookingType('others');
           setSelectedUser('');
+          setSelectedFamilyMemberId('self');
         }
 
         setDateTimeSlots([{ date: dateVal, time: timeVal }]);
         setVendorSearchTerm('');
         setServiceSearchTerm('');
       } else {
-        setBookingType('self');
         setSelectedUser('');
+        setSelectedFamilyMemberId('self');
         setFormData({
           patientName: '',
           age: '',
@@ -197,7 +201,9 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
           preferredTime: '',
           staffPreference: 'Any Available',
           serviceLocation: 'At Home',
-          vendorId: ''
+          vendorId: '',
+          paymentMethod: 'cash',
+          paymentStatus: 'pending'
         });
         setDateTimeSlots([{ date: '', time: '' }]);
         setVendorSearchTerm('');
@@ -263,8 +269,8 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
       return;
     }
 
-    if (bookingType === 'self' && !selectedUser) {
-      toast.error('Please select a user');
+    if (!selectedUser) {
+      toast.error('Please select a patient account');
       return;
     }
 
@@ -279,8 +285,8 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
     try {
       await onSubmit({
         formData,
-        bookingType,
         selectedUser,
+        selectedFamilyMemberId: selectedFamilyMemberId === 'self' ? null : selectedFamilyMemberId,
         prescriptionData,
         prescriptionFile,
         dateTimeSlots: validSlots
@@ -306,11 +312,13 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
         preferredTime: '',
         staffPreference: 'Any Available',
         serviceLocation: 'At Home',
-        vendorId: ''
+        vendorId: '',
+        paymentMethod: 'cash',
+        paymentStatus: 'pending'
       });
       setDateTimeSlots([{ date: '', time: '' }]);
-      setBookingType('self');
       setSelectedUser('');
+      setSelectedFamilyMemberId('self');
       setPrescriptionFile(null);
       setPrescriptionData({
         doctorName: '',
@@ -349,76 +357,18 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Booking Type Selection */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Booking For <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="bookingType"
-                  value="self"
-                  checked={bookingType === 'self'}
-                  onChange={(e) => {
-                    setBookingType(e.target.value as 'self' | 'others');
-                    setSelectedUser('');
-                    setFormData(prev => ({
-                      ...prev,
-                      patientName: '',
-                      email: '',
-                      age: '',
-                      sex: 'Male',
-                      alternateMobile: '',
-                      address: '',
-                      pincode: '',
-                      currentLocation: ''
-                    }));
-                  }}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-gray-700">Existing User (Select from list)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="bookingType"
-                  value="others"
-                  checked={bookingType === 'others'}
-                  onChange={(e) => {
-                    setBookingType(e.target.value as 'self' | 'others');
-                    setSelectedUser('');
-                    setFormData(prev => ({
-                      ...prev,
-                      patientName: '',
-                      email: '',
-                      age: '',
-                      sex: 'Male',
-                      alternateMobile: '',
-                      address: '',
-                      pincode: '',
-                      currentLocation: ''
-                    }));
-                  }}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-gray-700">New Patient (Manual Entry)</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Select User (if booking for existing user) */}
-          {bookingType === 'self' && (
+          {/* Select User Account */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Existing User <span className="text-red-500">*</span>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Select Patient Account <span className="text-red-500">*</span>
               </label>
               <select
                 value={selectedUser}
                 onChange={(e) => {
                   const userId = e.target.value;
                   setSelectedUser(userId);
+                  setSelectedFamilyMemberId('self');
                   
                   if (userId) {
                     const user = users.find((u: any) => u._id === userId);
@@ -428,13 +378,13 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                         patientName: user.name || '',
                         email: user.email || '',
                         age: user.age?.toString() || '',
-                        sex: user.sex || 'Male',
-                        alternateMobile: user.phone || '',
+                        sex: user.gender || user.sex || 'Male',
+                        alternateMobile: user.alternateMobile || user.phone || '',
                         address: user.address || '',
                         pincode: user.pincode || '',
-                        currentLocation: user.city || ''
+                        currentLocation: user.currentLocation || user.city || ''
                       }));
-                      toast.success('User details auto-filled!');
+                      toast.success('Patient details auto-filled!');
                     }
                   } else {
                     setFormData(prev => ({
@@ -451,32 +401,73 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   }
                 }}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white font-medium"
               >
-                <option value="">Choose a user ({users.length} available)</option>
+                <option value="">Choose a patient account ({users.length} available)</option>
                 {users.map((user) => (
                   <option key={user._id} value={user._id}>
-                    {user.name} - {user.email} ({user.role})
+                    {user.name} - {user.email} (PAT ID: {user.patientId || 'N/A'})
                   </option>
                 ))}
               </select>
-              {users.length === 0 && (
-                <p className="text-sm text-red-500 mt-1">No users found. Please create users first.</p>
-              )}
-              {selectedUser && (
-                <p className="text-sm text-green-600 mt-1">✓ User details have been auto-filled below</p>
-              )}
             </div>
-          )}
 
-          {/* Manual Entry Message (if booking for new patient) */}
-          {bookingType === 'others' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
-                <span className="font-semibold">Manual Entry Mode:</span> Please fill in all patient details below manually.
-              </p>
-            </div>
-          )}
+            {/* Who is this booking for? */}
+            {selectedUser && (
+              <div className="pt-2 border-t border-slate-200">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Who is this booking for? <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedFamilyMemberId}
+                  onChange={(e) => {
+                    const memberId = e.target.value;
+                    setSelectedFamilyMemberId(memberId);
+                    const user = users.find((u: any) => u._id === selectedUser);
+                    if (user) {
+                      if (memberId === 'self') {
+                        setFormData(prev => ({
+                          ...prev,
+                          patientName: user.name || '',
+                          email: user.email || '',
+                          age: user.age?.toString() || '',
+                          sex: user.gender || user.sex || 'Male',
+                          alternateMobile: user.alternateMobile || user.phone || '',
+                          address: user.address || '',
+                          pincode: user.pincode || '',
+                          currentLocation: user.currentLocation || user.city || ''
+                        }));
+                      } else {
+                        const member = user.familyMembers?.find((m: any) => m._id === memberId);
+                        if (member) {
+                          setFormData(prev => ({
+                            ...prev,
+                            patientName: member.name || '',
+                            email: member.email || user.email || '',
+                            age: member.age?.toString() || '',
+                            sex: member.gender || 'Male',
+                            alternateMobile: member.phone || user.phone || '',
+                            address: member.address || user.address || '',
+                            pincode: member.pincode || user.pincode || '',
+                            currentLocation: user.currentLocation || user.city || ''
+                          }));
+                        }
+                      }
+                    }
+                  }}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white font-medium"
+                >
+                  <option value="self">Myself (Account Owner - {users.find(u => u._id === selectedUser)?.name})</option>
+                  {users.find(u => u._id === selectedUser)?.familyMembers?.map((member: any) => (
+                    <option key={member._id} value={member._id}>
+                      {member.name} ({member.relationship})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           {/* Patient Information */}
           <div className="border-t pt-4">
@@ -895,6 +886,33 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   </div>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Payment Method & Status */}
+          <div className="grid md:grid-cols-2 gap-4 border-t pt-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Payment Method</label>
+              <select
+                value={formData.paymentMethod}
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+              >
+                <option value="cash">Cash</option>
+                <option value="razorpay">Razorpay</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Payment Status</label>
+              <select
+                value={formData.paymentStatus}
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentStatus: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+              >
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+              </select>
             </div>
           </div>
 

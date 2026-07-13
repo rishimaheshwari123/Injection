@@ -17,13 +17,15 @@ import {
   ChevronDown,
   Star,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Trash2,
+  UserPlus
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { logout } from "../store/slices/authSlice";
+import { logout, updateUserInState } from "../store/slices/authSlice";
 import { bookingAPI, userAPI } from "../services/api";
 import { toast } from "react-toastify";
 import logo from "../assets/logo.png";
@@ -50,15 +52,40 @@ const Navigation = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   // Vendor reviews left for Customer states
-  const [activeTab, setActiveTab] = useState<'bookings' | 'feedback'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'feedback' | 'family'>('bookings');
   const [userReviews, setUserReviews] = useState<any[]>([]);
   const [loadingUserReviews, setLoadingUserReviews] = useState(false);
+
+  // Family Members states
+  const [showAddFamilyModal, setShowAddFamilyModal] = useState(false);
+  const [familyMemberData, setFamilyMemberData] = useState({
+    name: '',
+    age: '',
+    gender: 'Male',
+    relationship: 'Spouse',
+    phone: '',
+    email: '',
+    address: '',
+    pincode: ''
+  });
+  const [addingFamilyMember, setAddingFamilyMember] = useState(false);
 
   const handleLogout = () => {
     dispatch(logout());
     setUserDropdownOpen(false);
     toast.success("Logged out successfully!");
     navigate("/login");
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await userAPI.getMe();
+      if (res.data && res.data.success) {
+        dispatch(updateUserInState(res.data.data));
+      }
+    } catch (err) {
+      console.error("Error syncing profile:", err);
+    }
   };
 
   const fetchUserBookings = async () => {
@@ -90,15 +117,60 @@ const Navigation = () => {
     }
   };
 
+  const handleAddFamilyMemberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!familyMemberData.name || !familyMemberData.age || !familyMemberData.gender || !familyMemberData.relationship) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    setAddingFamilyMember(true);
+    try {
+      const res = await userAPI.addFamilyMember(familyMemberData);
+      if (res.data && res.data.success) {
+        toast.success("Family member added successfully!");
+        dispatch(updateUserInState(res.data.data));
+        setShowAddFamilyModal(false);
+        setFamilyMemberData({
+          name: '',
+          age: '',
+          gender: 'Male',
+          relationship: 'Spouse',
+          phone: '',
+          email: '',
+          address: '',
+          pincode: ''
+        });
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to add family member");
+    } finally {
+      setAddingFamilyMember(false);
+    }
+  };
+
+  const handleDeleteFamilyMember = async (memberId: string) => {
+    if (!window.confirm("Are you sure you want to remove this family member?")) return;
+    try {
+      const res = await userAPI.deleteFamilyMember(memberId);
+      if (res.data && res.data.success) {
+        toast.success("Family member removed successfully");
+        dispatch(updateUserInState(res.data.data));
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to remove family member");
+    }
+  };
+
   useEffect(() => {
     if (myBookingsOpen && isAuthenticated && user?.role === "user") {
+      fetchUserProfile();
       if (activeTab === 'bookings') {
         fetchUserBookings();
-      } else {
+      } else if (activeTab === 'feedback') {
         fetchUserReviews();
       }
     }
-  }, [myBookingsOpen, isAuthenticated, user, activeTab]);
+  }, [myBookingsOpen, isAuthenticated, activeTab]);
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -782,6 +854,16 @@ const Navigation = () => {
                 >
                   <Star size={13} className={activeTab === 'feedback' ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} /> My Behavior Reviews ({userReviews.length})
                 </button>
+                <button
+                  onClick={() => setActiveTab('family')}
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${
+                    activeTab === 'family'
+                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  My Family Members
+                </button>
               </div>
 
               {/* Body */}
@@ -845,6 +927,15 @@ const Navigation = () => {
                               <div className="text-left md:text-right">
                                 <span className="text-[10px] text-slate-400 block font-semibold">Total Amount</span>
                                 <span className="text-sm font-extrabold text-slate-800">₹{booking.grandTotal}</span>
+                                <span
+                                  className={`block text-[10px] font-extrabold uppercase mt-1 px-1.5 py-0.5 rounded-md text-center ${
+                                    booking.paymentStatus === "paid"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
+                                      : "bg-amber-50 text-amber-750 border border-amber-150"
+                                  }`}
+                                >
+                                  {booking.paymentStatus || "pending"}
+                                </span>
                               </div>
 
                               {isCompleted && (
@@ -869,7 +960,7 @@ const Navigation = () => {
                       })}
                     </div>
                   )
-                ) : (
+                ) : activeTab === 'feedback' ? (
                   loadingUserReviews ? (
                     <div className="py-20 flex flex-col items-center justify-center gap-3">
                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#3DB9A6] rounded-full animate-spin" />
@@ -925,6 +1016,67 @@ const Navigation = () => {
                       </div>
                     </div>
                   )
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800">My Family Members</h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Manage family members to book services for them</p>
+                      </div>
+                      <button
+                        onClick={() => setShowAddFamilyModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg text-xs font-bold hover:shadow-md transition-all"
+                      >
+                        <UserPlus size={14} />
+                        Add Member
+                      </button>
+                    </div>
+
+                    {!user?.familyMembers || user.familyMembers.length === 0 ? (
+                      <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                        <UserPlus className="mx-auto text-slate-350 mb-2" size={40} />
+                        <p className="text-sm font-bold text-slate-700">No family members added yet</p>
+                        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Add your parent, spouse, children, or siblings to book services for them using your account.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {user.familyMembers.map((member: any) => (
+                          <div key={member._id} className="border border-slate-100 rounded-xl p-4 bg-slate-50/30 hover:bg-slate-55/40 transition-all flex flex-col justify-between min-h-[140px] relative">
+                            <div>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc]">
+                                  {member.relationship}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteFamilyMember(member._id)}
+                                  className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                                  title="Remove family member"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                              <h4 className="font-extrabold text-sm text-slate-800 mt-2">{member.name}</h4>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {member.gender} &bull; {member.age} Years
+                              </p>
+                              {(member.phone || member.email) && (
+                                <div className="mt-2 space-y-0.5 text-[11px] text-slate-650">
+                                  {member.phone && <p>📞 {member.phone}</p>}
+                                  {member.email && <p>✉️ {member.email}</p>}
+                                </div>
+                              )}
+                            </div>
+                            {member.address && (
+                              <div className="mt-3 pt-2 border-t border-slate-100 text-[10px] text-slate-550 leading-relaxed">
+                                📍 {member.address}, {member.pincode}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -1026,6 +1178,162 @@ const Navigation = () => {
                     </>
                   ) : (
                     <span>Submit Feedback</span>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Family Member Modal */}
+      <AnimatePresence>
+        {showAddFamilyModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[70] p-4 animate-fade-in">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-100 overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 className="text-base font-bold text-slate-800">Add Family Member</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddFamilyModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-105/50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleAddFamilyMemberSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter name"
+                      value={familyMemberData.name}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Age (Years) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="120"
+                      placeholder="Enter age"
+                      value={familyMemberData.age}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, age: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Gender *</label>
+                    <select
+                      value={familyMemberData.gender}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, gender: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-655 block mb-1">Relationship *</label>
+                    <select
+                      value={familyMemberData.relationship}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, relationship: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    >
+                      <option value="Spouse">Spouse</option>
+                      <option value="Father">Father</option>
+                      <option value="Mother">Mother</option>
+                      <option value="Child">Child</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      placeholder="10-digit number"
+                      value={familyMemberData.phone}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Email Address (Optional)</label>
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      value={familyMemberData.email}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-slate-650">Home Address (Optional)</label>
+                      {user?.address && (
+                        <button
+                          type="button"
+                          onClick={() => setFamilyMemberData(prev => ({ ...prev, address: user.address || '', pincode: user.pincode || '' }))}
+                          className="text-[10px] text-[#3DB9A6] hover:underline font-extrabold"
+                        >
+                          Use my address
+                        </button>
+                      )}
+                    </div>
+                    <textarea
+                      placeholder="Enter home address"
+                      rows={2}
+                      value={familyMemberData.address}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30 resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-650 block mb-1">Pincode (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="6-digit pincode"
+                      value={familyMemberData.pincode}
+                      onChange={(e) => setFamilyMemberData(prev => ({ ...prev, pincode: e.target.value }))}
+                      className="w-full text-sm p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3DB9A6]/30 focus:border-[#3DB9A6] bg-slate-50/30"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={addingFamilyMember}
+                  className="w-full py-3 mt-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-bold rounded-xl text-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {addingFamilyMember ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Adding...</span>
+                    </>
+                  ) : (
+                    <span>Add Member</span>
                   )}
                 </button>
               </form>

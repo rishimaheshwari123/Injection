@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 import Booking from '../models/Booking.js';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
@@ -84,11 +86,16 @@ export const createBooking = async (req, res) => {
       serviceLocation,
       estimatedDuration,
 
-      // Vendor Reference
+      // References
+      familyMemberId,
       vendorId,
 
       // Requested Items (Injection, Drip, Medicine)
-      requestedItems
+      requestedItems,
+
+      // Payments
+      paymentMethod,
+      paymentStatus
     } = req.body;
 
     // Get userId from JWT token. If admin is creating booking, allow using the userId passed in request body if it is a valid ObjectId.
@@ -168,11 +175,14 @@ export const createBooking = async (req, res) => {
 
       // References
       userId,
+      familyMemberId: familyMemberId || null,
       vendorId: vendorId || null,
 
       // Status - If a vendor is assigned at creation, mark as accepted, otherwise pending
       bookingStatus: vendorId ? 'accepted' : 'pending',
-      acceptedAt: vendorId ? new Date() : null
+      acceptedAt: vendorId ? new Date() : null,
+      paymentMethod: paymentMethod || null,
+      paymentStatus: paymentStatus || 'pending'
     });
 
     // Populate user and vendor details
@@ -278,7 +288,7 @@ export const getUserBookings = async (req, res) => {
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('userId', 'name email phone address')
+      .populate('userId', 'name email phone address familyMembers')
       .populate('vendorId', 'name phone businessName email');
 
     if (!booking) {
@@ -1406,6 +1416,177 @@ export const addRuntimeNote = async (req, res) => {
       data: booking
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Initialize Razorpay Instance helper
+const getRazorpayInstance = () => {
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY || 'rzp_test_SzRBgNqSTAHvYZ',
+    key_secret: process.env.RAZORPAY_SECRET || 'PLOmz3I3H6IAyd6f5YGq4NxW'
+  });
+};
+
+// @desc    Create a Razorpay order for booking payment
+// @route   POST /api/bookings/:id/pay/razorpay-order
+// @access  Private
+export const createRazorpayOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // If not admin, restrict payment until a vendor has accepted the booking
+    if (req.user && req.user.role !== 'admin') {
+      if (booking.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: 'Not authorized to pay for this booking'
+        });
+      }
+      
+      if (!booking.vendorId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment can only be made after a provider has accepted and been assigned to your booking'
+        });
+      }
+    }
+
+    // Use finalAmount, grandTotal, or subtotal as fallback
+    const payableAmount = booking.finalAmount || booking.grandTotal || booking.subtotal;
+    if (!payableAmount || payableAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payable amount'
+      });
+    }
+
+    const instance = getRazorpayInstance();
+    const options = {
+      amount: Math.round(payableAmount * 100), // amount in paise
+      currency: 'INR',
+      receipt: `receipt_${booking.bookingId || booking._id}`
+    };
+
+    const order = await instance.orders.create(options);
+
+    // Save order ID to booking
+    booking.razorpayOrderId = order.id;
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY || 'rzp_test_SzRBgNqSTAHvYZ'
+    });
+  } catch (error) {
+    console.error('Error creating Razorpay order:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Verify Razorpay payment signature
+// @route   POST /api/bookings/:id/pay/razorpay-verify
+// @access  Private
+export const verifyRazorpayPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required payment verification details'
+      });
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify signature
+    const secret = process.env.RAZORPAY_SECRET || 'PLOmz3I3H6IAyd6f5YGq4NxW';
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      booking.paymentStatus = 'failed';
+      await booking.save();
+      return res.status(400).json({
+        success: false,
+        message: 'Payment verification failed'
+      });
+    }
+
+    // Update booking details
+    booking.paymentStatus = 'paid';
+    booking.paymentMethod = 'razorpay';
+    booking.razorpayPaymentId = razorpay_payment_id;
+    booking.razorpaySignature = razorpay_signature;
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: booking
+    });
+  } catch (error) {
+    console.error('Error verifying Razorpay payment:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Admin marks a booking paid via cash on behalf of patient
+// @route   POST /api/bookings/:id/pay/admin-cash
+// @access  Private/Admin
+export const adminCashPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    booking.paymentStatus = 'paid';
+    booking.paymentMethod = 'cash';
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cash payment processed successfully',
+      data: booking
+    });
+  } catch (error) {
+    console.error('Error in admin cash payment:', error);
     res.status(500).json({
       success: false,
       message: error.message

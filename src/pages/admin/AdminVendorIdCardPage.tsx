@@ -94,7 +94,7 @@ export default function AdminVendorIdCardPage() {
         },
         jsPDF:        { 
           unit: 'px', 
-          format: [element.offsetWidth + 20, element.offsetHeight + 20], 
+          format: [element.offsetWidth + 20, element.offsetHeight + 20] as [number, number], 
           orientation: 'portrait' as const,
           hotfixes: ['px_scaling']
         },

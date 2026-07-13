@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Calendar, Clock, User, Mail, Phone, MapPin, 
-  ShoppingBag, ShieldAlert, Receipt, Star, CheckCircle, 
+  ShoppingBag, ShieldAlert, Receipt, 
   MessageSquare, FileText, Plus, AlertCircle, Play, 
-  CheckCircle2, XCircle, Printer, Tag
+  CheckCircle2, Tag, Loader2, Download
 } from 'lucide-react';
-import { bookingAPI, prescriptionAPI, reportAPI } from '../services/api';
+import { bookingAPI, prescriptionAPI, reportAPI, invoiceAPI } from '../services/api';
 import { useAppSelector } from '../store/hooks';
 import { toast } from 'react-toastify';
 import Navigation from '../components/Navigation';
@@ -46,6 +45,91 @@ const BookingDetailPage = () => {
   // Runtime note state
   const [newRuntimeNote, setNewRuntimeNote] = useState('');
   const [submittingNote, setSubmittingNote] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayNow = async () => {
+    setPaymentLoading(true);
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error("Failed to load Razorpay Payment Gateway. Please check your connection.");
+        setPaymentLoading(false);
+        return;
+      }
+
+      const orderRes = await bookingAPI.createRazorpayOrder(booking._id);
+      if (!orderRes.data.success) {
+        toast.error("Failed to initiate online payment order");
+        setPaymentLoading(false);
+        return;
+      }
+
+      const { orderId, amount, currency, key } = orderRes.data;
+
+      const options = {
+        key: key,
+        amount: amount,
+        currency: currency,
+        name: "PRLT Healthcare",
+        description: `Payment for booking ${booking.bookingId || booking._id}`,
+        order_id: orderId,
+        handler: async function (response: any) {
+          setPaymentLoading(true);
+          try {
+            const verifyRes = await bookingAPI.verifyRazorpayPayment(booking._id, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.data.success) {
+              toast.success("Payment verified and recorded successfully!");
+              setBooking(verifyRes.data.data);
+            } else {
+              toast.error("Payment verification failed!");
+            }
+          } catch (verifyErr: any) {
+            toast.error(verifyErr.response?.data?.message || "Verification failed");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+        prefill: {
+          name: booking.patientName || "",
+          email: booking.email || "",
+          contact: booking.alternateMobile || booking.userId?.phone || "",
+        },
+        theme: {
+          color: "#3DB9A6",
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentLoading(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to process payment");
+      setPaymentLoading(false);
+    }
+  };
 
   const fetchBookingDetails = async () => {
     if (!id) return;
@@ -199,9 +283,46 @@ const BookingDetailPage = () => {
     }
   };
 
-  const handlePrintInvoice = () => {
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+
+  const handleDownloadInvoice = async () => {
     if (!id) return;
-    window.open(`http://localhost:8080/api/invoices/${id}`, '_blank');
+    setDownloadingInvoice(true);
+    try {
+      const response = await invoiceAPI.generateInvoice(id);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice_${booking?.bookingId || id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded successfully!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to download invoice");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
+  const [cashLoading, setCashLoading] = useState(false);
+
+  const handleCashPayment = async () => {
+    if (!id) return;
+    setCashLoading(true);
+    try {
+      const res = await bookingAPI.adminCashPayment(id);
+      if (res.data && res.data.success) {
+        toast.success("Payment recorded successfully!");
+        setBooking(res.data.data);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to record cash payment");
+    } finally {
+      setCashLoading(false);
+    }
   };
 
   if (loading) {
@@ -286,15 +407,23 @@ const BookingDetailPage = () => {
           </div>
           
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Print invoice button (completed only) */}
-            {booking.bookingStatus === 'completed' && (
-              <button 
-                onClick={handlePrintInvoice}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-900 hover:shadow-lg transition-all"
-              >
-                <Printer size={16} /> Print Invoice
-              </button>
-            )}
+            {/* Download invoice button */}
+            <button 
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice || booking.paymentStatus !== 'paid'}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+              title={booking.paymentStatus !== 'paid' ? "Invoice is only available for paid bookings" : ""}
+            >
+              {downloadingInvoice ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Downloading...
+                </>
+              ) : (
+                <>
+                  <Download size={16} /> Download Invoice
+                </>
+              )}
+            </button>
 
             {/* Admin status update button */}
             {isAdmin && (
@@ -319,6 +448,36 @@ const BookingDetailPage = () => {
               <h2 className="text-base font-extrabold text-slate-800 mb-4.5 flex items-center gap-2 border-b pb-3 border-slate-100">
                 <User size={18} className="text-[#3DB9A6]" /> Patient & Visit Details
               </h2>
+
+              {(() => {
+                const familyMember = booking.familyMemberId && booking.userId?.familyMembers?.find((m: any) => m._id === booking.familyMemberId);
+                return (
+                  <div className="mb-5 p-4 rounded-xl border border-slate-150 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold">
+                    <div>
+                      <span className="text-slate-450 uppercase text-[9px] tracking-wider block font-extrabold mb-0.5">Booking Primary Account</span>
+                      <p className="text-slate-800 font-extrabold">
+                        {booking.userId?.name || 'NA'} {isAdminPath && booking.userId && (
+                          <Link to={`/admin/users/${booking.userId._id || booking.userId}`} className="text-[#3DB9A6] hover:underline font-black ml-1.5">(View Profile)</Link>
+                        )}
+                      </p>
+                      <span className="text-[10px] text-slate-500 font-bold block">{booking.userId?.email || ''}</span>
+                    </div>
+                    
+                    <div className="sm:text-right">
+                      <span className="text-slate-450 uppercase text-[9px] tracking-wider block font-extrabold mb-0.5">Booking For</span>
+                      {familyMember ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-extrabold">
+                          Family Member ({familyMember.relationship} - {familyMember.name})
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#e6f9e2] text-[#338024] border border-[#d2f4cc] rounded-lg text-[10px] font-extrabold">
+                          Account Owner (Self)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4.5 gap-x-6">
                 <div>
@@ -795,6 +954,65 @@ const BookingDetailPage = () => {
                   </div>
                   <span className="text-xl font-black text-slate-900">₹{finalCalculatedPayable}</span>
                 </div>
+
+                <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-550 font-bold">Payment Status:</span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase ${
+                        booking.paymentStatus === 'paid'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : booking.paymentStatus === 'failed'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {booking.paymentStatus || 'pending'}
+                    </span>
+                  </div>
+                  {booking.paymentStatus === 'paid' && booking.paymentMethod && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-550 font-bold">Method:</span>
+                      <span className="text-slate-800 font-bold uppercase">{booking.paymentMethod}</span>
+                    </div>
+                  )}
+
+                  {booking.paymentStatus !== 'paid' && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <button
+                        onClick={handlePayNow}
+                        disabled={paymentLoading || cashLoading}
+                        className="w-full py-3 bg-gradient-to-r from-[#3DB9A6] to-[#63D64F] hover:shadow-lg hover:shadow-[#3DB9A6]/10 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                      >
+                        {paymentLoading ? (
+                          <>
+                            <Loader2 className="animate-spin" size={14} />
+                            Processing...
+                          </>
+                        ) : (
+                          'Pay Online Now (Razorpay)'
+                        )}
+                      </button>
+
+                      {isAdmin && (
+                        <button
+                          onClick={handleCashPayment}
+                          disabled={paymentLoading || cashLoading}
+                          className="w-full py-3 border-2 border-dashed border-[#3DB9A6] hover:bg-[#3DB9A6]/5 text-[#3DB9A6] rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                        >
+                          {cashLoading ? (
+                            <>
+                              <Loader2 className="animate-spin" size={14} />
+                              Recording...
+                            </>
+                          ) : (
+                            'Confirm Cash Payment (Admin)'
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -960,7 +1178,7 @@ const BookingDetailPage = () => {
         <CancelBookingModal
           show={showCancelModal}
           onClose={() => setShowCancelModal(false)}
-          onConfirm={async (reason) => {
+          onSubmit={async (reason: string) => {
             try {
               const res = await bookingAPI.cancelBooking(booking._id, reason);
               if (res.data && res.data.success) {
@@ -980,7 +1198,7 @@ const BookingDetailPage = () => {
         <RescheduleBookingModal
           show={showRescheduleModal}
           onClose={() => setShowRescheduleModal(false)}
-          onConfirm={async (date, time, reason) => {
+          onSubmit={async (date: string, time: string, reason: string) => {
             try {
               const res = await bookingAPI.rescheduleBooking(booking._id, date, time, reason);
               if (res.data && res.data.success) {
@@ -1000,7 +1218,7 @@ const BookingDetailPage = () => {
         <StatusUpdateModal
           show={showStatusModal}
           onClose={() => setShowStatusModal(false)}
-          onConfirm={async (status) => {
+          onSubmit={async (status: string) => {
             try {
               const res = await bookingAPI.updateBookingStatus(booking._id, status);
               if (res.data && res.data.success) {

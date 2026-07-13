@@ -204,6 +204,28 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  paymentMethod: {
+    type: String,
+    enum: ['cash', 'razorpay'],
+    default: null
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending'
+  },
+  razorpayOrderId: {
+    type: String,
+    default: null
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null
+  },
+  razorpaySignature: {
+    type: String,
+    default: null
+  },
   additionalAmount: {
     type: Number,
     default: 0
@@ -238,6 +260,10 @@ const bookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'User ID is required']
+  },
+  familyMemberId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null
   },
   vendorId: {
     type: mongoose.Schema.Types.ObjectId,

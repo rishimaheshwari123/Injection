@@ -953,3 +953,103 @@ export const getUserReviews = async (req, res) => {
     });
   }
 };
+
+// @desc    Add family member
+// @route   POST /api/users/profile/family or POST /api/users/:id/family
+// @access  Private
+export const addFamilyMember = async (req, res) => {
+  try {
+    const targetUserId = req.params.id || (req.user ? req.user.id : null);
+    if (!targetUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { name, age, gender, phone, email, relationship, address, pincode } = req.body;
+
+    if (!name || !age || !gender || !relationship) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, age, gender, and relationship'
+      });
+    }
+
+    const newMember = {
+      name,
+      age: Number(age),
+      gender,
+      phone: phone || '',
+      email: email || '',
+      relationship,
+      address: address || '',
+      pincode: pincode || ''
+    };
+
+    user.familyMembers = user.familyMembers || [];
+    user.familyMembers.push(newMember);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Family member added successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('Error adding family member:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
+  }
+};
+
+// @desc    Delete family member
+// @route   DELETE /api/users/profile/family/:memberId or DELETE /api/users/:id/family/:memberId
+// @access  Private
+export const deleteFamilyMember = async (req, res) => {
+  try {
+    const targetUserId = req.params.id || (req.user ? req.user.id : null);
+    const { memberId } = req.params;
+
+    if (!targetUserId || !memberId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and Member ID are required'
+      });
+    }
+
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.familyMembers = user.familyMembers || [];
+    user.familyMembers = user.familyMembers.filter(member => member._id.toString() !== memberId);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Family member deleted successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('Error deleting family member:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
+  }
+};
