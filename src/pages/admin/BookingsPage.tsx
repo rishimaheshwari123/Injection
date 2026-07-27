@@ -6,7 +6,6 @@ import {
   FileText,
   Receipt,
   Image,
-  Heart,
   Plus,
   Edit2,
   MessageSquare,
