@@ -43,7 +43,6 @@ import SupportPage from "./pages/SupportPage";
 import PermissionGuard from "./components/PermissionGuard";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
-import VendorRegisterPage from "./pages/VendorRegisterPage";
 import VendorServiceRequestsPage from "./pages/admin/VendorServiceRequestsPage";
 import VendorProfilePage from "./pages/VendorProfilePage";
 import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
@@ -65,7 +64,6 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/vendor-register" element={<VendorRegisterPage />} />
 
         {/* Public Routes with Navigation and Footer */}
         <Route
