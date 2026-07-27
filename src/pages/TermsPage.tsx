@@ -460,7 +460,7 @@ export default function TermsPage() {
 
                 <div className="mt-8 pt-8 border-t border-white/10 flex items-center space-x-3 text-sm text-gray-300">
                   <MapPin className="text-teal-400 w-5 h-5 flex-shrink-0" />
-                  <span><strong>Address:</strong> Madhya Pradesh, India</span>
+                  <span><strong>Address:</strong> B60 CORAL LIFE PHASE- 1, NEAR BMHRC, AYODHYA BYPASS ROAD KAROND BHOPAL 462038</span>
                 </div>
               </div>
             </motion.section>

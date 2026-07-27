@@ -54,7 +54,8 @@ const ContactPage = () => {
       details: [
         "PRLT Healthcare and Research Solutions",
         "(OPC) Private Limited",
-        "Madhya Pradesh, India",
+        "B60 CORAL LIFE PHASE- 1, NEAR BMHRC,",
+        "AYODHYA BYPASS ROAD KAROND BHOPAL 462038",
       ],
       color: "from-red-500 to-pink-600",
     },

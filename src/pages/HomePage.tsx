@@ -980,7 +980,7 @@ const HomePage = () => {
                       PRLT Healthcare and Research Solutions (OPC) Private
                       Limited
                       <br />
-                      Madhya Pradesh, India
+                      B60 CORAL LIFE PHASE- 1, NEAR BMHRC, AYODHYA BYPASS ROAD KAROND BHOPAL 462038
                     </p>
                   </div>
                 </div>

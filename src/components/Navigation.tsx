@@ -10,7 +10,7 @@ import {
   Mail,
   Facebook,
   Twitter,
-  Linkedin,
+  Youtube,
   Instagram,
   BookOpen,
   Heart,
@@ -306,28 +306,36 @@ const Navigation = () => {
             {/* Social Media Circular Badges */}
             <div className="flex items-center space-x-2">
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61592305092380"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Facebook"
               >
                 <Facebook size={13} />
               </a>
               <a
-                href="#"
+                href="https://x.com/InjectionPRLT"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Twitter"
               >
                 <Twitter size={13} />
               </a>
               <a
-                href="#"
+                href="https://youtube.com/@injectionbyprlt?si=lRttQ4dbW2Bvr3SS"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
-                aria-label="LinkedIn"
+                aria-label="YouTube"
               >
-                <Linkedin size={13} />
+                <Youtube size={13} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/injection.prlt/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Instagram"
               >
@@ -763,28 +771,36 @@ const Navigation = () => {
                   {/* Social Media in Mobile */}
                   <div className="flex justify-center space-x-4 pt-3 border-t border-gray-200">
                     <a
-                      href="#"
+                      href="https://www.facebook.com/profile.php?id=61592305092380"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-gray-500 hover:text-teal-600 transition-colors duration-200"
                       aria-label="Facebook"
                     >
                       <Facebook size={18} />
                     </a>
                     <a
-                      href="#"
+                      href="https://x.com/InjectionPRLT"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-gray-500 hover:text-teal-600 transition-colors duration-200"
                       aria-label="Twitter"
                     >
                       <Twitter size={18} />
                     </a>
                     <a
-                      href="#"
+                      href="https://youtube.com/@injectionbyprlt?si=lRttQ4dbW2Bvr3SS"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-gray-500 hover:text-teal-600 transition-colors duration-200"
-                      aria-label="LinkedIn"
+                      aria-label="YouTube"
                     >
-                      <Linkedin size={18} />
+                      <Youtube size={18} />
                     </a>
                     <a
-                      href="#"
+                      href="https://www.instagram.com/injection.prlt/"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-gray-500 hover:text-teal-600 transition-colors duration-200"
                       aria-label="Instagram"
                     >

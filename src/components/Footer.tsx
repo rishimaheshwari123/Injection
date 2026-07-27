@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
+import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Instagram, Youtube } from 'lucide-react'
 import logo from '../assets/logo.png'
 
 const Footer = () => {
@@ -59,7 +59,7 @@ const Footer = () => {
             <div className="space-y-3 text-gray-400 text-sm">
               <div className="flex items-start space-x-2">
                 <MapPin size={16} className="mt-1 flex-shrink-0" />
-                <span>Madhya Pradesh, India</span>
+                <span>B60 CORAL LIFE PHASE- 1, NEAR BMHRC, AYODHYA BYPASS ROAD KAROND BHOPAL 462038</span>
               </div>
               <a href="tel:+91-6260760514" className="flex items-center space-x-2 hover:text-white transition-colors duration-200">
                 <Phone size={16} />
@@ -83,10 +83,18 @@ const Footer = () => {
           </div>
           
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <Facebook size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
-            <Twitter size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
-            <Linkedin size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
-            <Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            <a href="https://www.facebook.com/profile.php?id=61592305092380" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <Facebook size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            </a>
+            <a href="https://x.com/InjectionPRLT" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <Twitter size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            </a>
+            <a href="https://youtube.com/@injectionbyprlt?si=lRttQ4dbW2Bvr3SS" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+              <Youtube size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            </a>
+            <a href="https://www.instagram.com/injection.prlt/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            </a>
           </div>
         </div>
 
