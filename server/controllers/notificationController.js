@@ -3,7 +3,7 @@ import Device from '../models/Device.js';
 import CustomTopic from '../models/CustomTopic.js';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
-import firebaseApp from '../config/firebase.js';
+import { firebaseApp, messaging } from '../config/firebase.js';
 import cloudinary from '../config/cloudinary.js';
 
 // Helper to chunk array
@@ -94,9 +94,8 @@ export const registerDeviceToken = async (req, res) => {
       );
 
       // Subscribe in Firebase if possible
-      if (firebaseApp) {
+      if (messaging) {
         try {
-          const messaging = firebaseApp.messaging();
           for (const topic of autoTopics) {
             await messaging.subscribeToTopic(token, topic.firebaseKeyGroup);
           }
@@ -277,9 +276,8 @@ export const createCustomTopic = async (req, res) => {
           { $addToSet: { topics: customTopic.topicKey } }
         );
 
-        if (firebaseApp) {
+        if (messaging) {
           try {
-            const messaging = firebaseApp.messaging();
             const tokenChunks = chunkArray(tokens, 1000); // FCM subscribe topic allows up to 1000 tokens per request
             for (const chunk of tokenChunks) {
               await messaging.subscribeToTopic(chunk, customTopic.firebaseKeyGroup);
@@ -319,10 +317,9 @@ export const deleteCustomTopic = async (req, res) => {
 
     // Find all subscribed devices to unsubscribe in Firebase
     const subscribedDevices = await Device.find({ topics: topic.topicKey, isActive: true });
-    if (subscribedDevices.length > 0 && firebaseApp) {
+    if (subscribedDevices.length > 0 && messaging) {
       try {
         const tokens = subscribedDevices.map(d => d.token);
-        const messaging = firebaseApp.messaging();
         const tokenChunks = chunkArray(tokens, 1000);
         for (const chunk of tokenChunks) {
           await messaging.unsubscribeFromTopic(chunk, topic.firebaseKeyGroup);
@@ -416,9 +413,8 @@ export const subscribeDevices = async (req, res) => {
 
     // Subscribe via FCM
     let fcmResult = null;
-    if (tokensToSubscribe.length > 0 && firebaseApp) {
+    if (tokensToSubscribe.length > 0 && messaging) {
       try {
-        const messaging = firebaseApp.messaging();
         fcmResult = await messaging.subscribeToTopic(tokensToSubscribe, topic.firebaseKeyGroup);
         console.log(`Subscribed ${tokensToSubscribe.length} tokens to FCM topic ${topic.firebaseKeyGroup}`);
       } catch (fcmErr) {
@@ -476,9 +472,8 @@ export const unsubscribeDevices = async (req, res) => {
 
     // Unsubscribe in FCM
     let fcmResult = null;
-    if (tokensToUnsubscribe.length > 0 && firebaseApp) {
+    if (tokensToUnsubscribe.length > 0 && messaging) {
       try {
-        const messaging = firebaseApp.messaging();
         fcmResult = await messaging.unsubscribeFromTopic(tokensToUnsubscribe, topic.firebaseKeyGroup);
         console.log(`Unsubscribed ${tokensToUnsubscribe.length} tokens from FCM topic ${topic.firebaseKeyGroup}`);
       } catch (fcmErr) {
@@ -540,9 +535,8 @@ export const sendBroadcastNotification = async (req, res) => {
       const count = await Device.countDocuments({ topics: topic.topicKey, isActive: true });
       result.sentCount = count;
 
-      if (firebaseApp) {
+      if (messaging) {
         try {
-          const messaging = firebaseApp.messaging();
           const message = {
             notification: {
               title,
@@ -579,9 +573,8 @@ export const sendBroadcastNotification = async (req, res) => {
       result.sentCount = tokens.length;
 
       if (tokens.length > 0) {
-        if (firebaseApp) {
+        if (messaging) {
           try {
-            const messaging = firebaseApp.messaging();
             const tokenChunks = chunkArray(tokens, 500); // 500 max multicast capacity in FCM
             const responses = [];
 
@@ -691,8 +684,7 @@ export const sendToUser = async (userId, { title, body, data }) => {
       return;
     }
 
-    if (firebaseApp) {
-      const messaging = firebaseApp.messaging();
+    if (messaging) {
       const tokenChunks = chunkArray(tokens, 500);
       for (const chunk of tokenChunks) {
         await messaging.sendEachForMulticast({
@@ -722,8 +714,7 @@ export const sendToVendor = async (vendorId, { title, body, data }) => {
       return;
     }
 
-    if (firebaseApp) {
-      const messaging = firebaseApp.messaging();
+    if (messaging) {
       const tokenChunks = chunkArray(tokens, 500);
       for (const chunk of tokenChunks) {
         await messaging.sendEachForMulticast({
