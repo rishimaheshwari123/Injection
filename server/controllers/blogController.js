@@ -84,6 +84,7 @@ export const createBlog = async (req, res) => {
 
       // Media
       featuredImage,
+      featuredImageAlt,
       images,
 
       // Categorization
@@ -94,6 +95,17 @@ export const createBlog = async (req, res) => {
       metaTitle,
       metaDescription,
       metaKeywords,
+      focusKeyword,
+      canonicalUrl,
+      ogTitle,
+      ogDescription,
+      noIndex,
+
+      // FAQs
+      faq,
+
+      // Schema
+      schemaMarkup,
 
       // Status
       status,
@@ -137,6 +149,7 @@ export const createBlog = async (req, res) => {
 
       // Media
       featuredImage: featuredImage || null,
+      featuredImageAlt: featuredImageAlt || '',
       images: images || [],
 
       // Categorization
@@ -151,6 +164,21 @@ export const createBlog = async (req, res) => {
       metaTitle,
       metaDescription,
       metaKeywords: metaKeywords || [],
+      focusKeyword: focusKeyword || '',
+      canonicalUrl: canonicalUrl || '',
+      ogTitle: ogTitle || '',
+      ogDescription: ogDescription || '',
+      noIndex: noIndex || false,
+
+      // FAQs
+      faq: faq || [],
+
+      // Schema
+      schemaMarkup: schemaMarkup || {
+        articleSchema: true,
+        faqPageSchema: false,
+        breadcrumbSchema: true
+      },
 
       // Status
       status: status || 'draft',
@@ -381,6 +409,7 @@ export const updateBlog = async (req, res) => {
 
       // Media
       featuredImage,
+      featuredImageAlt,
       images,
 
       // Categorization
@@ -391,6 +420,17 @@ export const updateBlog = async (req, res) => {
       metaTitle,
       metaDescription,
       metaKeywords,
+      focusKeyword,
+      canonicalUrl,
+      ogTitle,
+      ogDescription,
+      noIndex,
+
+      // FAQs
+      faq,
+
+      // Schema
+      schemaMarkup,
 
       // Status
       status,
@@ -419,6 +459,7 @@ export const updateBlog = async (req, res) => {
     if (excerpt !== undefined) blog.excerpt = excerpt;
 
     if (featuredImage !== undefined) blog.featuredImage = featuredImage;
+    if (featuredImageAlt !== undefined) blog.featuredImageAlt = featuredImageAlt;
     if (images !== undefined) blog.images = images;
 
     if (category !== undefined) blog.category = category;
@@ -427,6 +468,14 @@ export const updateBlog = async (req, res) => {
     if (metaTitle !== undefined) blog.metaTitle = metaTitle;
     if (metaDescription !== undefined) blog.metaDescription = metaDescription;
     if (metaKeywords !== undefined) blog.metaKeywords = metaKeywords;
+    if (focusKeyword !== undefined) blog.focusKeyword = focusKeyword;
+    if (canonicalUrl !== undefined) blog.canonicalUrl = canonicalUrl;
+    if (ogTitle !== undefined) blog.ogTitle = ogTitle;
+    if (ogDescription !== undefined) blog.ogDescription = ogDescription;
+    if (noIndex !== undefined) blog.noIndex = noIndex;
+
+    if (faq !== undefined) blog.faq = faq;
+    if (schemaMarkup !== undefined) blog.schemaMarkup = schemaMarkup;
 
     if (status !== undefined) blog.status = status;
     if (isActive !== undefined) blog.isActive = isActive;

@@ -30,6 +30,11 @@ const blogSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  featuredImageAlt: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   images: [{
     type: String
   }],
@@ -81,6 +86,39 @@ const blogSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  focusKeyword: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  canonicalUrl: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  ogTitle: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  ogDescription: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  noIndex: {
+    type: Boolean,
+    default: false
+  },
+  faq: [{
+    question: { type: String, trim: true, default: '' },
+    answer: { type: String, trim: true, default: '' }
+  }],
+  schemaMarkup: {
+    articleSchema: { type: Boolean, default: true },
+    faqPageSchema: { type: Boolean, default: false },
+    breadcrumbSchema: { type: Boolean, default: true }
+  },
   
   // Status
   status: {

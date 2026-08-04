@@ -13,15 +13,58 @@ interface Blog {
   category: string;
   tags: string[];
   featuredImage: string;
+  featuredImageAlt?: string;
   views: number;
   likes: number;
   readingTime: number;
   publishedAt: string;
+  createdAt: string;
+  updatedAt: string;
   author: {
     name: string;
     email: string;
   };
   authorName: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  focusKeyword?: string;
+  canonicalUrl?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  noIndex?: boolean;
+  faq?: { question: string; answer: string }[];
+  schemaMarkup?: {
+    articleSchema: boolean;
+    faqPageSchema: boolean;
+    breadcrumbSchema: boolean;
+  };
+}
+
+function FAQAccordionItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm transition-all duration-300">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-5 text-left font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+      >
+        <span>{question}</span>
+        <span className={`transform transition-transform duration-300 text-teal-600 font-bold ${isOpen ? 'rotate-180' : ''}`}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </button>
+      <div 
+        className={`transition-all duration-350 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-96 border-t border-gray-150 p-5' : 'max-h-0'
+        }`}
+      >
+        <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">{answer}</p>
+      </div>
+    </div>
+  );
 }
 
 export default function BlogDetailPage() {
@@ -36,6 +79,144 @@ export default function BlogDetailPage() {
       fetchBlog();
     }
   }, [slug]);
+
+  // Handle SEO Meta tags and JSON-LD Schema Markups dynamically
+  useEffect(() => {
+    if (blog) {
+      // 1. Update document title
+      document.title = blog.metaTitle || blog.title;
+
+      // Helper to create or update meta tag
+      const setMetaTag = (nameOrProperty: string, content: string, isProperty = false) => {
+        const selector = isProperty 
+          ? `meta[property="${nameOrProperty}"]` 
+          : `meta[name="${nameOrProperty}"]`;
+        let element = document.querySelector(selector);
+        if (!element) {
+          element = document.createElement('meta');
+          if (isProperty) {
+            element.setAttribute('property', nameOrProperty);
+          } else {
+            element.setAttribute('name', nameOrProperty);
+          }
+          document.head.appendChild(element);
+        }
+        element.setAttribute('content', content);
+      };
+
+      // Set meta tags
+      setMetaTag('description', blog.metaDescription || blog.excerpt || '');
+      if (blog.focusKeyword) {
+        setMetaTag('keywords', blog.metaKeywords?.join(', ') || blog.focusKeyword);
+      }
+
+      // Robots NoIndex
+      if (blog.noIndex) {
+        setMetaTag('robots', 'noindex, nofollow');
+      } else {
+        setMetaTag('robots', 'index, follow');
+      }
+
+      // Open Graph Tags
+      setMetaTag('og:title', blog.ogTitle || blog.title, true);
+      setMetaTag('og:description', blog.ogDescription || blog.excerpt || '', true);
+      if (blog.featuredImage) {
+        setMetaTag('og:image', blog.featuredImage, true);
+      }
+      setMetaTag('og:type', 'article', true);
+      setMetaTag('og:url', window.location.href, true);
+
+      // Canonical link tag
+      let canonicalElement = document.querySelector('link[rel="canonical"]');
+      if (!canonicalElement) {
+        canonicalElement = document.createElement('link');
+        canonicalElement.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalElement);
+      }
+      canonicalElement.setAttribute('href', blog.canonicalUrl || window.location.href);
+
+      // 2. Schema Injection
+      const schemaMarkup = blog.schemaMarkup || { articleSchema: true, faqPageSchema: false, breadcrumbSchema: true };
+      const scriptTags: HTMLScriptElement[] = [];
+
+      const addSchema = (id: string, schemaObj: object) => {
+        const existing = document.getElementById(id);
+        if (existing) existing.remove();
+
+        const script = document.createElement('script');
+        script.id = id;
+        script.type = 'application/ld+json';
+        script.text = JSON.stringify(schemaObj);
+        document.head.appendChild(script);
+        scriptTags.push(script);
+      };
+
+      // Article Schema
+      if (schemaMarkup.articleSchema) {
+        addSchema('jsonld-article', {
+          '@context': 'https://schema.org',
+          '@type': 'NewsArticle',
+          'headline': blog.title,
+          'image': [blog.featuredImage].filter(Boolean),
+          'datePublished': blog.publishedAt || blog.createdAt,
+          'dateModified': blog.updatedAt || blog.createdAt,
+          'author': {
+            '@type': 'Person',
+            'name': blog.authorName || blog.author?.name || 'Admin',
+          }
+        });
+      }
+
+      // FAQ Page Schema
+      if (schemaMarkup.faqPageSchema && blog.faq && blog.faq.length > 0) {
+        addSchema('jsonld-faq', {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          'mainEntity': blog.faq.map(item => ({
+            '@type': 'Question',
+            'name': item.question,
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': item.answer
+            }
+          }))
+        });
+      }
+
+      // Breadcrumb Schema
+      if (schemaMarkup.breadcrumbSchema) {
+        addSchema('jsonld-breadcrumb', {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            {
+              '@type': 'ListItem',
+              'position': 1,
+              'name': 'Home',
+              'item': window.location.origin
+            },
+            {
+              '@type': 'ListItem',
+              'position': 2,
+              'name': 'Blog',
+              'item': `${window.location.origin}/blog`
+            },
+            {
+              '@type': 'ListItem',
+              'position': 3,
+              'name': blog.title,
+              'item': window.location.href
+            }
+          ]
+        });
+      }
+
+      // Cleanup dynamically injected tags on unmount
+      return () => {
+        scriptTags.forEach(tag => tag.remove());
+      };
+    }
+  }, [blog]);
 
   const fetchBlog = async () => {
     try {
@@ -124,6 +305,17 @@ export default function BlogDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
+            {/* Visual Breadcrumbs */}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-teal-100/70 mb-4 font-medium">
+              <span className="hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/')}>Home</span>
+              <span>/</span>
+              <span className="hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/blog')}>Blog</span>
+              <span>/</span>
+              <span className="hover:text-white cursor-pointer transition-colors" onClick={() => navigate(`/blog?category=${blog.category}`)}>{blog.category}</span>
+              <span>/</span>
+              <span className="text-white font-semibold truncate max-w-[200px]">{blog.title}</span>
+            </div>
+
             <div className="flex items-center gap-3 mb-4">
               <span className="bg-teal-500 px-4 py-1 rounded-full text-sm font-medium">
                 {blog.category}
@@ -167,9 +359,14 @@ export default function BlogDetailPage() {
         >
           <img
             src={blog.featuredImage}
-            alt={blog.title}
+            alt={blog.featuredImageAlt || blog.title}
             className="w-full h-[400px] object-cover rounded-2xl shadow-2xl"
           />
+          {blog.featuredImageAlt && (
+            <p className="text-center text-xs text-gray-500 mt-2 italic font-semibold">
+              Image: {blog.featuredImageAlt}
+            </p>
+          )}
         </motion.div>
       )}
 
@@ -196,15 +393,17 @@ export default function BlogDetailPage() {
             className="prose prose-lg max-w-none"
           >
             <div 
-              className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_a]:text-teal-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-teal-800 [&_a]:font-medium transition-all"
+              className="text-gray-700 leading-relaxed [&_a]:text-teal-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-teal-800 [&_a]:font-medium transition-all [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-4 [&_blockquote]:border-teal-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold"
               dangerouslySetInnerHTML={{ 
-                __html: blog.content
-                  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
-                    const isExternal = url.startsWith('http://') || url.startsWith('https://');
-                    const target = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
-                    return `<a href="${url}" ${target}>${text}</a>`;
-                  })
-                  .replace(/\n/g, '<br />')
+                __html: (blog.content.trim().startsWith('<') || blog.content.includes('</')) 
+                  ? blog.content 
+                  : blog.content
+                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+                        const isExternal = url.startsWith('http://') || url.startsWith('https://');
+                        const target = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
+                        return `<a href="${url}" ${target}>${text}</a>`;
+                      })
+                      .replace(/\n/g, '<br />')
               }} 
             />
           </motion.div>
@@ -234,6 +433,25 @@ export default function BlogDetailPage() {
             </motion.div>
           )}
 
+          {/* FAQ Section */}
+          {blog.faq && blog.faq.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.55 }}
+              className="mt-12 pt-8 border-t-2 border-gray-100"
+            >
+              <div className="flex items-center gap-2 mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Frequently Asked Questions</h3>
+              </div>
+              <div className="space-y-4">
+                {blog.faq.map((item, idx) => (
+                  <FAQAccordionItem key={idx} question={item.question} answer={item.answer} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Share Section */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -248,7 +466,7 @@ export default function BlogDetailPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{blog.authorName || blog.author?.name}</p>
-                  <p className="text-sm text-gray-500">Medical Expert</p>
+                  <p className="text-sm text-gray-500 font-medium">Medical Expert</p>
                 </div>
               </div>
               
