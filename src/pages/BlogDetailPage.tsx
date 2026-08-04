@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, User, ArrowLeft, Tag, Eye, Share2 } from 'lucide-react';
+import { 
+  Calendar, 
+  Clock, 
+  User, 
+  ArrowLeft, 
+  Tag, 
+  Eye, 
+  Share2, 
+  Heart,
+  Star,
+  AlertTriangle,
+  Info
+} from 'lucide-react';
 import { blogAPI } from '../services/api';
 
 interface Blog {
@@ -39,6 +51,8 @@ interface Blog {
     faqPageSchema: boolean;
     breadcrumbSchema: boolean;
   };
+  status?: "draft" | "published" | "archived";
+  isFeatured?: boolean;
 }
 
 function FAQAccordionItem({ question, answer }: { question: string; answer: string }) {
@@ -258,6 +272,18 @@ export default function BlogDetailPage() {
     }
   };
 
+  const handleLike = async () => {
+    if (!blog) return;
+    try {
+      const response = await blogAPI.likeBlog(blog._id);
+      if (response.data.success) {
+        setBlog(prev => prev ? { ...prev, likes: (prev.likes || 0) + 1 } : null);
+      }
+    } catch (error) {
+      console.error('Error liking blog:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -287,6 +313,14 @@ export default function BlogDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Draft Preview Banner */}
+      {blog.status === 'draft' && (
+        <div className="bg-amber-500 text-white text-center py-2.5 px-4 font-semibold text-sm flex items-center justify-center gap-2 shadow-inner">
+          <AlertTriangle size={18} className="animate-pulse" />
+          <span>Preview Mode: This blog post is currently saved as a draft and is not visible to the public.</span>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -316,12 +350,26 @@ export default function BlogDetailPage() {
               <span className="text-white font-semibold truncate max-w-[200px]">{blog.title}</span>
             </div>
 
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
               <span className="bg-teal-500 px-4 py-1 rounded-full text-sm font-medium">
                 {blog.category}
               </span>
+              {blog.isFeatured && (
+                <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
+                  <Star size={12} className="fill-current" />
+                  <span>Featured</span>
+                </span>
+              )}
+              {blog.status && blog.status !== 'published' && (
+                <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                  blog.status === 'draft' ? 'bg-amber-500 text-white border border-amber-400/30' :
+                  'bg-rose-500 text-white border border-rose-400/30'
+                }`}>
+                  {blog.status}
+                </span>
+              )}
               <span className="text-teal-100">•</span>
-              <span className="text-teal-100 flex items-center gap-1">
+              <span className="text-teal-100 flex items-center gap-1 font-medium">
                 <Clock size={16} />
                 {blog.readingTime} min read
               </span>
@@ -332,17 +380,21 @@ export default function BlogDetailPage() {
             </h1>
 
             <div className="flex flex-wrap items-center gap-6 text-teal-100">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 font-medium">
                 <User size={18} />
                 <span>{blog.authorName || blog.author?.name}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 font-medium">
                 <Calendar size={18} />
-                <span>{formatDate(blog.publishedAt)}</span>
+                <span>{formatDate(blog.publishedAt || blog.createdAt)}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 font-medium">
                 <Eye size={18} />
                 <span>{blog.views} views</span>
+              </div>
+              <div className="flex items-center gap-2 font-medium">
+                <Heart size={18} className="fill-rose-400 text-rose-400" />
+                <span>{blog.likes || 0} likes</span>
               </div>
             </div>
           </motion.div>
@@ -362,11 +414,6 @@ export default function BlogDetailPage() {
             alt={blog.featuredImageAlt || blog.title}
             className="w-full h-[400px] object-cover rounded-2xl shadow-2xl"
           />
-          {blog.featuredImageAlt && (
-            <p className="text-center text-xs text-gray-500 mt-2 italic font-semibold">
-              Image: {blog.featuredImageAlt}
-            </p>
-          )}
         </motion.div>
       )}
 
@@ -433,6 +480,52 @@ export default function BlogDetailPage() {
             </motion.div>
           )}
 
+          {/* Meta Publishing Auditor Section */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.52 }}
+            className="mt-12 pt-8 border-t-2 border-gray-100"
+          >
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs space-y-3.5 text-sm">
+              <div className="flex items-center gap-2 text-slate-400 font-bold uppercase text-[11px] tracking-wider mb-2 select-none">
+                <Info size={14} className="text-slate-400" />
+                <span>Meta Publishing Auditor</span>
+              </div>
+              
+              <div className="space-y-2.5 text-slate-600">
+                <div>
+                  <span className="text-slate-400 font-bold mr-1.5">Meta Title:</span>
+                  <span className="text-slate-700 font-semibold">{blog.metaTitle || blog.title}</span>
+                </div>
+                
+                <div>
+                  <span className="text-slate-400 font-bold mr-1.5">Meta Description:</span>
+                  <span className="text-slate-700 font-medium leading-relaxed">{blog.metaDescription || blog.excerpt || 'No description provided.'}</span>
+                </div>
+                
+                <div>
+                  <span className="text-slate-400 font-bold mr-1.5">Canonical URL:</span>
+                  <a 
+                    href={blog.canonicalUrl || window.location.href} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-orange-600 hover:underline font-semibold"
+                  >
+                    {blog.canonicalUrl || window.location.href}
+                  </a>
+                </div>
+                
+                <div>
+                  <span className="text-slate-400 font-bold mr-1.5">Indexing Status:</span>
+                  <span className={blog.noIndex ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold'}>
+                    {blog.noIndex ? 'noindex, nofollow (SEO hidden)' : 'index, follow (SEO discoverable)'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           {/* FAQ Section */}
           {blog.faq && blog.faq.length > 0 && (
             <motion.div
@@ -441,9 +534,6 @@ export default function BlogDetailPage() {
               transition={{ delay: 0.55 }}
               className="mt-12 pt-8 border-t-2 border-gray-100"
             >
-              <div className="flex items-center gap-2 mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Frequently Asked Questions</h3>
-              </div>
               <div className="space-y-4">
                 {blog.faq.map((item, idx) => (
                   <FAQAccordionItem key={idx} question={item.question} answer={item.answer} />
@@ -452,14 +542,15 @@ export default function BlogDetailPage() {
             </motion.div>
           )}
 
-          {/* Share Section */}
+
+          {/* Share & Like Section */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
             className="mt-12 pt-8 border-t-2 border-gray-100"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center">
                   <User size={24} className="text-white" />
@@ -470,13 +561,23 @@ export default function BlogDetailPage() {
                 </div>
               </div>
               
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
-              >
-                <Share2 size={18} />
-                <span>Share</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleLike}
+                  className="flex items-center gap-2 border border-rose-200 text-rose-600 px-5 py-2.5 rounded-lg hover:bg-rose-50 transition-colors font-medium text-sm"
+                >
+                  <Heart size={16} className="fill-rose-600 text-rose-600" />
+                  <span>Like ({blog.likes || 0})</span>
+                </button>
+                
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
+                >
+                  <Share2 size={16} />
+                  <span>Share</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
