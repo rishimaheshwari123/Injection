@@ -189,7 +189,7 @@ const BlogPage = () => {
                       <img
                         src={post.featuredImage}
                         alt={post.title}
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-auto group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">

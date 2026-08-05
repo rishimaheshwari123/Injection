@@ -412,7 +412,7 @@ export default function BlogDetailPage() {
           <img
             src={blog.featuredImage}
             alt={blog.featuredImageAlt || blog.title}
-            className="w-full h-[400px] object-cover rounded-2xl shadow-2xl"
+            className="w-full h-auto rounded-2xl shadow-2xl"
           />
         </motion.div>
       )}
@@ -602,7 +602,7 @@ export default function BlogDetailPage() {
                     <img
                       src={relatedBlog.featuredImage}
                       alt={relatedBlog.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-auto group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center">
