@@ -134,6 +134,8 @@ export default function BlogsPage() {
   
   // Editor and tags state
   const editorRef = useRef<HTMLDivElement>(null);
+  const editorImageInputRef = useRef<HTMLInputElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const [activeTab, setActiveTab] = useState<'editor' | 'html' | 'preview'>('editor');
   const [newTag, setNewTag] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -349,6 +351,73 @@ export default function BlogsPage() {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
       setFormData((prev) => ({ ...prev, content: html }));
+    }
+  };
+
+  const handleEditorImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      savedRangeRef.current = sel.getRangeAt(0);
+    } else {
+      savedRangeRef.current = null;
+    }
+    editorImageInputRef.current?.click();
+  };
+
+  const handleEditorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      const response = await blogAPI.uploadImage(file);
+      const url = response.data.data.url;
+
+      if (editorRef.current) {
+        editorRef.current.focus();
+      }
+
+      if (savedRangeRef.current) {
+        const sel = window.getSelection();
+        if (sel) {
+          sel.removeAllRanges();
+          sel.addRange(savedRangeRef.current);
+        }
+      }
+
+      document.execCommand("insertImage", false, url);
+      handleEditorInput();
+
+      toast.update(toastId, {
+        render: "Image uploaded and inserted successfully! 📸",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } catch (error: any) {
+      console.error("Error uploading editor image:", error);
+      toast.update(toastId, {
+        render: error.response?.data?.message || "Failed to upload image",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } finally {
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   };
 
@@ -989,17 +1058,19 @@ export default function BlogsPage() {
                         
                         <button 
                           type="button" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            const url = prompt("Enter Image URL:");
-                            if (url) document.execCommand('insertImage', false, url);
-                            handleEditorInput();
-                          }} 
-                          title="Insert Image Link" 
+                          onClick={handleEditorImageClick} 
+                          title="Upload Image" 
                           className="p-1.5 hover:bg-slate-200 rounded transition-colors"
                         >
                           <ImageIcon size={15} />
                         </button>
+                        <input
+                          type="file"
+                          ref={editorImageInputRef}
+                          onChange={handleEditorImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
 
                         <button type="button" onClick={(e) => executeCommand(e, 'removeFormat')} title="Clear Formatting" className="p-1.5 hover:bg-slate-200 rounded font-semibold text-xs transition-colors">Tx</button>
                       </div>
