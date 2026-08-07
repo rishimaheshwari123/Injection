@@ -47,6 +47,8 @@ import VendorServiceRequestsPage from "./pages/admin/VendorServiceRequestsPage";
 import VendorProfilePage from "./pages/VendorProfilePage";
 import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
+import InjectionPage from "./pages/InjectionPage";
+
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
@@ -95,6 +97,14 @@ function App() {
           element={
             <PublicLayout>
               <HealthcareServicesPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/services/injection"
+          element={
+            <PublicLayout>
+              <InjectionPage />
             </PublicLayout>
           }
         />

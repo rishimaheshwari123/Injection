@@ -90,16 +90,15 @@ const ContactPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Contact PRLT Healthcare | Book Home Healthcare Services Today
-        </title>
+        <title>Contact Us | PRLT Health Care Bhopal</title>
         <meta
           name="description"
-          content="Get in touch with PRLT Healthcare for professional home healthcare services, nursing care, IV drips, injections, wound dressing, elderly care, and medical assistance. Contact our team today to book an appointment."
+          content="Get in touch with PRLT Health Care in Bhopal for home nursing, injections, IV drips & patient care services. Book your appointment today."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/contact" />
         <meta
           name="keywords"
-          content="Contact PRLT Healthcare, Contact Home Healthcare Provider, Book Healthcare Services, Home Healthcare Contact, Nursing Care Appointment, Healthcare Services Inquiry, Medical Care at Home, Healthcare Support Services, Home Nursing Services, IV Drip Services Contact, Patient Care Services, Healthcare Consultation, Healthcare Appointment Booking"
+          content="Contact PRLT Healthcare, Home Nurse in Bhopal, Home Nursing Near Me, Healthcare Services at Your Doorstep"
         />
       </Helmet>
 
@@ -113,15 +112,10 @@ const ContactPage = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Let's Connect for Better Healthcare
+              Contact PRLT Health Care in Bhopal
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed mb-6">
-              At PRLT Healthcare, we are committed to providing reliable,
-              compassionate, and professional healthcare services tailored to
-              your needs. Whether you are looking for nursing care, IV drip
-              therapy, injection administration, wound dressing, elderly care,
-              healthcare training, or research services, our team is ready to
-              assist you.
+              Are you searching for a reliable <strong>home nurse in Bhopal</strong> or looking up <strong>home nursing near me</strong> for clinical support? PRLT Health Care brings high-quality <strong>healthcare services at your doorstep</strong>. Whether you need injection administration, IV fluid therapy, wound dressing, or post-surgical care, we are here to support your recovery.
             </p>
             <p className="text-lg text-gray-500 leading-relaxed">
               We understand that every patient and healthcare requirement is
@@ -143,10 +137,10 @@ const ContactPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Get In Touch
+              Reach Us
             </h2>
             <p className="text-xl text-gray-600">
-              Multiple ways to reach us for your convenience
+              If you require a certified <strong>home nurse in Bhopal</strong>, look no further. We offer the best <strong>home nursing near me</strong> search answers, delivering professional <strong>healthcare services at your doorstep</strong>.
             </p>
           </motion.div>
 
@@ -192,7 +186,7 @@ const ContactPage = () => {
               className="bg-white p-8 rounded-xl shadow-lg"
             >
               <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-                Send us a Message
+                Book a Home Healthcare Service
               </h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>

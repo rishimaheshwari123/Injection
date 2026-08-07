@@ -14,6 +14,7 @@ import {
   Award,
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 
 const ServicesPage = () => {
   const services = [
@@ -29,6 +30,7 @@ const ServicesPage = () => {
           name: "Home Injections",
           description: "Professional injection services at your home",
           gradient: "from-[#63D64F] to-[#3DB9A6]",
+          path: "/services/injection",
         },
         {
           icon: Droplets,
@@ -159,17 +161,15 @@ const ServicesPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Home Healthcare Services | IV Drips, Nursing & Patient Care | PRLT
-          Healthcare
-        </title>
+        <title>Home Nursing & Patient Care Services in Bhopal | PRLT</title>
         <meta
           name="description"
-          content="Explore PRLT Healthcare's professional home healthcare services including IV drips, injections, nursing care, wound dressing, elderly care, patient support, and medical assistance delivered at your doorstep."
+          content="Explore PRLT's home healthcare services in Bhopal — nursing care, IV drips, injections, wound dressing, elderly & post-surgery care at home."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/services" />
         <meta
           name="keywords"
-          content="Home Healthcare Services, Home Nursing Care, IV Drip Services, Injection Services, Wound Dressing Care, Elderly Care Services, Patient Care at Home, Nursing Assistance, Medical Care at Home, Healthcare Services Provider, Home Healthcare Company, Professional Nursing Services, Healthcare Support Services, Post Surgical Care, Home Medical Care"
+          content="Home Nursing Services Bhopal, Patient Care at Home Bhopal, Professional Nursing Care, Home Healthcare Bhopal"
         />
       </Helmet>
 
@@ -183,7 +183,7 @@ const ServicesPage = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Our Services
+              Home Healthcare Services in Bhopal
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
               Comprehensive healthcare solutions designed to meet your medical,
@@ -221,31 +221,98 @@ const ServicesPage = () => {
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {serviceCategory.services.map((service, index) => (
-                <motion.div
-                  key={service.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
-                >
-                  <div
-                    className={`w-16 h-16 bg-gradient-to-r ${service.gradient} rounded-lg flex items-center justify-center mb-4 shadow-md`}
+              {serviceCategory.services.map((service, index) => {
+                const CardContent = (
+                  <>
+                    <div
+                      className={`w-16 h-16 bg-gradient-to-r ${service.gradient} rounded-lg flex items-center justify-center mb-4 shadow-md`}
+                    >
+                      <service.icon className="w-8 h-8 text-white drop-shadow-sm" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex justify-between items-center">
+                      <span>{service.name}</span>
+                      {service.path && <span className="text-xs text-teal-600 hover:underline font-medium">View Detail →</span>}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {service.description}
+                    </p>
+                  </>
+                );
+
+                return (
+                  <motion.div
+                    key={service.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
                   >
-                    <service.icon className="w-8 h-8 text-white drop-shadow-sm" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    {service.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {service.description}
-                  </p>
-                </motion.div>
-              ))}
+                    {service.path ? (
+                      <Link to={service.path} className="block h-full">
+                        {CardContent}
+                      </Link>
+                    ) : (
+                      CardContent
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>
       ))}
+
+      {/* Detailed Services Info for SEO */}
+      <section className="py-20 bg-white border-t border-gray-100">
+        <div className="w-[90vw] mx-auto px-4 max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Comprehensive Care at Your Doorstep
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="bg-gray-50 p-8 rounded-xl border border-gray-100 shadow-sm"
+            >
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Home Nursing Services</h2>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Our <strong>home nursing services Bhopal</strong> are designed to bring hospital-quality care right to your doorstep. We provide <strong>professional nursing care</strong> for patients recovering from illness, chronic conditions, or surgeries. Our nurses are fully verified and trained to offer the best <strong>patient care at home Bhopal</strong>, ensuring medication schedules, vitals monitoring, and medical protocols are met.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-gray-50 p-8 rounded-xl border border-gray-100 shadow-sm"
+            >
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Injection & IV Drip at Home</h2>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Getting regular injections or IV fluid therapy shouldn't require frequent hospital visits. With our dedicated <strong>home nursing services Bhopal</strong>, you can receive clinical care such as an injection or IV drip at home safely. Our staff is skilled in administering medications with proper hygiene and clinical care, delivering <strong>professional nursing care</strong> that prioritizes patient comfort.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-gray-50 p-8 rounded-xl border border-gray-100 shadow-sm"
+            >
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Elderly & Post-Surgery Care</h2>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Recovering after surgery or managing age-related health issues requires constant attention. Our comprehensive <strong>patient care at home Bhopal</strong> solutions provide round-the-clock support. From post-surgical wound care to specialized geriatric support, we offer the best <strong>home nursing services Bhopal</strong> and <strong>professional nursing care</strong> to facilitate a speedy recovery.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       {/* Additional Services */}
       <section className="py-20 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]">

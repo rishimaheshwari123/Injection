@@ -49,17 +49,15 @@ const ResearchServicesPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Healthcare Research Services | Clinical & Medical Research | PRLT
-          Healthcare
-        </title>
+        <title>Clinical Research Services | PRLT Health Care Bhopal</title>
         <meta
           name="description"
-          content="PRLT Healthcare provides professional healthcare research services, clinical research support, medical data collection, healthcare studies, and evidence-based research solutions to improve patient outcomes and healthcare quality."
+          content="PRLT Health Care provides clinical research support and studies in Bhopal, advancing medical innovation with expert research services."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/services/research" />
         <meta
           name="keywords"
-          content="Healthcare Research Services, Clinical Research Services, Medical Research Services, Healthcare Research Solutions, Clinical Study Support, Healthcare Data Collection, Medical Research Organization, Healthcare Research Company, Clinical Trial Support, Evidence Based Healthcare, Healthcare Analytics, Medical Research Experts, Healthcare Innovation Research, Research Management Services, Healthcare Studies"
+          content="Clinical Research Services, Medical Care at Home Bhopal, Home Health Services, Professional Healthcare at Home in Bhopal"
         />
       </Helmet>
 
@@ -76,12 +74,10 @@ const ResearchServicesPage = () => {
               <FlaskConical className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-5xl font-bold text-white mb-6">
-              Research Services
+              Clinical Research Services
             </h1>
             <p className="text-xl text-green-100 leading-relaxed">
-              Comprehensive research support and data collection services for
-              academic institutions, healthcare organizations, and research
-              projects with scientific rigor and precision.
+              Comprehensive research support and data collection services for academic institutions and healthcare providers. While we focus on clinical data, we also support general <strong>home health services</strong> and clinical trials that analyze the efficacy of <strong>medical care at home Bhopal</strong>, ensuring that <strong>professional healthcare at home in Bhopal</strong> is guided by scientific validation and rigorous standards.
             </p>
           </motion.div>
         </div>
@@ -129,7 +125,7 @@ const ResearchServicesPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Our Research Capabilities
+              Our Research Approach
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               We provide comprehensive research support with modern
@@ -189,11 +185,10 @@ const ResearchServicesPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Research Areas
+              Research Support for Healthcare Providers
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We specialize in various research domains to support diverse
-              academic and professional needs
+              Our studies validate and optimize <strong>home health services</strong> to help organizations deliver high-quality <strong>medical care at home Bhopal</strong>. Through systematic research, we help clinicians establish protocols for <strong>professional healthcare at home in Bhopal</strong>.
             </p>
           </motion.div>
 

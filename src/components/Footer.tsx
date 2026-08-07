@@ -45,11 +45,10 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-lg mb-4">Our Services</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Healthcare Services</li>
-              <li>Research Services</li>
-              <li>Training & Placement</li>
-              <li>Medical Consultancy</li>
-              <li>Public Health Programs</li>
+              <li><Link to="/services/healthcare" className="hover:text-white transition-colors">Healthcare Services</Link></li>
+              <li><Link to="/services/injection" className="hover:text-white transition-colors">Injection at Home</Link></li>
+              <li><Link to="/services/research" className="hover:text-white transition-colors">Research Services</Link></li>
+              <li><Link to="/services/training" className="hover:text-white transition-colors">Training & Placement</Link></li>
             </ul>
           </div>
 

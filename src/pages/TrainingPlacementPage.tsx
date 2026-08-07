@@ -65,17 +65,15 @@ const TrainingPlacementPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Healthcare Training Programs | Professional Medical Skills Training |
-          PRLT Healthcare
-        </title>
+        <title>Medical Training Programs | PRLT Health Care Bhopal</title>
         <meta
           name="description"
-          content="Enhance your healthcare skills with PRLT Healthcare's professional training programs. We offer healthcare education, clinical skills development, certification courses, workshops, and industry-focused training for healthcare professionals."
+          content="Join PRLT Health Care's professional medical training programs in Bhopal, designed to build skilled and verified healthcare professionals."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/services/training" />
         <meta
           name="keywords"
-          content="Healthcare Training Programs, Healthcare Training Services, Medical Training Programs, Healthcare Certification Courses, Clinical Skills Training, Professional Healthcare Training, Healthcare Education Programs, Nursing Training Programs, Healthcare Workshops, Medical Skills Development, Healthcare Professional Training, Clinical Training Courses, Healthcare Career Development, Certified Healthcare Training, Healthcare Learning Programs"
+          content="Medical Training Programs Bhopal, Verified Healthcare Professionals, Home Medical Assistance, Professional Nursing Care"
         />
       </Helmet>
 
@@ -92,7 +90,7 @@ const TrainingPlacementPage = () => {
               <GraduationCap className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-5xl font-bold text-white mb-6">
-              Training & Placement
+              Medical Training Programs in Bhopal
             </h1>
             <p className="text-xl text-green-100 leading-relaxed">
               Professional training programs for healthcare students and
@@ -202,7 +200,7 @@ const TrainingPlacementPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Training Programs
+              Training Courses We Offer
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Comprehensive training programs designed for different educational
@@ -289,6 +287,48 @@ const TrainingPlacementPage = () => {
                 </ul>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Who Can Join Our Training Programs */}
+      <section className="py-20 bg-gray-50 border-t border-gray-100">
+        <div className="w-[90vw] mx-auto px-4 max-w-5xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Who Can Join Our Training Programs
+            </h2>
+            <p className="text-xl text-gray-650 max-w-3xl mx-auto leading-relaxed">
+              Our medical training programs are open to aspiring nurses, biotechnology graduates, and healthcare students who wish to become <strong>verified healthcare professionals</strong>. We prepare our trainees to deliver high-quality <strong>home medical assistance</strong> and <strong>professional nursing care</strong> in real-world clinical settings.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100 text-left">
+              <h3 className="font-semibold text-lg text-gray-900 mb-3">Nurses & DMLT Students</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Graduates seeking practical clinical exposure to master modern <strong>professional nursing care</strong> techniques, patient management, and field protocols.
+              </p>
+              <p className="text-gray-500 text-xs">Aims to produce <strong>verified healthcare professionals</strong>.</p>
+            </div>
+            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100 text-left">
+              <h3 className="font-semibold text-lg text-gray-900 mb-3">Aspiring Caregivers</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Individuals looking to establish a career in home care. Learn how to provide clinical <strong>home medical assistance</strong> for post-operative and geriatric patients.
+              </p>
+              <p className="text-gray-500 text-xs">Delivers clinical <strong>home medical assistance</strong> training.</p>
+            </div>
+            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100 text-left">
+              <h3 className="font-semibold text-lg text-gray-900 mb-3">Graduates (BSc/MSc)</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Life science graduates looking to build a foundation in clinical research or secure clinical roles as <strong>verified healthcare professionals</strong>.
+              </p>
+              <p className="text-gray-500 text-xs">Gain credentials to deliver <strong>professional nursing care</strong> support.</p>
+            </div>
           </div>
         </div>
       </section>

@@ -19,7 +19,8 @@ import {
   Clock,
   CheckCircle,
   Trash2,
-  UserPlus
+  UserPlus,
+  Syringe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -231,6 +232,7 @@ const Navigation = () => {
 
   const serviceItems = [
     { path: "/services/healthcare", label: "Healthcare Services", icon: Heart },
+    { path: "/services/injection", label: "Injection at Home", icon: Syringe },
     {
       path: "/services/research",
       label: "Research Services",

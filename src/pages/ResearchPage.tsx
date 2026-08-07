@@ -72,17 +72,15 @@ const ResearchPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Healthcare Research & Innovation | Clinical Research Services | PRLT
-          Healthcare
-        </title>
+        <title>Healthcare Research & Innovation | PRLT Health Care</title>
         <meta
           name="description"
-          content="PRLT Healthcare drives healthcare innovation through clinical research, healthcare studies, data analysis, and evidence-based solutions that improve patient outcomes and advance medical knowledge."
+          content="Discover PRLT Health Care's research initiatives driving innovation in medical care, clinical studies, and healthcare training."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/research" />
         <meta
           name="keywords"
-          content="Healthcare Research, Clinical Research, Healthcare Research Services, Medical Research, Healthcare Innovation, Evidence-Based Healthcare, Clinical Studies, Research & Development Healthcare, Healthcare Data Analysis, Medical Research Solutions, Healthcare Research Organization, Healthcare Research Programs, Clinical Trial Support, Healthcare Innovation Research, Healthcare Research Excellence"
+          content="Healthcare Research, Home Health Services, Healthcare Provider Bhopal, Medical Services at Home Bhopal"
         />
       </Helmet>
 
@@ -96,12 +94,10 @@ const ResearchPage = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Research & Innovation
+              Healthcare Research & Innovation
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Our research team works on innovative healthcare solutions aimed
-              at improving patient care, medical technology, and public health
-              outcomes through evidence-based research and collaboration.
+              Our research team works on innovative healthcare solutions. As a trusted <strong>healthcare provider Bhopal</strong>, we validate our <strong>medical services at home Bhopal</strong> and general <strong>home health services</strong> through evidence-based research and clinical collaboration.
             </p>
           </motion.div>
         </div>
@@ -117,7 +113,7 @@ const ResearchPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Research Areas
+              Our Research Focus Areas
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               We focus on diverse areas of healthcare research to address
@@ -215,11 +211,10 @@ const ResearchPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Our Collaborations
+              Collaborations & Studies
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Partnering with leading institutions to advance healthcare
-              research and innovation
+              As a premier <strong>healthcare provider Bhopal</strong>, we partner with leading institutions to evaluate and enhance <strong>home health services</strong> and clinical protocols, ensuring that <strong>medical services at home Bhopal</strong> are backed by credible scientific analysis.
             </p>
           </motion.div>
 

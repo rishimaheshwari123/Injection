@@ -48,16 +48,15 @@ const AboutPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          About PRLT Healthcare | Trusted Home Healthcare & Nursing Services
-        </title>
+        <title>About Us | PRLT Health Care and Research Solutions</title>
         <meta
           name="description"
-          content="Learn about PRLT Healthcare, a trusted provider of home healthcare services, nursing care, IV drips, injections, wound dressing, and patient support. Our mission is to deliver quality healthcare with compassion, professionalism, and convenience at your doorstep."
+          content="Learn about PRLT Health Care and Research Solutions — a Bhopal-based healthcare provider committed to quality home care and medical research."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/about" />
         <meta
           name="keywords"
-          content="Home Healthcare Services, Nursing Care at Home, IV Drip Services, Injection Services at Home, Wound Dressing Services, Elderly Care Services, Patient Care at Home, Healthcare Professionals, Home Medical Care, Healthcare Support Services, Home Nursing Hyderabad, Healthcare Provider, ISO Certified Healthcare Services"
+          content="About PRLT Healthcare, Trusted Home Healthcare Bhopal, Healthcare Provider Bhopal, Verified Healthcare Professionals"
         />
       </Helmet>
 
@@ -70,11 +69,11 @@ const AboutPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">About Us</h1>
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              About PRLT Health Care and Research Solutions
+            </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. is
-              committed to improving healthcare through advanced research,
-              medical consultation, and innovative healthcare solutions.
+              PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. is a premier <strong>healthcare provider Bhopal</strong> committed to improving public health through research, clinical consulting, and <strong>trusted home healthcare Bhopal</strong>. We provide services delivered by our network of <strong>verified healthcare professionals</strong>.
             </p>
           </motion.div>
         </div>
@@ -90,14 +89,10 @@ const AboutPage = () => {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Company Overview
+                Why Trust PRLT Health Care
               </h2>
               <p className="text-gray-600 mb-8 leading-relaxed">
-                We are dedicated to advancing healthcare through research-driven
-                solutions and improving the quality of life for communities. Our
-                comprehensive approach combines clinical expertise, innovative
-                research methodologies, and cutting-edge technology to deliver
-                exceptional healthcare services.
+                As a leading <strong>healthcare provider Bhopal</strong>, we are dedicated to advancing medical research and delivering clinical excellence. We are recognized for offering <strong>trusted home healthcare Bhopal</strong> residents rely on for patient support. All home services are executed by <strong>verified healthcare professionals</strong> who undergo rigid screening and training.
               </p>
 
               <div className="space-y-6">
@@ -148,6 +143,17 @@ const AboutPage = () => {
       {/* Mission & Vision */}
       <section className="py-20 bg-gray-50">
         <div className="w-[90vw] mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Our Mission & Vision
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+          </motion.div>
           <div className="grid md:grid-cols-2 gap-12">
             <motion.div
               initial={{ opacity: 0, y: 30 }}

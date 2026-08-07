@@ -89,17 +89,15 @@ const BlogPage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          Healthcare Blog | Health Tips, Medical Insights & Wellness Articles |
-          PRLT Healthcare
-        </title>
+        <title>Health & Wellness Blog | PRLT Health Care</title>
         <meta
           name="description"
-          content="Explore the PRLT Healthcare Blog for expert health tips, medical insights, home healthcare guidance, wellness advice, patient care information, and healthcare industry updates to help you live a healthier life."
+          content="Read expert tips on home healthcare, nursing care, elderly wellness & medical insights from PRLT Health Care's blog."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/blog" />
         <meta
           name="keywords"
-          content="Healthcare Blog, Health Tips Blog, Medical Insights, Healthcare Articles, Patient Care Tips, Home Healthcare Blog, Wellness Articles, Healthcare News, Medical Advice Blog, Healthy Living Tips, Healthcare Education, Health Awareness Articles, Nursing Care Tips, Elderly Care Advice, Preventive Healthcare"
+          content="PRLT Healthcare Blog, Elderly Care Services, Home Care for Patients, Recovery Care at Home"
         />
       </Helmet>
 
@@ -113,7 +111,7 @@ const BlogPage = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Blog & Insights
+              PRLT Health Care Blog
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
               Stay updated with the latest healthcare trends, research findings,
@@ -167,7 +165,7 @@ const BlogPage = () => {
               className="mb-12"
             >
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Latest Articles
+                Latest Health & Wellness Articles
               </h2>
               <p className="text-gray-600">
                 Explore our recent healthcare insights and updates
@@ -313,6 +311,49 @@ const BlogPage = () => {
           </div>
         </section>
       )}
+
+      {/* Home Care Tips & Guides Section */}
+      <section className="py-20 bg-white">
+        <div className="w-[90vw] mx-auto px-4 max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Home Care Tips & Guides
+            </h2>
+            <p className="text-gray-650">
+              Useful advice for managing health and treatments in familiar surroundings
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Geriatric Support</h3>
+              <p className="text-gray-650 text-sm leading-relaxed mb-3">
+                Learn how specialized <strong>elderly care services</strong> can help seniors maintain independence, manage daily medications, and receive emotional support at home.
+              </p>
+              <p className="text-xs text-teal-600 font-medium">Read guide on <strong>elderly care services</strong></p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Patient Safety</h3>
+              <p className="text-gray-650 text-sm leading-relaxed mb-3">
+                Proper sanitation and room setup are crucial when setting up <strong>home care for patients</strong>. Learn how to prevent falls and manage clinical hygiene at home.
+              </p>
+              <p className="text-xs text-teal-600 font-medium">Read guide on <strong>home care for patients</strong></p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Post-Operative Recovery</h3>
+              <p className="text-gray-650 text-sm leading-relaxed mb-3">
+                Effective <strong>recovery care at home</strong> accelerates healing. Access guides on monitoring wound dressings, managing IV drips, and preventing post-surgical complications.
+              </p>
+              <p className="text-xs text-teal-600 font-medium">Read guide on <strong>recovery care at home</strong></p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Newsletter Section */}
       <section className="py-20 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6]">

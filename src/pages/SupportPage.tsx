@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { API_CONFIG } from '../config/api.config';
+import { Helmet } from 'react-helmet-async';
 
 export default function SupportPage() {
   const [submitting, setSubmitting] = useState(false);
@@ -44,18 +45,33 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Patient Support & Help Center | PRLT Health Care</title>
+        <meta
+          name="description"
+          content="Need help with your PRLT Health Care service? Find support, FAQs, and assistance for home healthcare and patient care."
+        />
+        <link rel="canonical" href="https://www.prlthealthcare.com/support" />
+        <meta
+          name="keywords"
+          content="Patient Support PRLT, Home Medical Assistance, Home Patient Care Bhopal, Home Health Services"
+        />
+      </Helmet>
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold mb-4">Support Center</h1>
-          <p className="text-xl">We're here to help! Submit your query and we'll get back to you soon.</p>
+          <h1 className="text-4xl font-bold mb-4">Patient Support Center</h1>
+          <p className="text-xl">
+            We are here to help! If you need support with our <strong>home health services</strong>, require <strong>home medical assistance</strong>, or have questions about <strong>home patient care Bhopal</strong>, submit your request below and we will get back to you soon.
+          </p>
         </div>
       </div>
 
       {/* Support Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold mb-6">Submit a Support Ticket</h2>
+          <h2 className="text-2xl font-bold mb-6">Get Help With Your Service</h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,6 +197,31 @@ export default function SupportPage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* FAQs Section */}
+        <div className="mt-12 bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-900 mb-2">How can I request home medical assistance?</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                You can easily request <strong>home medical assistance</strong> by submitting a support ticket on this page, filling out our contact form, or calling our helpline directly at +91-6260760514.
+              </p>
+            </div>
+            <div className="border-t border-gray-150 pt-4">
+              <h3 className="font-semibold text-lg text-gray-900 mb-2">What is included in home patient care Bhopal services?</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Our <strong>home patient care Bhopal</strong> services include certified home nursing, vitals monitoring, medication administration, and post-surgery care tailored to the patient's recovery needs.
+              </p>
+            </div>
+            <div className="border-t border-gray-150 pt-4">
+              <h3 className="font-semibold text-lg text-gray-900 mb-2">Which home health services do you offer?</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                We offer a wide range of clinical <strong>home health services</strong>, including IV drip therapy, wound dressing, day care support, and professional injection administration by qualified nurses.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Contact Info */}

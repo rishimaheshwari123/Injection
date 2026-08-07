@@ -225,17 +225,15 @@ const HomePage = () => {
   return (
     <div>
       <Helmet>
-        <title>
-          PRLT Healthcare | Home Healthcare Services, IV Drips & Nursing Care at
-          Home
-        </title>
+        <title>Home Healthcare Services in Bhopal | PRLT Health Care</title>
         <meta
           name="description"
-          content="PRLT Healthcare provides professional home healthcare services including IV drips, injections, wound dressing, nursing care, elderly care, physiotherapy, and medical assistance at your doorstep. Book trusted healthcare services today."
+          content="PRLT Health Care offers trusted home nursing, injections, IV drips & elderly care in Bhopal. Book verified healthcare professionals today."
         />
+        <link rel="canonical" href="https://www.prlthealthcare.com/" />
         <meta
           name="keywords"
-          content="Home Healthcare Services, Home Healthcare Services Hyderabad, Nursing Care at Home, IV Drip at Home, Injection Services at Home, Dressing Services at Home, Elderly Care Services, Home Nursing Services, Patient Care at Home, Healthcare at Home, Professional Nursing Care"
+          content="Home Healthcare Services Bhopal, Healthcare at Home Bhopal, Best Home Healthcare in Bhopal, Home Nursing Bhopal, Injections at Home Bhopal, IV Drips Bhopal"
         />
       </Helmet>
 
@@ -297,6 +295,25 @@ const HomePage = () => {
               }`}
             />
           ))}
+        </div>
+      </section>
+
+      {/* Main Title Section (H1 SEO Optimization) */}
+      <section className="py-16 bg-white text-center">
+        <div className="max-w-4xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-650 mb-6">
+              Home Healthcare Services in Bhopal
+            </h1>
+            <p className="text-xl text-gray-600 leading-relaxed mb-6">
+              Welcome to PRLT Health Care, your premier destination for the <strong>best home healthcare in Bhopal</strong>. We specialize in bringing professional clinical support right to your bedside. If you are seeking high-quality <strong>home healthcare services Bhopal</strong> residents trust, or need reliable <strong>healthcare at home Bhopal</strong> for your loved ones, our verified medical professionals are here to assist.
+            </p>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+          </motion.div>
         </div>
       </section>
 
@@ -474,8 +491,10 @@ const HomePage = () => {
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
                 PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. is
-                committed to improving healthcare through advanced research,
-                medical consultation, and innovative healthcare solutions.
+                committed to improving public health standards as the leading <strong>healthcare at home Bhopal</strong> provider. We strive to offer the <strong>best home healthcare in Bhopal</strong>, ensuring safety, convenience, and professionalism are delivered with every home visit.
+              </p>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Our comprehensive <strong>home healthcare services Bhopal</strong> cover clinical nursing care, IV drip therapy, elderly assistance, and professional medical training, bridging the gap between hospital treatment and home recovery.
               </p>
 
               <div className="space-y-4 mb-8">
@@ -653,7 +672,7 @@ const HomePage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Why Choose PRLT Healthcare?
+              Why Choose PRLT Health Care in Bhopal
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Why Families Trust PRLT Healthcare
@@ -746,7 +765,7 @@ const HomePage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Our Services
+              Our Home Nursing & Patient Care Services
             </h2>
             <p className="text-xl text-gray-600">
               Comprehensive healthcare solutions tailored to your needs
