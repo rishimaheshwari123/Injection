@@ -28,6 +28,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import heroRoutes from './routes/heroRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import otpRoutes from './routes/otpRoutes.js';
 import fs from 'fs';
 
 // Load env vars
@@ -206,6 +207,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/hero', heroRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

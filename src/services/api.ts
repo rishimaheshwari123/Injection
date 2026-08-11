@@ -384,4 +384,10 @@ export const notificationAPI = {
   },
 };
 
+// OTP APIs
+export const otpAPI = {
+  sendOtp: (phone: string) => api.post(API_ENDPOINTS.OTP.SEND, { phone }),
+  verifyOtp: (phone: string, otp: string) => api.post(API_ENDPOINTS.OTP.VERIFY, { phone, otp }),
+};
+
 export default api;

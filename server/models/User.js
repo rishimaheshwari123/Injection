@@ -157,6 +157,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isPhoneVerified: {
+    type: Boolean,
+    default: false
+  },
   profileImage: {
     type: String,
     default: null

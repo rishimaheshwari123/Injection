@@ -4,6 +4,8 @@ import Review from '../models/Review.js';
 import AdminSetting from '../models/AdminSetting.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
+import Otp from '../models/Otp.js';
+import { normalizePhone } from '../utils/sms.js';
 
 // Generate JWT Token
 const generateToken = (id, role) => {
@@ -73,6 +75,15 @@ export const vendorRegister = async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizePhone(phone);
+    const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number is not verified. Please verify using OTP first.'
+      });
+    }
+
     if (!businessName || !businessType) {
       return res.status(400).json({
         success: false,
@@ -111,6 +122,7 @@ export const vendorRegister = async (req, res) => {
       email,
       password,
       phone,
+      isPhoneVerified: true,
       alternatePhone,
       gender,
 
@@ -160,6 +172,8 @@ export const vendorRegister = async (req, res) => {
     if (finalServices.length > 0) {
       await Service.updateMany({ _id: { $in: finalServices } }, { $addToSet: { vendors: vendor._id } });
     }
+
+    await Otp.deleteMany({ phone: normalizedPhone });
 
     const token = generateToken(vendor._id, 'vendor');
 
@@ -302,6 +316,23 @@ export const updateVendorProfile = async (req, res) => {
       });
     }
 
+    let shouldDeleteOtpPhone = null;
+    if (updateData.phone !== undefined) {
+      const normalizedInput = normalizePhone(updateData.phone);
+      const normalizedCurrent = normalizePhone(vendor.phone);
+      if (normalizedInput !== normalizedCurrent) {
+        const otpRecord = await Otp.findOne({ phone: normalizedInput, verified: true });
+        if (!otpRecord) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        vendor.isPhoneVerified = true;
+        shouldDeleteOtpPhone = normalizedInput;
+      }
+    }
+
     // Update all allowed fields
     const allowedFields = [
       'name', 'phone', 'alternatePhone', 'gender', 'businessName', 'businessType',
@@ -332,6 +363,10 @@ export const updateVendorProfile = async (req, res) => {
     });
 
     await vendor.save();
+
+    if (shouldDeleteOtpPhone) {
+      await Otp.deleteMany({ phone: shouldDeleteOtpPhone });
+    }
 
     if (servicesChanged) {
       const servicesToRemove = oldServices.filter(s => !newServices.includes(s));
@@ -522,6 +557,15 @@ export const createVendorByAdmin = async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizePhone(phone);
+    const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number is not verified. Please verify using OTP first.'
+      });
+    }
+
     if (!businessName || !businessType) {
       return res.status(400).json({
         success: false,
@@ -556,6 +600,7 @@ export const createVendorByAdmin = async (req, res) => {
       email,
       password,
       phone,
+      isPhoneVerified: true,
       alternatePhone,
       gender,
 
@@ -607,6 +652,8 @@ export const createVendorByAdmin = async (req, res) => {
     }
 
     await vendor.populate('services', 'serviceName category basePrice duration');
+
+    await Otp.deleteMany({ phone: normalizedPhone });
 
     res.status(201).json({
       success: true,
@@ -687,6 +734,23 @@ export const updateVendorByAdmin = async (req, res) => {
       });
     }
 
+    let shouldDeleteOtpPhone = null;
+    if (phone !== undefined) {
+      const normalizedInput = normalizePhone(phone);
+      const normalizedCurrent = normalizePhone(vendor.phone);
+      if (normalizedInput !== normalizedCurrent) {
+        const otpRecord = await Otp.findOne({ phone: normalizedInput, verified: true });
+        if (!otpRecord) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        vendor.isPhoneVerified = true;
+        shouldDeleteOtpPhone = normalizedInput;
+      }
+    }
+
     let servicesChanged = false;
     let oldServices = [];
     let newServices = [];
@@ -734,6 +798,10 @@ export const updateVendorByAdmin = async (req, res) => {
     if (verificationStatus !== undefined) vendor.verificationStatus = verificationStatus;
 
     await vendor.save();
+
+    if (shouldDeleteOtpPhone) {
+      await Otp.deleteMany({ phone: shouldDeleteOtpPhone });
+    }
 
     if (servicesChanged) {
       const servicesToRemove = oldServices.filter(s => !newServices.includes(s));

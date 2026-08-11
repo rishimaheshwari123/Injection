@@ -13,6 +13,12 @@ export const API_ENDPOINTS = {
     REGISTER: "/users/register",
   },
 
+  // OTP
+  OTP: {
+    SEND: "/otp/send",
+    VERIFY: "/otp/verify",
+  },
+
   // Users
   USERS: {
     BASE: "/users",

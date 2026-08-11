@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserCheck, UserX, Download, Plus, Edit, Trash2, X, Eye, MoreVertical } from 'lucide-react';
-import { userAPI } from '../../services/api';
+import { Search, UserCheck, UserX, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, Check } from 'lucide-react';
+import { userAPI, otpAPI } from '../../services/api';
 import { setUsers, setLoading, updateUserStatus, addUser, updateUser, removeUser } from '../../store/slices/userSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toast } from 'react-toastify';
@@ -147,6 +147,57 @@ const UsersPage = () => {
   const [uploadingBloodReport, setUploadingBloodReport] = useState(false);
   const [uploadingHistoryDocument, setUploadingHistoryDocument] = useState(false);
   const [uploadingOtherDocument, setUploadingOtherDocument] = useState(false);
+
+  // OTP Verification States
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [lastVerifiedPhone, setLastVerifiedPhone] = useState('');
+
+  const handleSendOtp = async () => {
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const response = await otpAPI.sendOtp(formData.phone);
+      if (response.data.success) {
+        setOtpSent(true);
+        toast.success('OTP sent successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^[0-9]{6}$/.test(otpCode)) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const response = await otpAPI.verifyOtp(formData.phone, otpCode);
+      if (response.data.success) {
+        setIsPhoneVerified(true);
+        setLastVerifiedPhone(formData.phone);
+        setOtpSent(false);
+        setOtpCode('');
+        toast.success('Phone number verified successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const handleFileUpload = async (
     file: File | null,
@@ -310,6 +361,10 @@ const UsersPage = () => {
       setBloodReportUrl(user.bloodReport || '');
       setHistoryDocumentUrl(user.historyDocument || '');
       setOtherDocumentUrl(user.otherDocument || '');
+      setIsPhoneVerified(true);
+      setLastVerifiedPhone(user.phone || '');
+      setOtpSent(false);
+      setOtpCode('');
     } else {
       setEditMode(false);
       setSelectedUser(null);
@@ -324,6 +379,10 @@ const UsersPage = () => {
       setChronicDiseases([]);
       setCurrentMedications([]);
       setInsuranceType('Primary');
+      setIsPhoneVerified(false);
+      setLastVerifiedPhone('');
+      setOtpSent(false);
+      setOtpCode('');
     }
     setShowModal(true);
   };
@@ -729,9 +788,72 @@ const UsersPage = () => {
                   )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                    <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
+                    <div className="flex gap-2">
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({ ...formData, phone: val });
+                          if (val === lastVerifiedPhone && lastVerifiedPhone !== '') {
+                            setIsPhoneVerified(true);
+                          } else {
+                            setIsPhoneVerified(false);
+                          }
+                        }}
+                        disabled={otpSent}
+                        className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none transition-all ${
+                          isPhoneVerified ? 'border-green-300 bg-green-50' : 'border-gray-300'
+                        }`}
+                      />
+                      {!isPhoneVerified ? (
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={sendingOtp || otpSent || !/^[0-9]{10}$/.test(formData.phone)}
+                          className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-semibold rounded-lg hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center min-w-[90px]"
+                        >
+                          {sendingOtp ? 'Sending...' : otpSent ? 'Sent' : 'Verify'}
+                        </button>
+                      ) : (
+                        <span className="px-3 py-2 bg-green-100 text-green-700 font-bold rounded-lg text-xs flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> Verified
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  {otpSent && (
+                    <div className="md:col-span-2 bg-[#f4fbf3] border border-[#d2f4cc] rounded-xl p-4 mt-2 animate-fadeIn">
+                      <p className="text-xs text-slate-600 mb-2 font-medium">An OTP has been sent to {formData.phone}. Please enter the 6-digit verification code below:</p>
+                      <div className="flex gap-3 items-center">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          placeholder="Enter OTP"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none text-center font-bold tracking-widest text-base"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={verifyingOtp || otpCode.length !== 6}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg hover:shadow-md transition disabled:opacity-50 text-xs"
+                        >
+                          {verifyingOtp ? 'Verifying...' : 'Verify OTP'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOtpSent(false)}
+                          className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
                     <select required value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
@@ -1047,7 +1169,7 @@ const UsersPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !isPhoneVerified}
                   className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {submitting ? (

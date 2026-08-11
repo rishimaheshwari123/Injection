@@ -2,6 +2,8 @@ import User from '../models/User.js';
 import UserReview from '../models/UserReview.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
+import Otp from '../models/Otp.js';
+import { normalizePhone } from '../utils/sms.js';
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -68,6 +70,15 @@ export const userRegister = async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizePhone(phone);
+    const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number is not verified. Please verify using OTP first.'
+      });
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -131,6 +142,7 @@ export const userRegister = async (req, res) => {
       email,
       password,
       phone,
+      isPhoneVerified: true,
       gender,
       age,
       address,
@@ -160,6 +172,8 @@ export const userRegister = async (req, res) => {
       historyDocument: historyDocument || null,
       otherDocument: otherDocument || null
     });
+
+    await Otp.deleteMany({ phone: normalizedPhone });
 
     const token = generateToken(user._id, user.role);
 
@@ -312,6 +326,23 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
+    let shouldDeleteOtpPhone = null;
+    if (phone !== undefined) {
+      const normalizedInput = normalizePhone(phone);
+      const normalizedCurrent = normalizePhone(user.phone);
+      if (normalizedInput !== normalizedCurrent) {
+        const otpRecord = await Otp.findOne({ phone: normalizedInput, verified: true });
+        if (!otpRecord) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        user.isPhoneVerified = true;
+        shouldDeleteOtpPhone = normalizedInput;
+      }
+    }
+
     // Validation for allowed fields if passed
     if (name !== undefined && !name) {
       return res.status(400).json({ success: false, message: 'Name cannot be empty' });
@@ -388,6 +419,10 @@ export const updateUserProfile = async (req, res) => {
 
     await user.save();
 
+    if (shouldDeleteOtpPhone) {
+      await Otp.deleteMany({ phone: shouldDeleteOtpPhone });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
@@ -456,6 +491,15 @@ export const createUserByAdmin = async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizePhone(phone);
+    const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number is not verified. Please verify using OTP first.'
+      });
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -510,6 +554,7 @@ export const createUserByAdmin = async (req, res) => {
       email,
       password,
       phone,
+      isPhoneVerified: true,
       gender,
       age,
       address,
@@ -539,6 +584,8 @@ export const createUserByAdmin = async (req, res) => {
       historyDocument: historyDocument || null,
       otherDocument: otherDocument || null
     });
+
+    await Otp.deleteMany({ phone: normalizedPhone });
 
     res.status(201).json({
       success: true,
@@ -596,6 +643,23 @@ export const updateUserByAdmin = async (req, res) => {
         success: false,
         message: 'User not found'
       });
+    }
+
+    let shouldDeleteOtpPhone = null;
+    if (phone !== undefined) {
+      const normalizedInput = normalizePhone(phone);
+      const normalizedCurrent = normalizePhone(user.phone);
+      if (normalizedInput !== normalizedCurrent) {
+        const otpRecord = await Otp.findOne({ phone: normalizedInput, verified: true });
+        if (!otpRecord) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        user.isPhoneVerified = true;
+        shouldDeleteOtpPhone = normalizedInput;
+      }
     }
 
     // Validation for required fields if they are passed
@@ -699,6 +763,10 @@ export const updateUserByAdmin = async (req, res) => {
     }
 
     await user.save();
+
+    if (shouldDeleteOtpPhone) {
+      await Otp.deleteMany({ phone: shouldDeleteOtpPhone });
+    }
 
     res.status(200).json({
       success: true,

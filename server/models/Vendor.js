@@ -179,6 +179,10 @@ const vendorSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isPhoneVerified: {
+    type: Boolean,
+    default: false
+  },
   verificationStatus: {
     type: String,
     enum: ['pending', 'verified', 'rejected'],
