@@ -306,7 +306,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-650 mb-6">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-6">
               Home Healthcare Services in Bhopal
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed mb-6">
