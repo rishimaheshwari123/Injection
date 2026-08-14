@@ -157,6 +157,12 @@ const AdminLayout = () => {
       permission: "dashboard",
     },
     {
+      path: "/admin/team",
+      icon: Users,
+      label: "Team Management",
+      permission: "dashboard",
+    },
+    {
       path: "/admin/staff",
       icon: UserCog,
       label: "Staff Management",

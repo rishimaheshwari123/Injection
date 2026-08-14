@@ -390,4 +390,24 @@ export const otpAPI = {
   verifyOtp: (phone: string, otp: string) => api.post(API_ENDPOINTS.OTP.VERIFY, { phone, otp }),
 };
 
+// Team APIs
+export const teamAPI = {
+  getTeamMembers: () => api.get("/team"),
+  adminGetTeamMembers: () => api.get("/team/admin"),
+  getTeamMemberById: (id: string) => api.get(`/team/${id}`),
+  createTeamMember: (formData: FormData) =>
+    api.post("/team", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  updateTeamMember: (id: string, formData: FormData) =>
+    api.put(`/team/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  deleteTeamMember: (id: string) => api.delete(`/team/${id}`),
+};
+
 export default api;

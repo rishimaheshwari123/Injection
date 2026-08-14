@@ -285,7 +285,7 @@ const Navigation = () => {
     <>
       {/* Top Bar */}
       <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-2.5 hidden md:block">
-        <div className="w-[90vw] mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center text-xs">
             {/* Contact Info Pills */}
             <div className="flex items-center space-x-4">
@@ -306,106 +306,111 @@ const Navigation = () => {
             </div>
 
             {/* Social Media Circular Badges */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <a
                 href="https://www.facebook.com/profile.php?id=61592305092380"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Facebook"
               >
-                <Facebook size={13} />
+                <Facebook size={14} />
               </a>
               <a
                 href="https://x.com/InjectionPRLT"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Twitter"
               >
-                <Twitter size={13} />
+                <Twitter size={14} />
               </a>
               <a
                 href="https://youtube.com/@injectionbyprlt?si=lRttQ4dbW2Bvr3SS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="YouTube"
               >
-                <Youtube size={13} />
+                <Youtube size={14} />
               </a>
               <a
                 href="https://www.instagram.com/injection.prlt/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white border border-white/20 shadow-sm transition-all duration-200 hover:scale-110 hover:rotate-6"
                 aria-label="Instagram"
               >
-                <Instagram size={13} />
+                <Instagram size={14} />
               </a>
             </div>
           </div>
         </div>
       </div>
 
-      <nav className="bg-white shadow-lg sticky top-0 z-50">
-        <div className="w-[90vw] mx-auto px-4">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-3">
-                <img
-                  src={logo}
-                  alt="PRLT Health Care Logo"
-                  className="w-32 md:w-48 rounded-lg object-cover"
-                />
-              </Link>
-            </div>
+      {/* Centered Logo above Navbar (Desktop only) */}
+      <div className="hidden lg:flex justify-center items-center py-2 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
+        <Link to="/" className="flex items-center group">
+          <div className="relative p-3 bg-white rounded-2xl shadow-md border border-gray-100/80 transition-all duration-500 group-hover:shadow-lg group-hover:scale-[1.02]">
+            <img
+              src={logo}
+              alt="PRLT Health Care Logo"
+              className="h-28 md:h-32 w-auto rounded-xl object-contain"
+            />
+            {/* Soft decorative shadow/glow behind logo */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-teal-500/5 to-emerald-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </div>
+        </Link>
+      </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-3">
+      <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20 w-full">
+            {/* Mobile Logo (left) */}
+            <Link to="/" className="flex items-center space-x-3 lg:hidden">
+              <img
+                src={logo}
+                alt="PRLT Health Care Logo"
+                className="w-32 rounded-lg object-cover"
+              />
+            </Link>
+
+            {/* Desktop Navigation - Centered together */}
+            <div className="hidden lg:flex items-center justify-center space-x-2 w-full">
               {/* Home */}
               <Link
                 to="/"
-                className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  location.pathname === "/"
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
+                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                  }`}
               >
-                <Home size={18} />
                 <span>Home</span>
+                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '1rem', right: '1rem' }}></span>
               </Link>
 
               {/* About Us */}
               <Link
                 to="/about"
-                className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  location.pathname === "/about"
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
+                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/about" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                  }`}
               >
-                <User size={18} />
                 <span>About Us</span>
+                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/about" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '1rem', right: '1rem' }}></span>
               </Link>
 
               {/* Services Dropdown */}
-              <div className="relative services-dropdown">
+              <div className="relative services-dropdown group/srv">
                 <button
                   onClick={() =>
                     setIsServicesDropdownOpen(!isServicesDropdownOpen)
                   }
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    location.pathname.startsWith("/services")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center space-x-1.5 py-2.5 px-4 text-[15px] font-bold transition-all duration-300 ${location.pathname.startsWith("/services") ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                    }`}
                 >
-                  <Briefcase size={18} />
                   <span>Services</span>
                   <ChevronDown
-                    size={16}
+                    size={14}
                     className={`transition-transform duration-200 ${isServicesDropdownOpen ? "rotate-180" : ""}`}
                   />
                 </button>
@@ -417,11 +422,11 @@ const Navigation = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                      className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
                     >
                       <Link
                         to="/services"
-                        className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200"
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#3DB9A6] transition-colors duration-200"
                         onClick={() => setIsServicesDropdownOpen(false)}
                       >
                         <Briefcase size={16} />
@@ -432,7 +437,7 @@ const Navigation = () => {
                         <Link
                           key={path}
                           to={path}
-                          className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200"
+                          className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#3DB9A6] transition-colors duration-200"
                           onClick={() => setIsServicesDropdownOpen(false)}
                         >
                           <Icon size={16} />
@@ -447,46 +452,44 @@ const Navigation = () => {
               {/* Research */}
               <Link
                 to="/research"
-                className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  location.pathname === "/research"
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
+                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/research" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                  }`}
               >
-                <FlaskConical size={18} />
                 <span>Research</span>
+                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/research" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '1rem', right: '1rem' }}></span>
               </Link>
 
               {/* Blog */}
               <Link
                 to="/blog"
-                className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  location.pathname === "/blog"
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
+                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/blog" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                  }`}
               >
-                <BookOpen size={18} />
                 <span>Blog</span>
+                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/blog" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '1rem', right: '1rem' }}></span>
               </Link>
 
+              {/* Contact Us */}
               <Link
                 to="/contact"
-                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-300 mr-2"
+                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.03] transition-all duration-300 mr-2 ml-4"
               >
                 Contact Us
               </Link>
 
+              {/* Login / Profile */}
               {isAuthenticated ? (
                 <div className="relative user-dropdown">
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-sm font-bold hover:bg-slate-50 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#3DB9A6]/10 text-[#3DB9A6] flex items-center justify-center font-bold text-sm">
+                    <div className="w-6 h-6 rounded-full bg-[#3DB9A6]/10 text-[#3DB9A6] flex items-center justify-center font-bold text-xs">
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-gray-750 max-w-[125px] truncate font-bold">{user?.name}</span>
+                    <span className="text-gray-700 max-w-[120px] truncate font-bold">{user?.name}</span>
                     <ChevronDown size={14} className="text-gray-500" />
                   </button>
                   <AnimatePresence>
@@ -495,7 +498,7 @@ const Navigation = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50"
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
                       >
                         {user?.role === "admin" && (
                           <Link
@@ -540,9 +543,9 @@ const Navigation = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-slate-50 border border-slate-200 transition-all duration-300"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-bold text-gray-700 hover:text-[#3DB9A6] hover:bg-slate-50 border border-slate-200 transition-all duration-300"
                 >
-                  <User size={16} />
+                  <User size={15} />
                   <span>Login</span>
                 </Link>
               )}
@@ -584,10 +587,10 @@ const Navigation = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 lg:hidden"
+              className="fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 lg:hidden flex flex-col"
             >
               {/* Sidebar Header */}
-              <div className=" bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] p-6">
+              <div className=" bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] p-6 shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <img
@@ -606,7 +609,7 @@ const Navigation = () => {
               </div>
 
               {/* Navigation Links */}
-              <div className="py-6">
+              <div className="py-6 flex-grow overflow-y-auto">
                 {navItems.map(({ path, label, icon: Icon }, index) => (
                   <motion.div
                     key={path}
@@ -616,11 +619,10 @@ const Navigation = () => {
                   >
                     <Link
                       to={path}
-                      className={`flex items-center space-x-4 px-6 py-4 text-base font-medium transition-all duration-300 ${
-                        location.pathname === path
+                      className={`flex items-center space-x-4 px-6 py-4 text-base font-medium transition-all duration-300 ${location.pathname === path
                           ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
                           : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <Icon size={22} />
                       <span>{label}</span>
@@ -641,11 +643,10 @@ const Navigation = () => {
                   </div>
                   <Link
                     to="/services"
-                    className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${
-                      location.pathname === "/services"
+                    className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${location.pathname === "/services"
                         ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
                         : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <Briefcase size={22} />
                     <span>All Services</span>
@@ -654,11 +655,10 @@ const Navigation = () => {
                     <Link
                       key={path}
                       to={path}
-                      className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${
-                        location.pathname === path
+                      className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${location.pathname === path
                           ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
                           : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <Icon size={22} />
                       <span>{label}</span>
@@ -696,7 +696,7 @@ const Navigation = () => {
                           <p className="text-[10px] text-gray-500 leading-tight">{user?.email}</p>
                         </div>
                       </div>
-                      
+
                       {user?.role === "admin" && (
                         <Link
                           to="/admin"
@@ -750,7 +750,7 @@ const Navigation = () => {
               </div>
 
               {/* Sidebar Footer */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gray-50">
+              <div className="p-6 bg-gray-50 border-t border-gray-200 shrink-0">
                 <div className="text-center space-y-3">
                   <p className="text-sm font-medium text-gray-700 mb-3">
                     Contact Information
@@ -854,31 +854,28 @@ const Navigation = () => {
               <div className="flex border-b border-slate-150 px-6 bg-slate-50/50">
                 <button
                   onClick={() => setActiveTab('bookings')}
-                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${
-                    activeTab === 'bookings'
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${activeTab === 'bookings'
                       ? 'border-[#3DB9A6] text-[#3DB9A6]'
                       : 'border-transparent text-slate-400 hover:text-slate-600'
-                  }`}
+                    }`}
                 >
                   My Assignments & Bookings
                 </button>
                 <button
                   onClick={() => setActiveTab('feedback')}
-                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all flex items-center gap-1.5 ${
-                    activeTab === 'feedback'
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'feedback'
                       ? 'border-[#3DB9A6] text-[#3DB9A6]'
                       : 'border-transparent text-slate-400 hover:text-slate-600'
-                  }`}
+                    }`}
                 >
                   <Star size={13} className={activeTab === 'feedback' ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} /> My Behavior Reviews ({userReviews.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('family')}
-                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${
-                    activeTab === 'family'
+                  className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${activeTab === 'family'
                       ? 'border-[#3DB9A6] text-[#3DB9A6]'
                       : 'border-transparent text-slate-400 hover:text-slate-600'
-                  }`}
+                    }`}
                 >
                   My Family Members
                 </button>
@@ -907,15 +904,14 @@ const Navigation = () => {
                             <div className="space-y-2">
                               <div className="flex items-center gap-3 flex-wrap">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">#{booking._id.slice(-6)}</span>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                  booking.bookingStatus === "completed"
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${booking.bookingStatus === "completed"
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                     : booking.bookingStatus === "cancelled"
                                       ? "bg-red-50 text-red-700 border-red-100"
                                       : booking.bookingStatus === "in-progress"
                                         ? "bg-blue-50 text-blue-700 border-blue-100"
                                         : "bg-amber-50 text-amber-700 border-amber-100"
-                                }`}>
+                                  }`}>
                                   {booking.bookingStatus}
                                 </span>
                               </div>
@@ -946,11 +942,10 @@ const Navigation = () => {
                                 <span className="text-[10px] text-slate-400 block font-semibold">Total Amount</span>
                                 <span className="text-sm font-extrabold text-slate-800">₹{booking.grandTotal}</span>
                                 <span
-                                  className={`block text-[10px] font-extrabold uppercase mt-1 px-1.5 py-0.5 rounded-md text-center ${
-                                    booking.paymentStatus === "paid"
+                                  className={`block text-[10px] font-extrabold uppercase mt-1 px-1.5 py-0.5 rounded-md text-center ${booking.paymentStatus === "paid"
                                       ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
                                       : "bg-amber-50 text-amber-750 border border-amber-150"
-                                  }`}
+                                    }`}
                                 >
                                   {booking.paymentStatus || "pending"}
                                 </span>

@@ -39,6 +39,7 @@ import SettingsPage from "./pages/admin/SettingsPage";
 import NotificationsPage from "./pages/admin/NotificationsPage";
 import GalleryPage from "./pages/admin/GalleryPage";
 import HeroPage from "./pages/admin/HeroPage";
+import TeamPage from "./pages/admin/TeamPage";
 import SupportPage from "./pages/SupportPage";
 import PermissionGuard from "./components/PermissionGuard";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
@@ -48,14 +49,16 @@ import VendorProfilePage from "./pages/VendorProfilePage";
 import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
 import InjectionPage from "./pages/InjectionPage";
+import FloatingDownloadButton from "./components/FloatingDownloadButton";
 
 
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-white">
+  <div className="min-h-screen bg-white relative">
     <Navigation />
     {children}
     <Footer />
+    <FloatingDownloadButton />
   </div>
 );
 
@@ -415,6 +418,14 @@ function App() {
             element={
               <PermissionGuard permission="dashboard">
                 <HeroPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="team"
+            element={
+              <PermissionGuard permission="dashboard">
+                <TeamPage />
               </PermissionGuard>
             }
           />

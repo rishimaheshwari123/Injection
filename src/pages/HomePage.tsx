@@ -40,6 +40,14 @@ const HomePage = () => {
   // Gallery state
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [gallerySlide, setGallerySlide] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Hero state
   const [heroImages, setHeroImages] = useState<string[]>([]);
@@ -112,8 +120,9 @@ const HomePage = () => {
     fetchHero();
   }, []);
 
-  // Calculate number of slides needed for 3 images per view
-  const totalGallerySlides = Math.ceil(galleryImages.length / 3);
+  // Calculate number of slides needed based on viewport size
+  const itemsPerSlide = isMobile ? 1 : 3;
+  const totalGallerySlides = Math.ceil(galleryImages.length / itemsPerSlide);
 
   // Gallery auto-scroll
   useEffect(() => {
@@ -173,49 +182,49 @@ const HomePage = () => {
 
   const features = [
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Certified & Experienced Healthcare Professionals",
       description:
         "Our team consists of highly trained and certified medical professionals dedicated to your care.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Safe & Hygienic Home Care Procedures",
       description:
         "We follow strict medical protocols to ensure the highest standards of safety and hygiene.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Same-Day Service Availability",
       description:
         "Quick response and same-day medical assistance for your urgent healthcare needs.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Personalized Patient Care Plans",
       description:
         "Tailored healthcare solutions designed specifically for each patient's unique requirements.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Affordable Healthcare at Home",
       description:
         "High-quality medical services at competitive and transparent prices.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "24/7 Customer Support",
       description:
         "Our support team is always available to assist you with any queries or emergencies.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Transparent Pricing",
       description:
         "No hidden costs. We provide clear and upfront pricing for all our medical services.",
     },
     {
-      icon: CheckCircle,
+      image: "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?auto=compress&cs=tinysrgb&w=600&fit=crop&q=80",
       title: "Quick Appointment Booking",
       description:
         "Easy and fast booking process through our platform or via phone.",
@@ -244,11 +253,10 @@ const HomePage = () => {
           {activeSlides.map((slide, index) => (
             <div
               key={index}
-              className={`transition-opacity duration-1000 ${
-                index === currentSlide
-                  ? "opacity-100"
-                  : "opacity-0 absolute inset-0"
-              }`}
+              className={`transition-opacity duration-1000 ${index === currentSlide
+                ? "opacity-100"
+                : "opacity-0 absolute inset-0"
+                }`}
             >
               <img
                 src={slide.image}
@@ -288,34 +296,16 @@ const HomePage = () => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide
-                  ? "bg-teal-600 scale-125"
-                  : "bg-gray-400 hover:bg-gray-600"
-              }`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+                ? "bg-teal-600 scale-125"
+                : "bg-gray-400 hover:bg-gray-600"
+                }`}
             />
           ))}
         </div>
       </section>
 
-      {/* Main Title Section (H1 SEO Optimization) */}
-      <section className="py-16 bg-white text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-6">
-              Home Healthcare Services in Bhopal
-            </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-6">
-              Welcome to PRLT Health Care, your premier destination for the <strong>best home healthcare in Bhopal</strong>. We specialize in bringing professional clinical support right to your bedside. If you are seeking high-quality <strong>home healthcare services Bhopal</strong> residents trust, or need reliable <strong>healthcare at home Bhopal</strong> for your loved ones, our verified medical professionals are here to assist.
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
-          </motion.div>
-        </div>
-      </section>
+
 
       {/* ISO Certification Auto-Scrolling Image Slider */}
       <section className="py-12 bg-gradient-to-r from-blue-50 to-teal-50 overflow-hidden">
@@ -420,11 +410,11 @@ const HomePage = () => {
                   <div
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{
-                      transform: `translateX(-${gallerySlide * (100 / 3)}%)`,
+                      transform: `translateX(-${gallerySlide * (100 / itemsPerSlide)}%)`,
                     }}
                   >
                     {galleryImages.map((img, index) => (
-                      <div key={index} className="w-1/3 flex-shrink-0 px-2">
+                      <div key={index} className="w-full md:w-1/3 flex-shrink-0 px-2">
                         <img
                           src={img}
                           alt={`Gallery ${index + 1}`}
@@ -435,7 +425,7 @@ const HomePage = () => {
                   </div>
 
                   {/* Navigation Arrows */}
-                  {galleryImages.length > 3 && (
+                  {galleryImages.length > itemsPerSlide && (
                     <>
                       <button
                         onClick={prevGallerySlide}
@@ -454,19 +444,18 @@ const HomePage = () => {
                 </div>
 
                 {/* Slide Indicators */}
-                {galleryImages.length > 3 && (
+                {galleryImages.length > itemsPerSlide && (
                   <div className="flex justify-center mt-8 space-x-2">
                     {Array.from({
-                      length: Math.ceil(galleryImages.length / 3),
+                      length: Math.ceil(galleryImages.length / itemsPerSlide),
                     }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setGallerySlide(index)}
-                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          index === gallerySlide
-                            ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] scale-125"
-                            : "bg-gray-400 hover:bg-gray-600"
-                        }`}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${index === gallerySlide
+                          ? "bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] scale-125"
+                          : "bg-gray-400 hover:bg-gray-600"
+                          }`}
                       />
                     ))}
                   </div>
@@ -683,20 +672,36 @@ const HomePage = () => {
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6 rounded-xl hover:shadow-lg transition-all duration-300"
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group relative bg-white rounded-2xl border border-slate-100 hover:border-teal-500/30 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-teal-500/10 hover:-translate-y-2 transition-all duration-500 flex flex-col text-left"
               >
-                <div className="w-16 h-16 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-white" />
+                {/* Creative Top Accent Line */}
+                <div className="absolute top-0 left-0 w-0 h-[3px] bg-gradient-to-r from-teal-400 to-cyan-500 group-hover:w-full transition-all duration-550 z-20"></div>
+
+                {/* Creative Background Glow Layer */}
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/[0.02] to-cyan-500/[0.06] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
+
+                <div className="h-44 w-full overflow-hidden relative z-10">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-300"></div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {feature.description}
-                </p>
+
+                <div className="p-5 flex-grow flex flex-col relative z-10">
+                  <h3 className="text-base font-bold text-slate-800 mb-2 leading-snug group-hover:text-teal-600 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 text-xs leading-relaxed flex-grow mt-1">
+                    {feature.description}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -740,6 +745,22 @@ const HomePage = () => {
                   >
                     Our Services
                   </Link>
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.injection"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 466 511.98" className="h-5 w-auto">
+                      <g fillRule="nonzero">
+                        <path fill="#ffffff" d="M199.9 237.8 1.4 470.17c7.22 24.57 30.16 41.81 55.8 41.81 11.16 0 20.93-2.79 29.3-8.37l244.16-139.46L199.9 237.8z"/>
+                        <path fill="#ffffff" d="m433.91 205.1-104.65-60-111.61 110.22 113.01 108.83 104.64-58.6c18.14-9.77 30.7-29.3 30.7-50.23-1.4-20.93-13.95-40.46-32.09-50.22z"/>
+                        <path fill="#ffffff" d="M199.42 273.45 329.27 145.1 87.9 8.37C79.53 2.79 68.36 0 57.2 0 30.7 0 6.98 18.14 1.4 41.86l198.02 231.59z"/>
+                        <path fill="#ffffff" d="M1.39 41.86C0 46.04 0 51.63 0 57.2v397.64c0 5.57 0 9.76 1.4 15.34l216.27-214.86L1.39 41.86z"/>
+                      </g>
+                    </svg>
+                    Download App
+                  </a>
                 </div>
               </motion.div>
             </div>
@@ -862,7 +883,24 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
+      {/* Main Title Section (H1 SEO Optimization) */}
+      <section className="py-16 bg-white text-center">
+        <div className="max-w-4xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-6">
+              Home Healthcare Services in Bhopal
+            </h1>
+            <p className="text-xl text-gray-600 leading-relaxed mb-6">
+              Welcome to PRLT Health Care, your premier destination for the <strong>best home healthcare in Bhopal</strong>. We specialize in bringing professional clinical support right to your bedside. If you are seeking high-quality <strong>home healthcare services Bhopal</strong> residents trust, or need reliable <strong>healthcare at home Bhopal</strong> for your loved ones, our verified medical professionals are here to assist.
+            </p>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] mx-auto rounded-full"></div>
+          </motion.div>
+        </div>
+      </section>
       {/* FAQ Section */}
       <section className="py-20 bg-gray-50">
         <div className="w-[90vw] mx-auto px-4">
@@ -923,11 +961,10 @@ const HomePage = () => {
                   />
                 </button>
                 <div
-                  className={`px-6 transition-all duration-300 ease-in-out ${
-                    activeFaq === index
-                      ? "max-h-40 py-4 border-t border-gray-100"
-                      : "max-h-0"
-                  } overflow-hidden`}
+                  className={`px-6 transition-all duration-300 ease-in-out ${activeFaq === index
+                    ? "max-h-40 py-4 border-t border-gray-100"
+                    : "max-h-0"
+                    } overflow-hidden`}
                 >
                   <p className="text-gray-600">{faq.answer}</p>
                 </div>
