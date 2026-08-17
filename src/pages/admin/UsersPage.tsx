@@ -356,7 +356,12 @@ const UsersPage = () => {
     if (user) {
       setEditMode(true);
       setSelectedUser(user);
-      setFormData({ ...user, password: '' });
+      setFormData({
+        ...user,
+        password: '',
+        latitude: user.latitude ? user.latitude.toString() : '22.7196',
+        longitude: user.longitude ? user.longitude.toString() : '75.8577'
+      });
       setAllergies(parseMedicalEntries(user.allergies));
       setChronicDiseases(parseMedicalEntries(user.chronicDiseases));
       setCurrentMedications(parseMedicalEntries(user.currentMedications));

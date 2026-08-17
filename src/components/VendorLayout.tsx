@@ -10,6 +10,7 @@ import {
   X,
   Award,
   Share2,
+  Inbox,
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
@@ -46,6 +47,11 @@ const VendorLayout = () => {
       path: "/vendor/bookings",
       icon: Calendar,
       label: "Booking Management",
+    },
+    {
+      path: "/vendor/requests",
+      icon: Inbox,
+      label: "Booking Requests",
     },
     {
       path: "/vendor/services",

@@ -142,6 +142,8 @@ export const bookingAPI = {
   getBookingById: (id: string) => api.get(API_ENDPOINTS.BOOKINGS.BY_ID(id)),
   createBooking: (bookingData: any) =>
     api.post(API_ENDPOINTS.BOOKINGS.CREATE, bookingData),
+  createUserBooking: (bookingData: any) =>
+    api.post("/user-bookings/create", bookingData),
   getUserBookings: (params?: any) => api.get(API_ENDPOINTS.BOOKINGS.USER_BOOKINGS, { params }),
   submitReview: (bookingId: string, rating: number, reviewText: string) =>
     api.post(`/bookings/${bookingId}/review/vendor`, { rating, reviewText }),
@@ -149,6 +151,8 @@ export const bookingAPI = {
     api.post(`/bookings/${bookingId}/review/user`, { rating, reviewText }),
   getVendorBookings: () => api.get(API_ENDPOINTS.BOOKINGS.VENDOR_BOOKINGS),
   getAvailableBookings: () => api.get(API_ENDPOINTS.BOOKINGS.AVAILABLE),
+  getVendorNotifications: () => api.get("/user-bookings/notifications"),
+  acceptUserBooking: (bookingId: string) => api.put(`/user-bookings/accept/${bookingId}`),
   acceptBooking: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.ACCEPT(id)),
   startService: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.START(id)),
   completeService: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.COMPLETE(id)),

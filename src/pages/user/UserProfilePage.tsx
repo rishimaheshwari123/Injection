@@ -30,8 +30,8 @@ export default function UserProfilePage() {
     city: user?.city || "",
     state: user?.state || "",
     pincode: user?.pincode || "",
-    longitude: user?.longitude !== undefined ? user?.longitude.toString() : "",
-    latitude: user?.latitude !== undefined ? user?.latitude.toString() : "",
+    longitude: user?.longitude ? user.longitude.toString() : "75.8577",
+    latitude: user?.latitude ? user.latitude.toString() : "22.7196",
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
@@ -90,8 +90,8 @@ export default function UserProfilePage() {
           city: freshUser.city || "",
           state: freshUser.state || "",
           pincode: freshUser.pincode || "",
-          longitude: freshUser.longitude !== undefined ? freshUser.longitude.toString() : "",
-          latitude: freshUser.latitude !== undefined ? freshUser.latitude.toString() : "",
+          longitude: freshUser.longitude ? freshUser.longitude.toString() : "75.8577",
+          latitude: freshUser.latitude ? freshUser.latitude.toString() : "22.7196",
         });
         setFamilyMembers(freshUser.familyMembers || []);
       }

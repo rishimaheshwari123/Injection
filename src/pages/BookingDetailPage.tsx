@@ -260,6 +260,19 @@ const BookingDetailPage = () => {
   };
 
   // Vendor Action triggers
+  const handleAcceptBooking = async () => {
+    if (!id) return;
+    try {
+      const res = await bookingAPI.acceptBooking(id);
+      if (res.data && res.data.success) {
+        toast.success('Booking accepted successfully!');
+        setBooking(res.data.data);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to accept booking');
+    }
+  };
+
   const handleStartService = async () => {
     if (!id) return;
     try {
@@ -1024,6 +1037,15 @@ const BookingDetailPage = () => {
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
                 <h3 className="text-xs uppercase font-extrabold text-slate-450 tracking-wider">Service Provider Controls</h3>
                 
+                {booking.bookingStatus === 'pending' && (
+                  <button
+                    onClick={handleAcceptBooking}
+                    className="w-full py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 size={14} /> Accept Booking Assignment
+                  </button>
+                )}
+
                 {booking.bookingStatus === 'accepted' && (
                   <button
                     onClick={handleStartService}

@@ -299,7 +299,9 @@ const VendorsPage = () => {
             url: vendor.documents?.policeVerification?.url || ''
           }
         },
-        profileImage: vendor.profileImage || ''
+        profileImage: vendor.profileImage || '',
+        latitude: vendor.latitude ? vendor.latitude.toString() : '22.7196',
+        longitude: vendor.longitude ? vendor.longitude.toString() : '75.8577'
       });
       setServiceAreas(vendor.serviceAreas || []);
       setIsPhoneVerified(true);
@@ -457,6 +459,7 @@ const VendorsPage = () => {
 
       const submitData = {
         ...formData,
+        verificationStatus: formData.isVerified ? 'verified' : 'pending',
         serviceAreas,
         documents: Object.keys(cleanedDocuments).length > 0 ? cleanedDocuments : undefined,
         profileImage: formData.profileImage || undefined
@@ -624,8 +627,8 @@ const VendorsPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${vendor.businessType === 'Individual'
-                              ? 'bg-sky-50 text-sky-700 border-sky-100/70'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-100/70'
+                            ? 'bg-sky-50 text-sky-700 border-sky-100/70'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-100/70'
                             }`}>
                             {vendor.businessType}
                           </span>
@@ -658,8 +661,8 @@ const VendorsPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${vendor.isActive
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : 'bg-rose-50 text-rose-700 border-rose-100'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-100'
                             }`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${vendor.isActive ? 'bg-emerald-500' : 'bg-rose-400'}`}></span>
                             {vendor.isActive ? 'Active' : 'Inactive'}
@@ -1299,8 +1302,8 @@ const VendorsPage = () => {
                             <span className="text-xs text-gray-500 block">Services: {req.services?.length || 0}</span>
                           </div>
                           <span className={`px-2 py-0.5 text-2xs font-bold rounded-full border uppercase ${req.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
-                              req.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
-                                'bg-yellow-100 text-yellow-800 border-yellow-200'
+                            req.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                              'bg-yellow-100 text-yellow-800 border-yellow-200'
                             }`}>
                             {req.status}
                           </span>

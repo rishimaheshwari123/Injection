@@ -64,6 +64,18 @@ export default function VendorBookingsPage() {
     }
   };
 
+  const handleAcceptBooking = async (id: string) => {
+    try {
+      const res = await bookingAPI.acceptBooking(id);
+      if (res.data && res.data.success) {
+        toast.success("Booking accepted successfully!");
+        fetchBookings();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to accept booking");
+    }
+  };
+
   const formatBookingDateTime = (booking: any) => {
     if (booking.preferredTimeSlot) {
       try {
@@ -119,6 +131,7 @@ export default function VendorBookingsPage() {
   // Statistics calculation
   const stats = {
     total: bookings.length,
+    pending: bookings.filter((b) => b.bookingStatus === "pending").length,
     scheduled: bookings.filter((b) => b.bookingStatus === "accepted").length,
     inProgress: bookings.filter((b) => b.bookingStatus === "in-progress").length,
     completed: bookings.filter((b) => b.bookingStatus === "completed").length,
@@ -128,6 +141,7 @@ export default function VendorBookingsPage() {
     // Role status mapping
     const statusMatches =
       statusFilter === "All" ||
+      (statusFilter === "Pending" && booking.bookingStatus === "pending") ||
       (statusFilter === "Scheduled" && booking.bookingStatus === "accepted") ||
       (statusFilter === "In Progress" && booking.bookingStatus === "in-progress") ||
       (statusFilter === "Completed" && booking.bookingStatus === "completed") ||
@@ -166,7 +180,7 @@ export default function VendorBookingsPage() {
       </div>
 
       {/* Stats Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         {/* Total Bookings */}
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
           <div className="p-3 bg-slate-50 rounded-xl text-slate-600">
@@ -177,6 +191,19 @@ export default function VendorBookingsPage() {
               Total Assignments
             </span>
             <span className="text-2xl font-black text-slate-800">{stats.total}</span>
+          </div>
+        </div>
+
+        {/* Pending Assignments */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+          <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+            <Clock size={26} />
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-slate-400 block uppercase tracking-wider">
+              Pending
+            </span>
+            <span className="text-2xl font-black text-slate-800">{stats.pending}</span>
           </div>
         </div>
 
@@ -236,7 +263,7 @@ export default function VendorBookingsPage() {
 
         {/* Filters */}
         <div className="flex rounded-xl border p-1 bg-slate-50 overflow-x-auto self-start md:self-auto">
-          {["All", "Scheduled", "In Progress", "Completed", "Cancelled"].map(
+          {["All", "Pending", "Scheduled", "In Progress", "Completed", "Cancelled"].map(
             (status) => (
               <button
                 key={status}
@@ -369,14 +396,24 @@ export default function VendorBookingsPage() {
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
-                        <Link
-                          to={`/vendor/bookings/${booking._id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F]/10 to-[#3DB9A6]/10 text-teal-800 hover:from-[#63D64F]/20 hover:to-[#3DB9A6]/20 transition-all text-xs font-bold rounded-xl border border-teal-200/50"
-                        >
-                          <Eye size={13} />
-                          Details
-                          <ChevronRight size={12} />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {booking.bookingStatus === "pending" && (
+                            <button
+                              onClick={() => handleAcceptBooking(booking._id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white hover:shadow-md transition-all text-xs font-bold rounded-xl"
+                            >
+                              Accept
+                            </button>
+                          )}
+                          <Link
+                            to={`/vendor/bookings/${booking._id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F]/10 to-[#3DB9A6]/10 text-teal-800 hover:from-[#63D64F]/20 hover:to-[#3DB9A6]/20 transition-all text-xs font-bold rounded-xl border border-teal-200/50"
+                          >
+                            <Eye size={13} />
+                            Details
+                            <ChevronRight size={12} />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

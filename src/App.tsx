@@ -53,6 +53,7 @@ import FloatingDownloadButton from "./components/FloatingDownloadButton";
 import VendorLayout from "./components/VendorLayout";
 import VendorBookingsPage from "./pages/vendor/VendorBookingsPage";
 import VendorServicesPage from "./pages/vendor/VendorServicesPage";
+import VendorRequestsPage from "./pages/vendor/VendorRequestsPage";
 import UserLayout from "./components/UserLayout";
 import UserBookingsPage from "./pages/user/UserBookingsPage";
 import UserProfilePage from "./pages/user/UserProfilePage";
@@ -218,6 +219,7 @@ function App() {
           <Route path="bookings" element={<VendorBookingsPage />} />
           <Route path="bookings/:id" element={<BookingDetailPage />} />
           <Route path="services" element={<VendorServicesPage />} />
+          <Route path="requests" element={<VendorRequestsPage />} />
           <Route path="profile" element={<VendorProfilePage />} />
           <Route path="id-card" element={<VendorIdCardPage />} />
           <Route path="referrals" element={<MyReferralsPage />} />

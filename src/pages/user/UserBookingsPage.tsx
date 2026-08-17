@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { bookingAPI } from "../../services/api";
+import { bookingAPI, serviceAPI, vendorAPI, prescriptionAPI } from "../../services/api";
+import { useAppSelector } from "../../store/hooks";
+import { CreateBookingModal, ServiceDetailModal } from "../../components/bookings";
 import { toast } from "react-toastify";
 import {
   Search,
@@ -12,6 +14,7 @@ import {
   Phone,
   User,
   ClipboardList,
+  Plus,
 } from "lucide-react";
 
 interface Booking {
@@ -38,14 +41,39 @@ interface Booking {
 }
 
 export default function UserBookingsPage() {
+  const { user } = useAppSelector((state: any) => state.auth);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Modal and Autocomplete states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [selectedServiceForDetail, setSelectedServiceForDetail] = useState<any>(null);
+  const [showServiceDetailModal, setShowServiceDetailModal] = useState(false);
+
   useEffect(() => {
     fetchBookings();
+    loadModalData();
   }, []);
+
+  const loadModalData = async () => {
+    try {
+      const servicesRes = await serviceAPI.getPublicServices();
+      if (servicesRes.data.success) {
+        setServices(servicesRes.data.data || []);
+      }
+      
+      const vendorsRes = await vendorAPI.getAllVendors();
+      if (vendorsRes.data.success) {
+        setVendors(vendorsRes.data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to load autocomplete data for bookings", error);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -60,6 +88,114 @@ export default function UserBookingsPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateBooking = async (data: any) => {
+    const {
+      formData,
+      selectedUser,
+      selectedFamilyMemberId,
+      prescriptionData,
+      prescriptionFile,
+      dateTimeSlots,
+    } = data;
+
+    const subtotal = formData.selectedServices.reduce(
+      (sum: number, s: any) => sum + s.price * s.quantity,
+      0,
+    );
+    const grandTotal = subtotal;
+
+    const vendorId = formData.vendorId || (
+      formData.selectedServices.length > 0
+        ? formData.selectedServices[0].vendorId
+        : null
+    );
+
+    try {
+      const createdBookings = [];
+
+      for (let i = 0; i < dateTimeSlots.length; i++) {
+        const slot = dateTimeSlots[i];
+        const preferredTimeSlot = `${slot.date} ${slot.time}`;
+
+        const bookingData = {
+          ...formData,
+          preferredTimeSlot,
+          vendorId,
+          userId: selectedUser,
+          familyMemberId: selectedFamilyMemberId || null,
+          subtotal,
+          gstAmount: 0,
+          grandTotal,
+        };
+
+        const response = await bookingAPI.createUserBooking(bookingData);
+        if (response.data.success) {
+          const createdBooking = response.data.data;
+          createdBookings.push(createdBooking);
+
+          // Add prescription only to the first booking if provided
+          if (i === 0) {
+            const hasFormData =
+              prescriptionData.doctorName ||
+              prescriptionData.diagnosis ||
+              prescriptionData.medications.some((m: any) => m.name);
+
+            if (hasFormData) {
+              try {
+                if (prescriptionFile) {
+                  try {
+                    const uploadResponse =
+                      await prescriptionAPI.uploadImage(prescriptionFile);
+                    if (uploadResponse.data.success) {
+                      await bookingAPI.updatePrescription(
+                        createdBooking._id,
+                        {
+                          ...prescriptionData,
+                          supportingImageUrl: uploadResponse.data.data.url,
+                        },
+                        "form",
+                      );
+                    } else {
+                      await bookingAPI.updatePrescription(
+                        createdBooking._id,
+                        prescriptionData,
+                        "form",
+                      );
+                    }
+                  } catch (error: any) {
+                    await bookingAPI.updatePrescription(
+                      createdBooking._id,
+                      prescriptionData,
+                      "form",
+                    );
+                  }
+                } else {
+                  await bookingAPI.updatePrescription(
+                    createdBooking._id,
+                    prescriptionData,
+                    "form",
+                  );
+                }
+              } catch (error: any) {
+                console.error("Prescription save failed for first booking");
+              }
+            }
+          }
+        }
+      }
+
+      if (createdBookings.length > 0) {
+        toast.success(
+          `${createdBookings.length} booking(s) created successfully!`
+        );
+        setShowCreateModal(false);
+        fetchBookings();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create bookings");
     }
   };
 
@@ -163,6 +299,13 @@ export default function UserBookingsPage() {
           </h1>
           <p className="text-slate-500 mt-1">Track and manage your healthcare service requests</p>
         </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl hover:shadow-lg font-bold transition-all text-sm"
+        >
+          <Plus size={18} />
+          Book Service
+        </button>
       </div>
 
       {/* Stats Summary Cards */}
@@ -404,6 +547,32 @@ export default function UserBookingsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {showCreateModal && (
+        <CreateBookingModal
+          show={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateBooking}
+          services={services}
+          users={user ? [user] : []}
+          vendors={vendors}
+          onServiceDetailClick={(service) => {
+            setSelectedServiceForDetail(service);
+            setShowServiceDetailModal(true);
+          }}
+        />
+      )}
+
+      {showServiceDetailModal && selectedServiceForDetail && (
+        <ServiceDetailModal
+          show={showServiceDetailModal}
+          onClose={() => {
+            setShowServiceDetailModal(false);
+            setSelectedServiceForDetail(null);
+          }}
+          service={selectedServiceForDetail}
+        />
       )}
     </div>
   );
