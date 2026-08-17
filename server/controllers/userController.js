@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import UserReview from '../models/UserReview.js';
+import Vendor from '../models/Vendor.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
 import Otp from '../models/Otp.js';
@@ -59,8 +60,27 @@ export const userRegister = async (req, res) => {
       medicalReport,
       bloodReport,
       historyDocument,
-      otherDocument
+      otherDocument,
+      referredBy
     } = req.body;
+
+    // Resolve referred by reference dynamically if provided
+    let referredByRef = null;
+    let referredByModel = null;
+    if (referredBy && typeof referredBy === 'string' && referredBy.trim() !== '') {
+      const trimmedRefCode = referredBy.trim().toUpperCase();
+      const referringUser = await User.findOne({ referralCode: trimmedRefCode });
+      if (referringUser) {
+        referredByRef = referringUser._id;
+        referredByModel = 'User';
+      } else {
+        const referringVendor = await Vendor.findOne({ referralCode: trimmedRefCode });
+        if (referringVendor) {
+          referredByRef = referringVendor._id;
+          referredByModel = 'Vendor';
+        }
+      }
+    }
 
     // Validation
     if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
@@ -170,7 +190,10 @@ export const userRegister = async (req, res) => {
       medicalReport: medicalReport || null,
       bloodReport: bloodReport || null,
       historyDocument: historyDocument || null,
-      otherDocument: otherDocument || null
+      otherDocument: otherDocument || null,
+      referredBy: referredBy || '',
+      referredByRef,
+      referredByModel
     });
 
     await Otp.deleteMany({ phone: normalizedPhone });
@@ -1119,5 +1142,105 @@ export const deleteFamilyMember = async (req, res) => {
       success: false,
       message: error.message || 'Server error'
     });
+  }
+};
+
+export const getReferralStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Get referred users
+    const referredUsers = await User.find({
+      referredByRef: userId,
+      referredByModel: 'User'
+    }).select('patientId name email phone createdAt');
+
+    // Get referred vendors
+    const referredVendors = await Vendor.find({
+      referredByRef: userId,
+      referredByModel: 'User'
+    }).select('vendorId name email phone businessName createdAt');
+
+    // Find who referred this user
+    let referrerName = null;
+    let referrerRole = null;
+    if (user.referredByRef) {
+      if (user.referredByModel === 'User') {
+        const refUser = await User.findById(user.referredByRef).select('name role');
+        if (refUser) {
+          referrerName = refUser.name;
+          referrerRole = refUser.role;
+        }
+      } else if (user.referredByModel === 'Vendor') {
+        const refVendor = await Vendor.findById(user.referredByRef).select('name role');
+        if (refVendor) {
+          referrerName = refVendor.name;
+          referrerRole = 'vendor';
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        referralCode: user.referralCode || null,
+        referredBy: user.referredBy || null,
+        referrerName,
+        referrerRole,
+        referredUsers,
+        referredVendors,
+        referredUsersCount: referredUsers.length,
+        referredVendorsCount: referredVendors.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral stats:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const generateMyReferralCode = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.referralCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Referral code already exists',
+        referralCode: user.referralCode
+      });
+    }
+
+    // Generate unique referral code (same logic as pre-save hook)
+    let isUnique = false;
+    let code = '';
+    while (!isUnique) {
+      code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const userMatch = await User.findOne({ referralCode: code });
+      const vendorMatch = await Vendor.findOne({ referralCode: code });
+      if (!userMatch && !vendorMatch) {
+        isUnique = true;
+      }
+    }
+
+    user.referralCode = code;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Referral code generated successfully',
+      referralCode: code
+    });
+  } catch (error) {
+    console.error('Error generating referral code:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };

@@ -41,6 +41,7 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
 
   // My Bookings & Reviews States
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
@@ -222,6 +223,23 @@ const Navigation = () => {
     };
   }, [userDropdownOpen]);
 
+  // Close register dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".register-dropdown")) {
+        setIsRegisterDropdownOpen(false);
+      }
+    };
+
+    if (isRegisterDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isRegisterDropdownOpen]);
+
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/about", label: "About Us", icon: User },
@@ -285,7 +303,7 @@ const Navigation = () => {
     <>
       {/* Top Bar */}
       <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-2.5 hidden md:block">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-[90vw] mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center text-xs">
             {/* Contact Info Pills */}
             <div className="flex items-center space-x-4">
@@ -348,55 +366,41 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Centered Logo above Navbar (Desktop only) */}
-      <div className="hidden lg:flex justify-center items-center py-2 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
-        <Link to="/" className="flex items-center group">
-          <div className="relative p-3 bg-white rounded-2xl shadow-md border border-gray-100/80 transition-all duration-500 group-hover:shadow-lg group-hover:scale-[1.02]">
-            <img
-              src={logo}
-              alt="PRLT Health Care Logo"
-              className="h-28 md:h-32 w-auto rounded-xl object-contain"
-            />
-            {/* Soft decorative shadow/glow behind logo */}
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-teal-500/5 to-emerald-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          </div>
-        </Link>
-      </div>
-
+      {/* Navbar Container */}
       <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-[90vw] mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 w-full">
-            {/* Mobile Logo (left) */}
-            <Link to="/" className="flex items-center space-x-3 lg:hidden">
+            {/* Logo (left) */}
+            <Link to="/" className="flex items-center space-x-3 shrink-0">
               <img
                 src={logo}
                 alt="PRLT Health Care Logo"
-                className="w-32 rounded-lg object-cover"
+                className="h-10 md:h-20 w-auto rounded-lg object-contain"
               />
             </Link>
 
-            {/* Desktop Navigation - Centered together */}
-            <div className="hidden lg:flex items-center justify-center space-x-2 w-full">
+            {/* Desktop Navigation Links (middle) */}
+            <div className="hidden lg:flex items-center justify-center space-x-1 xl:space-x-3 flex-1 mx-4">
               {/* Home */}
               <Link
                 to="/"
-                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                className={`relative py-2.5 px-3 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
                   }`}
               >
                 <span>Home</span>
-                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/" ? "w-auto" : "w-0 group-hover:w-auto"
-                  }`} style={{ left: '1rem', right: '1rem' }}></span>
+                <span className={`absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '0.75rem', right: '0.75rem' }}></span>
               </Link>
 
               {/* About Us */}
               <Link
                 to="/about"
-                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/about" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                className={`relative py-2.5 px-3 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/about" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
                   }`}
               >
                 <span>About Us</span>
-                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/about" ? "w-auto" : "w-0 group-hover:w-auto"
-                  }`} style={{ left: '1rem', right: '1rem' }}></span>
+                <span className={`absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/about" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '0.75rem', right: '0.75rem' }}></span>
               </Link>
 
               {/* Services Dropdown */}
@@ -405,7 +409,7 @@ const Navigation = () => {
                   onClick={() =>
                     setIsServicesDropdownOpen(!isServicesDropdownOpen)
                   }
-                  className={`flex items-center space-x-1.5 py-2.5 px-4 text-[15px] font-bold transition-all duration-300 ${location.pathname.startsWith("/services") ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                  className={`flex items-center space-x-1.5 py-2.5 px-3 text-[15px] font-bold transition-all duration-300 ${location.pathname.startsWith("/services") ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
                     }`}
                 >
                   <span>Services</span>
@@ -452,34 +456,36 @@ const Navigation = () => {
               {/* Research */}
               <Link
                 to="/research"
-                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/research" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                className={`relative py-2.5 px-3 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/research" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
                   }`}
               >
                 <span>Research</span>
-                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/research" ? "w-auto" : "w-0 group-hover:w-auto"
-                  }`} style={{ left: '1rem', right: '1rem' }}></span>
+                <span className={`absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/research" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '0.75rem', right: '0.75rem' }}></span>
               </Link>
 
               {/* Blog */}
               <Link
                 to="/blog"
-                className={`relative py-2.5 px-4 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/blog" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
+                className={`relative py-2.5 px-3 text-[15px] font-bold transition-all duration-300 group ${location.pathname === "/blog" ? "text-[#3DB9A6]" : "text-gray-600 hover:text-[#3DB9A6]"
                   }`}
               >
                 <span>Blog</span>
-                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/blog" ? "w-auto" : "w-0 group-hover:w-auto"
-                  }`} style={{ left: '1rem', right: '1rem' }}></span>
+                <span className={`absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] rounded-full transition-all duration-300 ${location.pathname === "/blog" ? "w-auto" : "w-0 group-hover:w-auto"
+                  }`} style={{ left: '0.75rem', right: '0.75rem' }}></span>
               </Link>
 
               {/* Contact Us */}
               <Link
                 to="/contact"
-                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.03] transition-all duration-300 mr-2 ml-4"
+                className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white px-5 py-2 rounded-full font-bold text-sm hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.03] transition-all duration-300"
               >
                 Contact Us
               </Link>
+            </div>
 
-              {/* Login / Profile */}
+            {/* Desktop Auth Section (right) */}
+            <div className="hidden lg:flex items-center gap-3 shrink-0">
               {isAuthenticated ? (
                 <div className="relative user-dropdown">
                   <button
@@ -519,15 +525,22 @@ const Navigation = () => {
                           </Link>
                         )}
                         {user?.role === "user" && (
-                          <button
-                            onClick={() => {
-                              setMyBookingsOpen(true);
-                              setUserDropdownOpen(false);
-                            }}
-                            className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
-                          >
-                            My Bookings
-                          </button>
+                          <>
+                            <Link
+                              to="/user/bookings"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                              onClick={() => setUserDropdownOpen(false)}
+                            >
+                              My Bookings
+                            </Link>
+                            <Link
+                              to="/user/profile"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                              onClick={() => setUserDropdownOpen(false)}
+                            >
+                              My Profile
+                            </Link>
+                          </>
                         )}
                         <hr className="my-1 border-gray-100" />
                         <button
@@ -541,20 +554,63 @@ const Navigation = () => {
                   </AnimatePresence>
                 </div>
               ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-bold text-gray-700 hover:text-[#3DB9A6] hover:bg-slate-50 border border-slate-200 transition-all duration-300"
-                >
-                  <User size={15} />
-                  <span>Login</span>
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    to="/login"
+                    className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-bold text-gray-700 hover:text-[#3DB9A6] hover:bg-slate-50 border border-slate-200 transition-all duration-300"
+                  >
+                    <User size={15} />
+                    <span>Login</span>
+                  </Link>
+
+                  {/* Register Dropdown */}
+                  <div className="relative register-dropdown">
+                    <button
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(!isRegisterDropdownOpen);
+                        setUserDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-extrabold text-white bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all duration-300"
+                    >
+                      <span>Register</span>
+                      <ChevronDown size={14} className="text-white" />
+                    </button>
+                    <AnimatePresence>
+                      {isRegisterDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 text-left"
+                        >
+                          <Link
+                            to="/register/user"
+                            className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-50 hover:text-[#3DB9A6] font-semibold transition-colors"
+                            onClick={() => setIsRegisterDropdownOpen(false)}
+                          >
+                            <User size={16} className="text-gray-400" />
+                            <span>User Register</span>
+                          </Link>
+                          <Link
+                            to="/vendor/register"
+                            className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-50 hover:text-[#63D64F] font-semibold transition-colors"
+                            onClick={() => setIsRegisterDropdownOpen(false)}
+                          >
+                            <Briefcase size={16} className="text-gray-400" />
+                            <span>Vendor Register</span>
+                          </Link>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-150 transition-colors duration-205"
               aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? (
@@ -620,8 +676,8 @@ const Navigation = () => {
                     <Link
                       to={path}
                       className={`flex items-center space-x-4 px-6 py-4 text-base font-medium transition-all duration-300 ${location.pathname === path
-                          ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
-                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                        ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
+                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                         }`}
                     >
                       <Icon size={22} />
@@ -644,8 +700,8 @@ const Navigation = () => {
                   <Link
                     to="/services"
                     className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${location.pathname === "/services"
-                        ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
-                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                      ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
+                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                       }`}
                   >
                     <Briefcase size={22} />
@@ -656,8 +712,8 @@ const Navigation = () => {
                       key={path}
                       to={path}
                       className={`flex items-center space-x-4 px-6 py-3 text-base font-medium transition-all duration-300 ${location.pathname === path
-                          ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
-                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                        ? "text-blue-600 bg-blue-50 border-r-4 border-blue-600"
+                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                         }`}
                     >
                       <Icon size={22} />
@@ -716,15 +772,22 @@ const Navigation = () => {
                         </Link>
                       )}
                       {user?.role === "user" && (
-                        <button
-                          onClick={() => {
-                            setMyBookingsOpen(true);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
-                        >
-                          My Bookings
-                        </button>
+                        <>
+                          <Link
+                            to="/user/bookings"
+                            className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300 mb-2"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            My Bookings
+                          </Link>
+                          <Link
+                            to="/user/profile"
+                            className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            My Profile
+                          </Link>
+                        </>
                       )}
                       <button
                         onClick={() => {
@@ -737,14 +800,31 @@ const Navigation = () => {
                       </button>
                     </div>
                   ) : (
-                    <Link
-                      to="/login"
-                      className="flex items-center justify-center space-x-2 w-full border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all duration-300"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <User size={18} />
-                      <span>Login</span>
-                    </Link>
+                    <div className="flex flex-col gap-2.5 w-full">
+                      <Link
+                        to="/login"
+                        className="flex items-center justify-center space-x-2 w-full border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <User size={18} />
+                        <span>Login</span>
+                      </Link>
+                      <div className="border-t border-slate-100 my-1"></div>
+                      <Link
+                        to="/register/user"
+                        className="flex items-center justify-center space-x-2 w-full text-white bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] px-6 py-3 rounded-lg font-semibold hover:shadow-md transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <span>User Register</span>
+                      </Link>
+                      <Link
+                        to="/vendor/register"
+                        className="flex items-center justify-center space-x-2 w-full text-white bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] px-6 py-3 rounded-lg font-semibold hover:shadow-md transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <span>Vendor Register</span>
+                      </Link>
+                    </div>
                   )}
                 </motion.div>
               </div>
@@ -855,8 +935,8 @@ const Navigation = () => {
                 <button
                   onClick={() => setActiveTab('bookings')}
                   className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${activeTab === 'bookings'
-                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
-                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                    ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                 >
                   My Assignments & Bookings
@@ -864,8 +944,8 @@ const Navigation = () => {
                 <button
                   onClick={() => setActiveTab('feedback')}
                   className={`py-3 px-4 font-bold text-xs border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'feedback'
-                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
-                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                    ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                 >
                   <Star size={13} className={activeTab === 'feedback' ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} /> My Behavior Reviews ({userReviews.length})
@@ -873,8 +953,8 @@ const Navigation = () => {
                 <button
                   onClick={() => setActiveTab('family')}
                   className={`py-3 px-4 font-bold text-xs border-b-2 transition-all ${activeTab === 'family'
-                      ? 'border-[#3DB9A6] text-[#3DB9A6]'
-                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                    ? 'border-[#3DB9A6] text-[#3DB9A6]'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                 >
                   My Family Members
@@ -905,12 +985,12 @@ const Navigation = () => {
                               <div className="flex items-center gap-3 flex-wrap">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">#{booking._id.slice(-6)}</span>
                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${booking.bookingStatus === "completed"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                    : booking.bookingStatus === "cancelled"
-                                      ? "bg-red-50 text-red-700 border-red-100"
-                                      : booking.bookingStatus === "in-progress"
-                                        ? "bg-blue-50 text-blue-700 border-blue-100"
-                                        : "bg-amber-50 text-amber-700 border-amber-100"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                  : booking.bookingStatus === "cancelled"
+                                    ? "bg-red-50 text-red-700 border-red-100"
+                                    : booking.bookingStatus === "in-progress"
+                                      ? "bg-blue-50 text-blue-700 border-blue-100"
+                                      : "bg-amber-50 text-amber-700 border-amber-100"
                                   }`}>
                                   {booking.bookingStatus}
                                 </span>
@@ -943,8 +1023,8 @@ const Navigation = () => {
                                 <span className="text-sm font-extrabold text-slate-800">₹{booking.grandTotal}</span>
                                 <span
                                   className={`block text-[10px] font-extrabold uppercase mt-1 px-1.5 py-0.5 rounded-md text-center ${booking.paymentStatus === "paid"
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
-                                      : "bg-amber-50 text-amber-750 border border-amber-150"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
+                                    : "bg-amber-50 text-amber-750 border border-amber-150"
                                     }`}
                                 >
                                   {booking.paymentStatus || "pending"}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
@@ -19,7 +19,10 @@ import Footer from '../components/Footer';
 const VendorProfilePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  const isDashboard = location.pathname.startsWith('/vendor');
   
   const [vendorData, setVendorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -225,11 +228,11 @@ const VendorProfilePage = () => {
   if (loading) {
     return (
       <div>
-        <Navigation />
+        {!isDashboard && <Navigation />}
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#63D64F]"></div>
         </div>
-        <Footer />
+        {!isDashboard && <Footer />}
       </div>
     );
   }
@@ -237,7 +240,7 @@ const VendorProfilePage = () => {
   if (!vendorData) {
     return (
       <div>
-        <Navigation />
+        {!isDashboard && <Navigation />}
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
           <AlertCircle size={48} className="text-red-500 mb-4" />
           <h2 className="text-xl font-bold text-gray-800">Profile Not Found</h2>
@@ -246,7 +249,7 @@ const VendorProfilePage = () => {
             <LogOut size={18} /> Logout
           </button>
         </div>
-        <Footer />
+        {!isDashboard && <Footer />}
       </div>
     );
   }
@@ -265,7 +268,7 @@ const VendorProfilePage = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <Navigation />
+      {!isDashboard && <Navigation />}
       
       {/* Banner / Header */}
       <div className="bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white py-12">
@@ -1012,7 +1015,7 @@ const VendorProfilePage = () => {
         )}
       </AnimatePresence>
 
-      <Footer />
+      {!isDashboard && <Footer />}
     </div>
   );
 };

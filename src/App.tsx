@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
@@ -50,6 +50,17 @@ import AdminVendorIdCardPage from "./pages/admin/AdminVendorIdCardPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
 import InjectionPage from "./pages/InjectionPage";
 import FloatingDownloadButton from "./components/FloatingDownloadButton";
+import VendorLayout from "./components/VendorLayout";
+import VendorBookingsPage from "./pages/vendor/VendorBookingsPage";
+import VendorServicesPage from "./pages/vendor/VendorServicesPage";
+import UserLayout from "./components/UserLayout";
+import UserBookingsPage from "./pages/user/UserBookingsPage";
+import UserProfilePage from "./pages/user/UserProfilePage";
+import UserRegisterPage from "./pages/UserRegisterPage";
+import VendorRegisterPage from "./pages/VendorRegisterPage";
+import VendorIdCardPage from "./pages/VendorIdCardPage";
+import UserIdCardPage from "./pages/UserIdCardPage";
+import MyReferralsPage from "./pages/MyReferralsPage";
 
 
 // Layout wrapper for public pages
@@ -69,6 +80,16 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<Navigate to="/register/user" replace />} />
+        <Route path="/register/user" element={<UserRegisterPage />} />
+        <Route
+          path="/vendor/register"
+          element={
+            <PublicLayout>
+              <VendorRegisterPage />
+            </PublicLayout>
+          }
+        />
 
         {/* Public Routes with Navigation and Footer */}
         <Route
@@ -184,14 +205,40 @@ function App() {
           }
         />
 
+        {/* Vendor Routes */}
         <Route
-          path="/vendor/profile"
+          path="/vendor"
           element={
-            <ProtectedRoute>
-              <VendorProfilePage />
+            <ProtectedRoute requireVendor={true}>
+              <VendorLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="bookings" replace />} />
+          <Route path="bookings" element={<VendorBookingsPage />} />
+          <Route path="bookings/:id" element={<BookingDetailPage />} />
+          <Route path="services" element={<VendorServicesPage />} />
+          <Route path="profile" element={<VendorProfilePage />} />
+          <Route path="id-card" element={<VendorIdCardPage />} />
+          <Route path="referrals" element={<MyReferralsPage />} />
+        </Route>
+
+        {/* User Routes */}
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute>
+              <UserLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="bookings" replace />} />
+          <Route path="bookings" element={<UserBookingsPage />} />
+          <Route path="bookings/:id" element={<BookingDetailPage />} />
+          <Route path="profile" element={<UserProfilePage />} />
+          <Route path="id-card" element={<UserIdCardPage />} />
+          <Route path="referrals" element={<MyReferralsPage />} />
+        </Route>
 
         <Route
           path="/booking/:id"

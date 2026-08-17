@@ -65,6 +65,8 @@ export const userAPI = {
   deleteFamilyMember: (memberId: string) => api.delete(`/users/profile/family/${memberId}`),
   adminAddFamilyMember: (userId: string, data: any) => api.post(`/users/${userId}/family`, data),
   adminDeleteFamilyMember: (userId: string, memberId: string) => api.delete(`/users/${userId}/family/${memberId}`),
+  getReferralStats: () => api.get("/users/referrals/stats"),
+  generateReferralCode: () => api.post("/users/referrals/generate"),
 };
 
 // Vendor APIs
@@ -100,6 +102,8 @@ export const vendorAPI = {
   },
   getReviews: (vendorId: string) => api.get(`/vendors/${vendorId}/reviews`),
   getIdCardDetails: (vendorId: string) => api.get(`/vendors/${vendorId}/id-card`),
+  getReferralStats: () => api.get("/vendors/referrals/stats"),
+  generateReferralCode: () => api.post("/vendors/referrals/generate"),
 };
 
 // Service APIs

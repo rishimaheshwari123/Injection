@@ -1,48 +1,24 @@
-import { useEffect, useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { vendorAPI } from '../services/api';
-import { Award, Download, ShieldCheck } from 'lucide-react';
+import { Award, Download, ShieldCheck, Heart } from 'lucide-react';
 import { toast } from 'react-toastify';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
-export default function VendorIdCardPage() {
+export default function UserIdCardPage() {
   const { user } = useSelector((state: any) => state.auth);
-  const [loading, setLoading] = useState(true);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [cardDetails, setCardDetails] = useState<any>(null);
-
-  useEffect(() => {
-    if (user?._id) {
-      fetchCardDetails(user._id);
-    }
-  }, [user]);
-
-  const fetchCardDetails = async (vendorId: string) => {
-    try {
-      setLoading(true);
-      const res = await vendorAPI.getIdCardDetails(vendorId);
-      if (res.data && res.data.success) {
-        setCardDetails(res.data.data);
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to load ID card settings");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadPDF = async () => {
-    if (!cardRef.current || !cardDetails?.vendor) return;
+    if (!cardRef.current || !user) return;
     try {
       setDownloadingPdf(true);
       const element = cardRef.current;
       const opt = {
         margin:       0.1,
-        filename:     `${cardDetails.vendor.name.replace(/\s+/g, '_')}_ID_Card.pdf`,
+        filename:     `${user.name.replace(/\s+/g, '_')}_Member_Card.pdf`,
         image:        { type: 'jpeg' as const, quality: 1.0 },
         html2canvas:  { 
           scale: 2.5, 
@@ -63,13 +39,19 @@ export default function VendorIdCardPage() {
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], avoid: ['div', 'img', 'tr'] }
       };
       await html2pdf().from(element).set(opt).save();
-      toast.success("ID Card PDF downloaded successfully!");
+      toast.success("Member Card PDF downloaded successfully!");
     } catch (error) {
       console.error(error);
       toast.error("Failed to download PDF");
     } finally {
       setDownloadingPdf(false);
     }
+  };
+
+  const getMemberId = () => {
+    if (!user?._id) return "MEM-PENDING";
+    // Construct a readable clean member ID from user ID
+    return `MEM-${user._id.substring(user._id.length - 8).toUpperCase()}`;
   };
 
   return (
@@ -105,15 +87,10 @@ export default function VendorIdCardPage() {
         <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center gap-2">
           <Award className="text-[#3DB9A6]" size={24} /> My Digital ID Card
         </h1>
-        <p className="text-sm text-slate-500 mt-1">View, print, and download your digital identity card badge.</p>
+        <p className="text-sm text-slate-500 mt-1">View, print, and download your digital healthcare membership card badge.</p>
       </div>
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-2">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-[#3DB9A6]"></div>
-          <p className="text-xs text-slate-500 font-medium">Loading ID Card details...</p>
-        </div>
-      ) : cardDetails?.vendor ? (
+      {user ? (
         <div className="flex flex-col items-center space-y-6 w-full print:p-0">
           
           {/* Action button */}
@@ -130,7 +107,7 @@ export default function VendorIdCardPage() {
                 </>
               ) : (
                 <>
-                  <Download size={14} /> Download / Print ID Card
+                  <Download size={14} /> Download / Print Member Card
                 </>
               )}
             </button>
@@ -140,15 +117,11 @@ export default function VendorIdCardPage() {
           <div ref={cardRef} className="print-card-only id-card-container w-80 bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-250/70 flex flex-col relative print:shadow-none print:border-slate-300" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
             {/* Card Header */}
             <div className="bg-gradient-to-r from-[#3DB9A6] to-[#63D64F] py-5 px-6 text-white text-center relative flex flex-col items-center gap-1">
-              {cardDetails.setting?.logoUrl ? (
-                <img src={cardDetails.setting.logoUrl} alt="Logo" className="h-10 object-contain" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center font-black text-lg text-white">
-                  +
-                </div>
-              )}
-              <h3 className="text-[10px] uppercase tracking-widest font-black text-white leading-tight">{cardDetails.setting?.title || 'General Medical Services'}</h3>
-              <p className="text-[8px] text-white/90 font-bold tracking-wide">REGISTERED MEDICAL PARTNER</p>
+              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-black text-lg text-white">
+                <Heart className="w-5 h-5 text-white fill-white" />
+              </div>
+              <h3 className="text-[11px] uppercase tracking-widest font-black text-white leading-tight">General Medical Services</h3>
+              <p className="text-[8px] text-white/90 font-bold tracking-wide">DIGITAL HEALTHCARE MEMBER</p>
             </div>
 
             {/* Card Body */}
@@ -156,11 +129,11 @@ export default function VendorIdCardPage() {
               {/* User Avatar */}
               <div className="relative mb-4">
                 <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-50 flex items-center justify-center">
-                  {cardDetails.vendor.profileImage ? (
-                    <img src={cardDetails.vendor.profileImage} alt={cardDetails.vendor.name} className="w-full h-full object-cover" />
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-3xl font-black text-slate-400 uppercase">
-                      {cardDetails.vendor.name.charAt(0)}
+                      {user.name.charAt(0)}
                     </span>
                   )}
                 </div>
@@ -171,44 +144,39 @@ export default function VendorIdCardPage() {
 
               {/* Name details */}
               <div className="mb-4">
-                <h2 className="text-xl font-extrabold text-slate-800 leading-tight mb-1">{cardDetails.vendor.name}</h2>
-                <p className="text-xs font-bold text-[#3DB9A6] uppercase tracking-wider">{cardDetails.vendor.specialization || 'General Partner'}</p>
-                <p className="text-[10px] font-semibold text-slate-400 mt-1">{cardDetails.vendor.businessName}</p>
+                <h2 className="text-xl font-extrabold text-slate-800 leading-tight mb-1">{user.name}</h2>
+                <p className="text-xs font-bold text-[#3DB9A6] uppercase tracking-wider">Verified Member</p>
               </div>
 
               {/* Information block */}
               <div className="w-full bg-slate-50 border border-slate-150/70 rounded-xl p-4 space-y-2.5 text-left mb-4">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Partner ID</span>
-                  <span className="font-extrabold text-slate-800 font-mono text-xs">{cardDetails.vendor.vendorId}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Member ID</span>
+                  <span className="font-extrabold text-slate-800 font-mono text-xs">{getMemberId()}</span>
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap flex-shrink-0">Email</span>
-                  <span className="font-semibold text-slate-700 text-[10px] break-all text-right leading-tight">{cardDetails.vendor.email}</span>
+                  <span className="font-semibold text-slate-700 text-[10px] break-all text-right leading-tight">{user.email}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Mobile</span>
-                  <span className="font-semibold text-slate-700 text-xs">{cardDetails.vendor.phone}</span>
+                  <span className="font-semibold text-slate-700 text-xs">{user.phone}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Issue Date</span>
-                  <span className="font-semibold text-slate-700 text-[11px]">
-                    {new Date(cardDetails.vendor.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Blood Group</span>
+                  <span className="font-extrabold text-red-600 text-xs">{user.bloodGroup || 'Unknown'}</span>
                 </div>
-              </div>
-
-              {/* Signature block */}
-              <div className="w-full flex flex-col items-center">
-                {cardDetails.setting?.signatureUrl ? (
-                  <img src={cardDetails.setting.signatureUrl} alt="Signature" className="h-10 object-contain mb-1" />
-                ) : (
-                  <div className="font-mono italic text-xs text-slate-500 font-bold mb-1 h-10 flex items-end">
-                    Auth Signatory
+                {user.pincode && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Pincode</span>
+                    <span className="font-semibold text-slate-700 text-xs">{user.pincode}</span>
                   </div>
                 )}
-                <div className="w-32 border-t-2 border-slate-300 my-1"></div>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Authorized Sign</span>
+              </div>
+
+              {/* Bottom tag */}
+              <div className="w-full text-center mt-2">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Healthcare at your doorstep</span>
               </div>
 
             </div>

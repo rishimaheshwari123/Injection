@@ -14,13 +14,19 @@ import {
   uploadVendorFile,
   verifyVendorDocument,
   getVendorReviews,
-  getVendorIdCardDetails
+  getVendorIdCardDetails,
+  getReferralStats,
+  generateMyReferralCode
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.post('/register', vendorRegister);
+
+router.get('/referrals/stats', protect, getReferralStats);
+router.post('/referrals/generate', protect, generateMyReferralCode);
+
 router.post('/upload', uploadVendorFile);
 
 

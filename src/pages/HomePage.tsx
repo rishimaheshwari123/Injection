@@ -16,7 +16,6 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { galleryAPI, heroAPI } from "../services/api";
-import logo from "../assets/logo.png";
 import s1 from "../assets/s1.jpeg";
 import s2 from "../assets/s2.jpeg";
 import s3 from "../assets/s3.jpeg";
@@ -54,22 +53,16 @@ const HomePage = () => {
 
   const slides = [
     {
-      image: logo,
-      // image: "https://img.freepik.com/free-photo/women-working-chemical-project-new-discovery_23-2148776759.jpg?semt=ais_hybrid&w=740&q=80",
-      // title: "Advancing Healthcare through Research & Innovation",
-      // subtitle: "PRLT Health Care and Research Solutions provide healthcare research, medical consultancy, and innovative health solutions to improve patient outcomes and medical advancements."
+      image: "/herobanner1.jpeg",
     },
     {
-      image:
-        "https://t3.ftcdn.net/jpg/06/45/68/94/360_F_645689490_Fzwptjq0YLCW8JZpC6lASo1KJcAgzZPj.jpg",
-      //   title: "Expert Medical Care at Your Doorstep",
-      //   subtitle: "Experience professional healthcare services in the comfort of your home with our qualified medical professionals and state-of-the-art equipment."
+      image: "/herobanner2.jpeg",
     },
     {
-      image:
-        "https://png.pngtree.com/thumb_back/fw800/background/20250828/pngtree-scientific-medical-laboratory-high-definition-close-up-photography-image_18542279.webp",
-      //   title: "Leading Medical Research & Training",
-      //   subtitle: "Join our comprehensive training programs and cutting-edge research initiatives that are shaping the future of healthcare and medical education."
+      image: "/herobanner3.jpeg",
+    },
+    {
+      image: "/herobanner4.jpeg",
     },
   ];
 
@@ -248,20 +241,21 @@ const HomePage = () => {
 
       {/* Hero Slider Section */}
       <section className="relative w-full flex items-center justify-center overflow-hidden bg-white">
-        {/* Slider Images */}
-        <div className="relative w-full z-0 max-h-[600px] md:max-h-[700px]">
+        {/* Slider Container */}
+        <div className="relative w-full z-0 aspect-[16/9] overflow-hidden">
           {activeSlides.map((slide, index) => (
             <div
               key={index}
-              className={`transition-opacity duration-1000 ${index === currentSlide
-                ? "opacity-100"
-                : "opacity-0 absolute inset-0"
+              className={`transition-opacity duration-1000 absolute inset-0 w-full h-full flex items-center justify-center bg-white ${index === currentSlide
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0 pointer-events-none"
                 }`}
             >
+              {/* Foreground Image */}
               <img
                 src={slide.image}
                 alt={`Healthcare slide ${index + 1}`}
-                className="w-full max-h-[15vh] md:max-h-[70vh] object-cover "
+                className="w-full h-full object-cover"
               />
             </div>
           ))}
@@ -291,12 +285,12 @@ const HomePage = () => {
         </button>
 
         {/* Slide Indicators */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
+        <div className="absolute bottom-3 md:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2 md:space-x-3">
           {activeSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+              className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 ${index === currentSlide
                 ? "bg-teal-600 scale-125"
                 : "bg-gray-400 hover:bg-gray-600"
                 }`}
@@ -753,10 +747,10 @@ const HomePage = () => {
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 466 511.98" className="h-5 w-auto">
                       <g fillRule="nonzero">
-                        <path fill="#ffffff" d="M199.9 237.8 1.4 470.17c7.22 24.57 30.16 41.81 55.8 41.81 11.16 0 20.93-2.79 29.3-8.37l244.16-139.46L199.9 237.8z"/>
-                        <path fill="#ffffff" d="m433.91 205.1-104.65-60-111.61 110.22 113.01 108.83 104.64-58.6c18.14-9.77 30.7-29.3 30.7-50.23-1.4-20.93-13.95-40.46-32.09-50.22z"/>
-                        <path fill="#ffffff" d="M199.42 273.45 329.27 145.1 87.9 8.37C79.53 2.79 68.36 0 57.2 0 30.7 0 6.98 18.14 1.4 41.86l198.02 231.59z"/>
-                        <path fill="#ffffff" d="M1.39 41.86C0 46.04 0 51.63 0 57.2v397.64c0 5.57 0 9.76 1.4 15.34l216.27-214.86L1.39 41.86z"/>
+                        <path fill="#ffffff" d="M199.9 237.8 1.4 470.17c7.22 24.57 30.16 41.81 55.8 41.81 11.16 0 20.93-2.79 29.3-8.37l244.16-139.46L199.9 237.8z" />
+                        <path fill="#ffffff" d="m433.91 205.1-104.65-60-111.61 110.22 113.01 108.83 104.64-58.6c18.14-9.77 30.7-29.3 30.7-50.23-1.4-20.93-13.95-40.46-32.09-50.22z" />
+                        <path fill="#ffffff" d="M199.42 273.45 329.27 145.1 87.9 8.37C79.53 2.79 68.36 0 57.2 0 30.7 0 6.98 18.14 1.4 41.86l198.02 231.59z" />
+                        <path fill="#ffffff" d="M1.39 41.86C0 46.04 0 51.63 0 57.2v397.64c0 5.57 0 9.76 1.4 15.34l216.27-214.86L1.39 41.86z" />
                       </g>
                     </svg>
                     Download App
@@ -977,84 +971,70 @@ const HomePage = () => {
       {/* Contact Form Section */}
       <section className="py-20 bg-white">
         <div className="w-[90vw] mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Info with Doctor Image */}
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            {/* Contact Info Card */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
+              className="bg-gray-50 p-8 rounded-xl border border-gray-100/80 shadow-sm"
             >
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                Get In Touch
-              </h2>
-              <p className="text-lg text-gray-600 mb-8">
-                Ready to experience quality healthcare? Contact us today to
-                learn more about our services or schedule a consultation with
-                our expert team.
-              </p>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Get In Touch
+                </h2>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  Ready to experience quality healthcare? Contact us today to
+                  learn more about our services or schedule a consultation with
+                  our expert team.
+                </p>
 
-              <div className="space-y-6 mb-8">
-                <a
-                  href="tel:+91-6260760514"
-                  className="flex items-center space-x-4 group"
-                >
-                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors duration-200">
-                    <Phone className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-teal-600 transition-colors duration-200">
-                      Phone Number
-                    </h3>
-                    <p className="text-gray-600">+91-6260760514</p>
-                  </div>
-                </a>
+                <div className="space-y-4">
+                  <a
+                    href="tel:+91-6260760514"
+                    className="flex items-center space-x-4 group bg-white p-4 rounded-xl border border-gray-100 hover:border-teal-200 transition-all duration-300 shadow-sm"
+                  >
+                    <div className="w-11 h-11 bg-teal-50 rounded-lg flex items-center justify-center group-hover:bg-teal-100 transition-colors duration-200 shrink-0">
+                      <Phone className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-600 transition-colors duration-200">
+                        Phone Number
+                      </h3>
+                      <p className="text-xs text-gray-500 font-medium mt-0.5">+91-6260760514</p>
+                    </div>
+                  </a>
 
-                <a
-                  href="mailto:info@prlthealthcare.com"
-                  className="flex items-center space-x-4 group"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
-                    <Mail className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
-                      Email Address
-                    </h3>
-                    <p className="text-gray-600">info@prlthealthcare.com</p>
-                  </div>
-                </a>
+                  <a
+                    href="mailto:info@prlthealthcare.com"
+                    className="flex items-center space-x-4 group bg-white p-4 rounded-xl border border-gray-100 hover:border-blue-200 transition-all duration-300 shadow-sm"
+                  >
+                    <div className="w-11 h-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200 shrink-0">
+                      <Mail className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                        Email Address
+                      </h3>
+                      <p className="text-xs text-gray-500 font-medium mt-0.5">info@prlthealthcare.com</p>
+                    </div>
+                  </a>
 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-green-600" />
+                  <div className="flex items-start space-x-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="w-11 h-11 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+                      <MapPin className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Office Address
+                      </h3>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">
+                        PRLT Healthcare and Research Solutions (OPC) Private Limited
+                        <br />
+                        B60 CORAL LIFE PHASE- 1, NEAR BMHRC, AYODHYA BYPASS ROAD KAROND BHOPAL 462038
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Office Address
-                    </h3>
-                    <p className="text-gray-600">
-                      PRLT Healthcare and Research Solutions (OPC) Private
-                      Limited
-                      <br />
-                      B60 CORAL LIFE PHASE- 1, NEAR BMHRC, AYODHYA BYPASS ROAD KAROND BHOPAL 462038
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Doctor Team Image */}
-              <div className="relative">
-                <img
-                  src="https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=500&h=300&fit=crop"
-                  alt="Medical team"
-                  className="w-full h-64 object-cover rounded-xl shadow-lg"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-xl"></div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-lg font-semibold">Our Expert Team</h3>
-                  <p className="text-sm text-gray-200">
-                    Dedicated healthcare professionals
-                  </p>
                 </div>
               </div>
             </motion.div>
@@ -1064,64 +1044,51 @@ const HomePage = () => {
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-gray-50 p-8 rounded-xl"
+              className="bg-gray-50 p-8 rounded-xl border border-gray-100/80 shadow-sm"
             >
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 Send us a Message
               </h3>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
-                    placeholder="Enter your full name"
-                  />
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex-grow flex-shrink-0 md:flex-1">
+
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full block h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  <div className="flex-grow flex-shrink-0 md:flex-1">
+
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full block h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Enter your email address"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
-                    placeholder="Enter your email address"
-                  />
-                </div>
 
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Phone Number
-                  </label>
                   <input
                     type="tel"
                     id="phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
+                    className="w-full block h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300"
                     placeholder="Enter your phone number"
                   />
                 </div>

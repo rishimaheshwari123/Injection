@@ -429,6 +429,10 @@ const VendorsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPhoneVerified) {
+      toast.error('Please verify the phone number via OTP first');
+      return;
+    }
     setSubmitting(true);
     try {
       const cleanedDocuments: any = {};

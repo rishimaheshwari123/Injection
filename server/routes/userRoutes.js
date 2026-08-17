@@ -16,15 +16,19 @@ import {
   uploadUserFile,
   getUserReviews,
   addFamilyMember,
-  deleteFamilyMember
+  deleteFamilyMember,
+  getReferralStats,
+  generateMyReferralCode
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.post('/register', userRegister);
-
 router.post('/login', userLogin);
+
+router.get('/referrals/stats', protect, getReferralStats);
+router.post('/referrals/generate', protect, generateMyReferralCode);
 
 router.post('/upload', protect, uploadUserFile);
 
