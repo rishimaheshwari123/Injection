@@ -4,6 +4,7 @@ import { userAPI } from "../../services/api";
 import { updateUserInState } from "../../store/slices/authSlice";
 import { RootState } from "../../store/store";
 import { toast } from "react-toastify";
+import { LocationAutocomplete } from "../../components/LocationAutocomplete";
 import {
   User,
   Mail,
@@ -33,6 +34,7 @@ export default function UserProfilePage() {
     latitude: user?.latitude !== undefined ? user?.latitude.toString() : "",
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
 
   // Family Members States
   const [familyMembers, setFamilyMembers] = useState<any[]>(user?.familyMembers || []);
@@ -254,18 +256,16 @@ export default function UserProfilePage() {
               </div>
 
               {/* City */}
-              <div>
+              <div className="relative z-30">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   City
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="city"
+                  <LocationAutocomplete
                     value={profileData.city}
-                    onChange={handleProfileChange}
-                    required
+                    onChange={(val) => setProfileData(prev => ({ ...prev, city: val }))}
+                    type="(cities)"
                     placeholder="City name"
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
@@ -273,18 +273,16 @@ export default function UserProfilePage() {
               </div>
 
               {/* State */}
-              <div>
+              <div className="relative z-30">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   State
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="state"
+                  <LocationAutocomplete
                     value={profileData.state}
-                    onChange={handleProfileChange}
-                    required
+                    onChange={(val) => setProfileData(prev => ({ ...prev, state: val }))}
+                    type="(regions)"
                     placeholder="State name"
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
@@ -292,22 +290,18 @@ export default function UserProfilePage() {
               </div>
 
               {/* Pincode */}
-              <div>
+              <div className="relative z-20">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   Pincode
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="pincode"
+                  <LocationAutocomplete
                     value={profileData.pincode}
-                    onChange={handleProfileChange}
-                    required
-                    maxLength={6}
-                    pattern="[0-9]{6}"
+                    onChange={(val) => setProfileData(prev => ({ ...prev, pincode: val }))}
+                    type="postal_code"
                     placeholder="6-digit pincode"
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
                 </div>
               </div>

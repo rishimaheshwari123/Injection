@@ -5,6 +5,7 @@ import { authAPI, otpAPI } from "../services/api";
 import { toast } from "react-toastify";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
+import { LocationAutocomplete } from "../components/LocationAutocomplete";
 
 export default function UserRegisterPage() {
   const navigate = useNavigate();
@@ -119,6 +120,8 @@ export default function UserRegisterPage() {
     referredBy: "",
   });
 
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
@@ -230,9 +233,8 @@ export default function UserRegisterPage() {
                       onChange={handleChange}
                       required
                       disabled={otpSent}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all ${
-                        isPhoneVerified ? "border-green-300 bg-green-50 text-green-700 font-semibold" : "border-slate-200"
-                      }`}
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all ${isPhoneVerified ? "border-green-300 bg-green-50 text-green-700 font-semibold" : "border-slate-200"
+                        }`}
                       placeholder="9876543210"
                     />
                   </div>
@@ -395,60 +397,52 @@ export default function UserRegisterPage() {
               </div>
 
               {/* City */}
-              <div className="sm:col-span-1">
+              <div className="sm:col-span-1 relative z-30">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   City
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="city"
+                  <LocationAutocomplete
                     value={formData.city}
-                    onChange={handleChange}
-                    required
+                    onChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+                    type="(cities)"
+                    placeholder="Bhopal"
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
-                    placeholder="Indore"
                   />
                 </div>
               </div>
 
               {/* State */}
-              <div className="sm:col-span-1">
+              <div className="sm:col-span-1 relative z-30">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   State
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="state"
+                  <LocationAutocomplete
                     value={formData.state}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    onChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                    type="(regions)"
                     placeholder="Madhya Pradesh"
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
                 </div>
               </div>
 
               {/* Pincode */}
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 relative z-20">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
                   Pincode
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                  <input
-                    type="text"
-                    name="pincode"
+                  <LocationAutocomplete
                     value={formData.pincode}
-                    onChange={handleChange}
-                    required
-                    maxLength={6}
-                    pattern="[0-9]{6}"
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    onChange={(val) => setFormData(prev => ({ ...prev, pincode: val }))}
+                    type="postal_code"
                     placeholder="452001"
+                    className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
                 </div>
               </div>
