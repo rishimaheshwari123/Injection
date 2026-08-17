@@ -46,6 +46,8 @@ export const vendorRegister = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -113,10 +115,10 @@ export const vendorRegister = async (req, res) => {
       });
     }
 
-    if (!address || !city || !state || !pincode) {
+    if (!address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Complete address information is required'
+        message: 'Complete address information including latitude and longitude is required'
       });
     }
 
@@ -164,6 +166,8 @@ export const vendorRegister = async (req, res) => {
       city,
       state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       serviceAreas: serviceAreas || [],
 
       // Documents
@@ -364,6 +368,7 @@ export const updateVendorProfile = async (req, res) => {
       'name', 'phone', 'alternatePhone', 'gender', 'businessName', 'businessType',
       'registrationNumber', 'gstNumber', 'qualifications',
       'experience', 'specialization', 'address', 'city', 'state', 'pincode',
+      'longitude', 'latitude',
       'serviceAreas', 'documents', 'availability', 'pricing', 'profileImage',
       'bio', 'bankDetails', 'services'
     ];
@@ -548,6 +553,8 @@ export const createVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -599,10 +606,10 @@ export const createVendorByAdmin = async (req, res) => {
       });
     }
 
-    if (!address || !city || !state || !pincode) {
+    if (!address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Complete address information is required'
+        message: 'Complete address information including latitude and longitude is required'
       });
     }
 
@@ -646,6 +653,8 @@ export const createVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       serviceAreas: serviceAreas || [],
 
       // Documents
@@ -724,6 +733,8 @@ export const updateVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -807,6 +818,8 @@ export const updateVendorByAdmin = async (req, res) => {
     if (city !== undefined) vendor.city = city;
     if (state !== undefined) vendor.state = state;
     if (pincode !== undefined) vendor.pincode = pincode;
+    if (longitude !== undefined) vendor.longitude = Number(longitude);
+    if (latitude !== undefined) vendor.latitude = Number(latitude);
     if (serviceAreas !== undefined) vendor.serviceAreas = serviceAreas;
 
     if (documents !== undefined) vendor.documents = documents;

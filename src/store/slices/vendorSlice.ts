@@ -13,6 +13,8 @@ interface Vendor {
   city: string;
   state: string;
   pincode: string;
+  longitude?: number;
+  latitude?: number;
   isVerified: boolean;
   isActive: boolean;
   verificationStatus: string;

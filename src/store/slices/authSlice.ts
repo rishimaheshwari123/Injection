@@ -10,7 +10,11 @@ interface User {
   rating?: number;
   totalReviews?: number;
   address?: string;
+  city?: string;
+  state?: string;
   pincode?: string;
+  longitude?: number;
+  latitude?: number;
   familyMembers?: any[];
   permissions?: {
     dashboard: boolean;

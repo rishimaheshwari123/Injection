@@ -108,6 +108,14 @@ const vendorSchema = new mongoose.Schema({
     required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
   },
+  longitude: {
+    type: Number,
+    required: [true, 'Longitude is required']
+  },
+  latitude: {
+    type: Number,
+    required: [true, 'Latitude is required']
+  },
   serviceAreas: [{
     type: String,
     trim: true

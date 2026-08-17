@@ -40,7 +40,7 @@ const VendorsPage = () => {
     gender: 'Male',
     businessName: '', businessType: 'Individual', registrationNumber: '',
     gstNumber: '', experience: '', specialization: '', address: '',
-    city: '', state: '', pincode: '', bio: '', profileImage: '',
+    city: '', state: '', pincode: '', longitude: '', latitude: '', bio: '', profileImage: '',
     isActive: true, isVerified: false,
     services: [] as string[],
     bankDetails: {
@@ -313,7 +313,7 @@ const VendorsPage = () => {
         gender: 'Male',
         businessName: '', businessType: 'Individual', registrationNumber: '',
         gstNumber: '', experience: '', specialization: '', address: '',
-        city: '', state: '', pincode: '', bio: '', profileImage: '',
+        city: '', state: '', pincode: '', longitude: '75.8577', latitude: '22.7196', bio: '', profileImage: '',
         isActive: true, isVerified: false,
         services: [],
         bankDetails: {
@@ -330,6 +330,18 @@ const VendorsPage = () => {
           policeVerification: { type: 'Police Verification', url: '' }
         }
       });
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setFormData(prev => ({
+              ...prev,
+              longitude: pos.coords.longitude.toString(),
+              latitude: pos.coords.latitude.toString()
+            }));
+          },
+          (err) => console.error(err)
+        );
+      }
       setServiceAreas([]);
       setIsPhoneVerified(false);
       setLastVerifiedPhone('');
@@ -1026,6 +1038,7 @@ const VendorsPage = () => {
                     <input type="text" required value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
                   </div>
+
                 </div>
               </div>
 

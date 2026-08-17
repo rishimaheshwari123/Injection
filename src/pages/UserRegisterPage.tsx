@@ -23,6 +23,34 @@ export default function UserRegisterPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            longitude: position.coords.longitude.toString(),
+            latitude: position.coords.latitude.toString()
+          }));
+        },
+        (error) => {
+          console.error("Error getting geolocation:", error);
+          setFormData(prev => ({
+            ...prev,
+            longitude: "75.8577",
+            latitude: "22.7196"
+          }));
+        }
+      );
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        longitude: "75.8577",
+        latitude: "22.7196"
+      }));
+    }
+  }, []);
+
   // OTP Verification States
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -80,8 +108,14 @@ export default function UserRegisterPage() {
     password: "",
     confirmPassword: "",
     phone: "",
+    gender: "Male",
+    age: "",
     address: "",
+    city: "",
+    state: "",
     pincode: "",
+    longitude: "",
+    latitude: "",
     referredBy: "",
   });
 
@@ -305,6 +339,99 @@ export default function UserRegisterPage() {
                 </div>
               </div>
 
+              {/* Gender */}
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange as any}
+                  required
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all bg-white"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Age */}
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  Age
+                </label>
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  required
+                  min={1}
+                  max={120}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                  placeholder="30"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  Full Address
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3.5 top-4 text-slate-400" size={16} />
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                    rows={2}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    placeholder="123, Main Street, Area"
+                  />
+                </div>
+              </div>
+
+              {/* City */}
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  City
+                </label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    placeholder="Indore"
+                  />
+                </div>
+              </div>
+
+              {/* State */}
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  State
+                </label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                    placeholder="Madhya Pradesh"
+                  />
+                </div>
+              </div>
+
               {/* Pincode */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
@@ -321,29 +448,12 @@ export default function UserRegisterPage() {
                     maxLength={6}
                     pattern="[0-9]{6}"
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
-                    placeholder="461111"
+                    placeholder="452001"
                   />
                 </div>
               </div>
 
-              {/* Address */}
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
-                  Full Address
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3.5 top-4 text-slate-400" size={16} />
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                    rows={3}
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
-                    placeholder="123, Main Street, Area, City"
-                  />
-                </div>
-              </div>
+
 
               {/* Referral Code */}
               <div className="sm:col-span-2">

@@ -15,7 +15,11 @@ interface UserFormData {
   gender: string;
   age: string;
   address: string;
+  city: string;
+  state: string;
   pincode: string;
+  longitude: string;
+  latitude: string;
   alternateMobile: string;
   currentLocation: string;
   hasInsurance: boolean;
@@ -124,7 +128,7 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [formData, setFormData] = useState<UserFormData>({
     name: '', email: '', password: '', phone: '', gender: 'Male', age: '',
-    address: '', pincode: '', alternateMobile: '', currentLocation: '',
+    address: '', city: '', state: '', pincode: '', longitude: '', latitude: '', alternateMobile: '', currentLocation: '',
     hasInsurance: false, insurancePolicyNumber: '', insuranceProvider: '',
     bloodGroup: 'Unknown', emergencyContactName: '', emergencyContactPhone: '',
     emergencyContactRelation: '', additionalNotes: '', role: 'user', isActive: true
@@ -370,11 +374,23 @@ const UsersPage = () => {
       setSelectedUser(null);
       setFormData({
         name: '', email: '', password: '', phone: '', gender: 'Male', age: '',
-        address: '', pincode: '', alternateMobile: '', currentLocation: '',
+        address: '', city: '', state: '', pincode: '', longitude: '75.8577', latitude: '22.7196', alternateMobile: '', currentLocation: '',
         hasInsurance: false, insurancePolicyNumber: '', insuranceProvider: '',
         bloodGroup: 'Unknown', emergencyContactName: '', emergencyContactPhone: '',
         emergencyContactRelation: '', additionalNotes: '', role: 'user', isActive: true
       });
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setFormData(prev => ({
+              ...prev,
+              longitude: pos.coords.longitude.toString(),
+              latitude: pos.coords.latitude.toString()
+            }));
+          },
+          (err) => console.error(err)
+        );
+      }
       setAllergies([]);
       setChronicDiseases([]);
       setCurrentMedications([]);
@@ -1046,10 +1062,21 @@ const UsersPage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                    <input type="text" required value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                    <input type="text" required value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
                     <input type="text" required value={formData.pincode} onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F]" />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Alternate Mobile</label>
                     <input type="tel" value={formData.alternateMobile} onChange={(e) => setFormData({ ...formData, alternateMobile: e.target.value })}

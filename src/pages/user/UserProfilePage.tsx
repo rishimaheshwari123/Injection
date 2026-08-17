@@ -26,7 +26,11 @@ export default function UserProfilePage() {
     email: user?.email || "",
     phone: user?.phone || "",
     address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || "",
     pincode: user?.pincode || "",
+    longitude: user?.longitude !== undefined ? user?.longitude.toString() : "",
+    latitude: user?.latitude !== undefined ? user?.latitude.toString() : "",
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
@@ -46,6 +50,30 @@ export default function UserProfilePage() {
     fetchLatestDetails();
   }, []);
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setProfileData(prev => ({
+            ...prev,
+            longitude: position.coords.longitude.toString(),
+            latitude: position.coords.latitude.toString()
+          }));
+        },
+        (error) => {
+          console.error("Error getting geolocation:", error);
+          if (!profileData.longitude) {
+            setProfileData(prev => ({
+              ...prev,
+              longitude: "75.8577",
+              latitude: "22.7196"
+            }));
+          }
+        }
+      );
+    }
+  }, []);
+
   const fetchLatestDetails = async () => {
     try {
       const res = await userAPI.getMe();
@@ -57,7 +85,11 @@ export default function UserProfilePage() {
           email: freshUser.email || "",
           phone: freshUser.phone || "",
           address: freshUser.address || "",
+          city: freshUser.city || "",
+          state: freshUser.state || "",
           pincode: freshUser.pincode || "",
+          longitude: freshUser.longitude !== undefined ? freshUser.longitude.toString() : "",
+          latitude: freshUser.latitude !== undefined ? freshUser.latitude.toString() : "",
         });
         setFamilyMembers(freshUser.familyMembers || []);
       }
@@ -221,6 +253,44 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
+              {/* City */}
+              <div>
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  City
+                </label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    name="city"
+                    value={profileData.city}
+                    onChange={handleProfileChange}
+                    required
+                    placeholder="City name"
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* State */}
+              <div>
+                <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
+                  State
+                </label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    name="state"
+                    value={profileData.state}
+                    onChange={handleProfileChange}
+                    required
+                    placeholder="State name"
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
+                  />
+                </div>
+              </div>
+
               {/* Pincode */}
               <div>
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
@@ -242,6 +312,8 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
+
+
               {/* Address */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-450 uppercase tracking-wider mb-2">
@@ -254,7 +326,7 @@ export default function UserProfilePage() {
                     value={profileData.address}
                     onChange={handleProfileChange}
                     required
-                    rows={3}
+                    rows={2}
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#3DB9A6] focus:ring-2 focus:ring-[#3DB9A6]/10 text-sm transition-all"
                   />
                 </div>

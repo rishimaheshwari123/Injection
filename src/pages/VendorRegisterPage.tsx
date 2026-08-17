@@ -22,6 +22,34 @@ const VendorRegisterPage = () => {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            longitude: position.coords.longitude.toString(),
+            latitude: position.coords.latitude.toString()
+          }));
+        },
+        (error) => {
+          console.error("Error getting geolocation:", error);
+          setFormData(prev => ({
+            ...prev,
+            longitude: "75.8577",
+            latitude: "22.7196"
+          }));
+        }
+      );
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        longitude: "75.8577",
+        latitude: "22.7196"
+      }));
+    }
+  }, []);
+
   // OTP Verification States
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -90,6 +118,8 @@ const VendorRegisterPage = () => {
     city: '',
     state: '',
     pincode: '',
+    longitude: '',
+    latitude: '',
     bio: '',
     bankDetails: {
       accountHolderName: '',
@@ -534,6 +564,7 @@ const VendorRegisterPage = () => {
                           placeholder="452001"
                           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
                       </div>
+
                       <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Short Bio</label>
                         <textarea name="bio" value={formData.bio} onChange={handleChange} rows={2} maxLength={500}

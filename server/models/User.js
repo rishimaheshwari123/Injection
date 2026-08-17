@@ -48,10 +48,28 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Address is required'],
     trim: true
   },
+  city: {
+    type: String,
+    required: [true, 'City is required'],
+    trim: true
+  },
+  state: {
+    type: String,
+    required: [true, 'State is required'],
+    trim: true
+  },
   pincode: {
     type: String,
     required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
+  },
+  longitude: {
+    type: Number,
+    required: [true, 'Longitude is required']
+  },
+  latitude: {
+    type: Number,
+    required: [true, 'Latitude is required']
   },
   alternateMobile: {
     type: String

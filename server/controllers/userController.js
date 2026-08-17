@@ -36,7 +36,11 @@ export const userRegister = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -83,10 +87,10 @@ export const userRegister = async (req, res) => {
     }
 
     // Validation
-    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+    if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, city, state, pincode, longitude, latitude'
       });
     }
 
@@ -166,7 +170,11 @@ export const userRegister = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       alternateMobile: alternateMobile || '',
       currentLocation: currentLocation || '',
       hasInsurance: hasInsurance === 'true' || hasInsurance === true,
@@ -317,7 +325,11 @@ export const updateUserProfile = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -388,8 +400,20 @@ export const updateUserProfile = async (req, res) => {
     if (address !== undefined && !address) {
       return res.status(400).json({ success: false, message: 'Address cannot be empty' });
     }
+    if (city !== undefined && !city) {
+      return res.status(400).json({ success: false, message: 'City cannot be empty' });
+    }
+    if (state !== undefined && !state) {
+      return res.status(400).json({ success: false, message: 'State cannot be empty' });
+    }
     if (pincode !== undefined && !pincode) {
       return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
+    if (longitude !== undefined && (longitude === '' || isNaN(Number(longitude)))) {
+      return res.status(400).json({ success: false, message: 'Longitude must be a valid number' });
+    }
+    if (latitude !== undefined && (latitude === '' || isNaN(Number(latitude)))) {
+      return res.status(400).json({ success: false, message: 'Latitude must be a valid number' });
     }
 
     // Update fields if provided, otherwise preserve existing values
@@ -398,7 +422,11 @@ export const updateUserProfile = async (req, res) => {
     if (gender !== undefined) user.gender = gender;
     if (age !== undefined) user.age = age;
     if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (state !== undefined) user.state = state;
     if (pincode !== undefined) user.pincode = pincode;
+    if (longitude !== undefined) user.longitude = Number(longitude);
+    if (latitude !== undefined) user.latitude = Number(latitude);
     if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
     if (currentLocation !== undefined) user.currentLocation = currentLocation;
     if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
@@ -470,7 +498,11 @@ export const createUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -507,10 +539,10 @@ export const createUserByAdmin = async (req, res) => {
     }
 
     // Validation
-    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+    if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, city, state, pincode, longitude, latitude'
       });
     }
 
@@ -581,7 +613,11 @@ export const createUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       alternateMobile: alternateMobile || '',
       currentLocation: currentLocation || '',
       hasInsurance: hasInsurance === 'true' || hasInsurance === true,
@@ -632,7 +668,11 @@ export const updateUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -720,8 +760,20 @@ export const updateUserByAdmin = async (req, res) => {
     if (address !== undefined && !address) {
       return res.status(400).json({ success: false, message: 'Address cannot be empty' });
     }
+    if (city !== undefined && !city) {
+      return res.status(400).json({ success: false, message: 'City cannot be empty' });
+    }
+    if (state !== undefined && !state) {
+      return res.status(400).json({ success: false, message: 'State cannot be empty' });
+    }
     if (pincode !== undefined && !pincode) {
       return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
+    if (longitude !== undefined && (longitude === '' || isNaN(Number(longitude)))) {
+      return res.status(400).json({ success: false, message: 'Longitude must be a valid number' });
+    }
+    if (latitude !== undefined && (latitude === '' || isNaN(Number(latitude)))) {
+      return res.status(400).json({ success: false, message: 'Latitude must be a valid number' });
     }
 
     // Update fields if provided, otherwise preserve existing
@@ -731,7 +783,11 @@ export const updateUserByAdmin = async (req, res) => {
     if (gender !== undefined) user.gender = gender;
     if (age !== undefined) user.age = age;
     if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (state !== undefined) user.state = state;
     if (pincode !== undefined) user.pincode = pincode;
+    if (longitude !== undefined) user.longitude = Number(longitude);
+    if (latitude !== undefined) user.latitude = Number(latitude);
     if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
     if (currentLocation !== undefined) user.currentLocation = currentLocation;
     if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
