@@ -14,7 +14,11 @@ const adminData = {
   gender: 'Male',
   age: 30,
   address: 'Admin Office',
+  city: 'Indore',
+  state: 'Madhya Pradesh',
   pincode: '123456',
+  longitude: 75.8577,
+  latitude: 22.7196,
   role: 'admin'
 };
 

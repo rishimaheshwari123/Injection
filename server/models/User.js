@@ -48,10 +48,28 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Address is required'],
     trim: true
   },
+  city: {
+    type: String,
+    required: [true, 'City is required'],
+    trim: true
+  },
+  state: {
+    type: String,
+    required: [true, 'State is required'],
+    trim: true
+  },
   pincode: {
     type: String,
     required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
+  },
+  longitude: {
+    type: Number,
+    required: [true, 'Longitude is required']
+  },
+  latitude: {
+    type: Number,
+    required: [true, 'Latitude is required']
   },
   alternateMobile: {
     type: String
@@ -203,9 +221,58 @@ const userSchema = new mongoose.Schema({
     relationship: { type: String, required: true, trim: true },
     address: { type: String, trim: true },
     pincode: { type: String, trim: true }
-  }]
+  }],
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  referredBy: {
+    type: String
+  },
+  referredByRef: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'referredByModel'
+  },
+  referredByModel: {
+    type: String,
+    enum: ['User', 'Vendor']
+  }
 }, {
   timestamps: true
+});
+
+// Helper function to generate a globally unique referral code
+const generateUniqueReferralCode = async () => {
+  let isUnique = false;
+  let code = '';
+  while (!isUnique) {
+    code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    let userMatch = null;
+    if (mongoose.models.User) {
+      userMatch = await mongoose.models.User.findOne({ referralCode: code });
+    }
+    let vendorMatch = null;
+    if (mongoose.models.Vendor) {
+      vendorMatch = await mongoose.models.Vendor.findOne({ referralCode: code });
+    }
+    if (!userMatch && !vendorMatch) {
+      isUnique = true;
+    }
+  }
+  return code;
+};
+
+// Generate unique referral code before saving for new user accounts
+userSchema.pre('save', async function(next) {
+  if (this.isNew && !this.referralCode) {
+    try {
+      this.referralCode = await generateUniqueReferralCode();
+    } catch (error) {
+      return next(error);
+    }
+  }
+  next();
 });
 
 // Generate unique patientId/userId before saving using Counter model

@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import UserReview from '../models/UserReview.js';
+import Vendor from '../models/Vendor.js';
 import jwt from 'jsonwebtoken';
 import cloudinary from '../config/cloudinary.js';
 import Otp from '../models/Otp.js';
@@ -35,7 +36,11 @@ export const userRegister = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -59,14 +64,33 @@ export const userRegister = async (req, res) => {
       medicalReport,
       bloodReport,
       historyDocument,
-      otherDocument
+      otherDocument,
+      referredBy
     } = req.body;
 
+    // Resolve referred by reference dynamically if provided
+    let referredByRef = null;
+    let referredByModel = null;
+    if (referredBy && typeof referredBy === 'string' && referredBy.trim() !== '') {
+      const trimmedRefCode = referredBy.trim().toUpperCase();
+      const referringUser = await User.findOne({ referralCode: trimmedRefCode });
+      if (referringUser) {
+        referredByRef = referringUser._id;
+        referredByModel = 'User';
+      } else {
+        const referringVendor = await Vendor.findOne({ referralCode: trimmedRefCode });
+        if (referringVendor) {
+          referredByRef = referringVendor._id;
+          referredByModel = 'Vendor';
+        }
+      }
+    }
+
     // Validation
-    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+    if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, city, state, pincode, longitude, latitude'
       });
     }
 
@@ -146,7 +170,11 @@ export const userRegister = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       alternateMobile: alternateMobile || '',
       currentLocation: currentLocation || '',
       hasInsurance: hasInsurance === 'true' || hasInsurance === true,
@@ -170,7 +198,10 @@ export const userRegister = async (req, res) => {
       medicalReport: medicalReport || null,
       bloodReport: bloodReport || null,
       historyDocument: historyDocument || null,
-      otherDocument: otherDocument || null
+      otherDocument: otherDocument || null,
+      referredBy: referredBy || '',
+      referredByRef,
+      referredByModel
     });
 
     await Otp.deleteMany({ phone: normalizedPhone });
@@ -294,7 +325,11 @@ export const updateUserProfile = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -365,8 +400,20 @@ export const updateUserProfile = async (req, res) => {
     if (address !== undefined && !address) {
       return res.status(400).json({ success: false, message: 'Address cannot be empty' });
     }
+    if (city !== undefined && !city) {
+      return res.status(400).json({ success: false, message: 'City cannot be empty' });
+    }
+    if (state !== undefined && !state) {
+      return res.status(400).json({ success: false, message: 'State cannot be empty' });
+    }
     if (pincode !== undefined && !pincode) {
       return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
+    if (longitude !== undefined && (longitude === '' || isNaN(Number(longitude)))) {
+      return res.status(400).json({ success: false, message: 'Longitude must be a valid number' });
+    }
+    if (latitude !== undefined && (latitude === '' || isNaN(Number(latitude)))) {
+      return res.status(400).json({ success: false, message: 'Latitude must be a valid number' });
     }
 
     // Update fields if provided, otherwise preserve existing values
@@ -375,7 +422,11 @@ export const updateUserProfile = async (req, res) => {
     if (gender !== undefined) user.gender = gender;
     if (age !== undefined) user.age = age;
     if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (state !== undefined) user.state = state;
     if (pincode !== undefined) user.pincode = pincode;
+    if (longitude !== undefined) user.longitude = Number(longitude);
+    if (latitude !== undefined) user.latitude = Number(latitude);
     if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
     if (currentLocation !== undefined) user.currentLocation = currentLocation;
     if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
@@ -447,7 +498,11 @@ export const createUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -484,10 +539,10 @@ export const createUserByAdmin = async (req, res) => {
     }
 
     // Validation
-    if (!name || !email || !password || !phone || !gender || !age || !address || !pincode) {
+    if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, pincode'
+        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, city, state, pincode, longitude, latitude'
       });
     }
 
@@ -558,7 +613,11 @@ export const createUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       alternateMobile: alternateMobile || '',
       currentLocation: currentLocation || '',
       hasInsurance: hasInsurance === 'true' || hasInsurance === true,
@@ -609,7 +668,11 @@ export const updateUserByAdmin = async (req, res) => {
       gender,
       age,
       address,
+      city,
+      state,
       pincode,
+      longitude,
+      latitude,
       alternateMobile,
       currentLocation,
       hasInsurance,
@@ -697,8 +760,20 @@ export const updateUserByAdmin = async (req, res) => {
     if (address !== undefined && !address) {
       return res.status(400).json({ success: false, message: 'Address cannot be empty' });
     }
+    if (city !== undefined && !city) {
+      return res.status(400).json({ success: false, message: 'City cannot be empty' });
+    }
+    if (state !== undefined && !state) {
+      return res.status(400).json({ success: false, message: 'State cannot be empty' });
+    }
     if (pincode !== undefined && !pincode) {
       return res.status(400).json({ success: false, message: 'Pincode cannot be empty' });
+    }
+    if (longitude !== undefined && (longitude === '' || isNaN(Number(longitude)))) {
+      return res.status(400).json({ success: false, message: 'Longitude must be a valid number' });
+    }
+    if (latitude !== undefined && (latitude === '' || isNaN(Number(latitude)))) {
+      return res.status(400).json({ success: false, message: 'Latitude must be a valid number' });
     }
 
     // Update fields if provided, otherwise preserve existing
@@ -708,7 +783,11 @@ export const updateUserByAdmin = async (req, res) => {
     if (gender !== undefined) user.gender = gender;
     if (age !== undefined) user.age = age;
     if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (state !== undefined) user.state = state;
     if (pincode !== undefined) user.pincode = pincode;
+    if (longitude !== undefined) user.longitude = Number(longitude);
+    if (latitude !== undefined) user.latitude = Number(latitude);
     if (alternateMobile !== undefined) user.alternateMobile = alternateMobile;
     if (currentLocation !== undefined) user.currentLocation = currentLocation;
     if (hasInsurance !== undefined) user.hasInsurance = hasInsurance === 'true' || hasInsurance === true;
@@ -1119,5 +1198,105 @@ export const deleteFamilyMember = async (req, res) => {
       success: false,
       message: error.message || 'Server error'
     });
+  }
+};
+
+export const getReferralStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Get referred users
+    const referredUsers = await User.find({
+      referredByRef: userId,
+      referredByModel: 'User'
+    }).select('patientId name email phone createdAt');
+
+    // Get referred vendors
+    const referredVendors = await Vendor.find({
+      referredByRef: userId,
+      referredByModel: 'User'
+    }).select('vendorId name email phone businessName createdAt');
+
+    // Find who referred this user
+    let referrerName = null;
+    let referrerRole = null;
+    if (user.referredByRef) {
+      if (user.referredByModel === 'User') {
+        const refUser = await User.findById(user.referredByRef).select('name role');
+        if (refUser) {
+          referrerName = refUser.name;
+          referrerRole = refUser.role;
+        }
+      } else if (user.referredByModel === 'Vendor') {
+        const refVendor = await Vendor.findById(user.referredByRef).select('name role');
+        if (refVendor) {
+          referrerName = refVendor.name;
+          referrerRole = 'vendor';
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        referralCode: user.referralCode || null,
+        referredBy: user.referredBy || null,
+        referrerName,
+        referrerRole,
+        referredUsers,
+        referredVendors,
+        referredUsersCount: referredUsers.length,
+        referredVendorsCount: referredVendors.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral stats:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const generateMyReferralCode = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.referralCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Referral code already exists',
+        referralCode: user.referralCode
+      });
+    }
+
+    // Generate unique referral code (same logic as pre-save hook)
+    let isUnique = false;
+    let code = '';
+    while (!isUnique) {
+      code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const userMatch = await User.findOne({ referralCode: code });
+      const vendorMatch = await Vendor.findOne({ referralCode: code });
+      if (!userMatch && !vendorMatch) {
+        isUnique = true;
+      }
+    }
+
+    user.referralCode = code;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Referral code generated successfully',
+      referralCode: code
+    });
+  } catch (error) {
+    console.error('Error generating referral code:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };

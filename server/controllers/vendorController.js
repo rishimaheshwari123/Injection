@@ -1,5 +1,6 @@
 import Vendor from '../models/Vendor.js';
 import Service from '../models/Service.js';
+import User from '../models/User.js';
 import Review from '../models/Review.js';
 import AdminSetting from '../models/AdminSetting.js';
 import jwt from 'jsonwebtoken';
@@ -45,6 +46,8 @@ export const vendorRegister = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -64,8 +67,29 @@ export const vendorRegister = async (req, res) => {
       bankDetails,
 
       // Selected Services
-      services
+      services,
+
+      // Referral Info
+      referredBy
     } = req.body;
+
+    // Resolve referred by reference dynamically if provided
+    let referredByRef = null;
+    let referredByModel = null;
+    if (referredBy && typeof referredBy === 'string' && referredBy.trim() !== '') {
+      const trimmedRefCode = referredBy.trim().toUpperCase();
+      const referringUser = await User.findOne({ referralCode: trimmedRefCode });
+      if (referringUser) {
+        referredByRef = referringUser._id;
+        referredByModel = 'User';
+      } else {
+        const referringVendor = await Vendor.findOne({ referralCode: trimmedRefCode });
+        if (referringVendor) {
+          referredByRef = referringVendor._id;
+          referredByModel = 'Vendor';
+        }
+      }
+    }
 
     // Validate required fields
     if (!name || !email || !password || !phone) {
@@ -91,10 +115,10 @@ export const vendorRegister = async (req, res) => {
       });
     }
 
-    if (!address || !city || !state || !pincode) {
+    if (!address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Complete address information is required'
+        message: 'Complete address information including latitude and longitude is required'
       });
     }
 
@@ -142,6 +166,8 @@ export const vendorRegister = async (req, res) => {
       city,
       state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       serviceAreas: serviceAreas || [],
 
       // Documents
@@ -165,7 +191,11 @@ export const vendorRegister = async (req, res) => {
       // Status (forced for registration)
       isActive: false,
       isVerified: false,
-      verificationStatus: 'pending'
+      verificationStatus: 'pending',
+
+      referredBy: referredBy || '',
+      referredByRef,
+      referredByModel
     });
 
     // Bidirectional sync: add this vendor to the selected services
@@ -338,6 +368,7 @@ export const updateVendorProfile = async (req, res) => {
       'name', 'phone', 'alternatePhone', 'gender', 'businessName', 'businessType',
       'registrationNumber', 'gstNumber', 'qualifications',
       'experience', 'specialization', 'address', 'city', 'state', 'pincode',
+      'longitude', 'latitude',
       'serviceAreas', 'documents', 'availability', 'pricing', 'profileImage',
       'bio', 'bankDetails', 'services'
     ];
@@ -522,6 +553,8 @@ export const createVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -573,10 +606,10 @@ export const createVendorByAdmin = async (req, res) => {
       });
     }
 
-    if (!address || !city || !state || !pincode) {
+    if (!address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Complete address information is required'
+        message: 'Complete address information including latitude and longitude is required'
       });
     }
 
@@ -620,6 +653,8 @@ export const createVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude: Number(longitude),
+      latitude: Number(latitude),
       serviceAreas: serviceAreas || [],
 
       // Documents
@@ -698,6 +733,8 @@ export const updateVendorByAdmin = async (req, res) => {
       city,
       state,
       pincode,
+      longitude,
+      latitude,
       serviceAreas,
 
       // Documents
@@ -781,6 +818,8 @@ export const updateVendorByAdmin = async (req, res) => {
     if (city !== undefined) vendor.city = city;
     if (state !== undefined) vendor.state = state;
     if (pincode !== undefined) vendor.pincode = pincode;
+    if (longitude !== undefined) vendor.longitude = Number(longitude);
+    if (latitude !== undefined) vendor.latitude = Number(latitude);
     if (serviceAreas !== undefined) vendor.serviceAreas = serviceAreas;
 
     if (documents !== undefined) vendor.documents = documents;
@@ -1018,7 +1057,10 @@ export const getVendorIdCardDetails = async (req, res) => {
     const vendorId = req.params.id;
 
     // Check if requester is Admin or the Vendor themselves
-    if (req.user.role !== 'admin' && req.user._id.toString() !== vendorId) {
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isSelfVendor = req.vendor && req.vendor._id.toString() === vendorId;
+
+    if (!isAdmin && !isSelfVendor) {
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to view this ID card details'
@@ -1052,6 +1094,106 @@ export const getVendorIdCardDetails = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+export const getReferralStats = async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    // Get referred users
+    const referredUsers = await User.find({
+      referredByRef: vendorId,
+      referredByModel: 'Vendor'
+    }).select('patientId name email phone createdAt');
+
+    // Get referred vendors
+    const referredVendors = await Vendor.find({
+      referredByRef: vendorId,
+      referredByModel: 'Vendor'
+    }).select('vendorId name email phone businessName createdAt');
+
+    // Find who referred this vendor
+    let referrerName = null;
+    let referrerRole = null;
+    if (vendor.referredByRef) {
+      if (vendor.referredByModel === 'User') {
+        const refUser = await User.findById(vendor.referredByRef).select('name role');
+        if (refUser) {
+          referrerName = refUser.name;
+          referrerRole = refUser.role;
+        }
+      } else if (vendor.referredByModel === 'Vendor') {
+        const refVendor = await Vendor.findById(vendor.referredByRef).select('name role');
+        if (refVendor) {
+          referrerName = refVendor.name;
+          referrerRole = 'vendor';
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        referralCode: vendor.referralCode || null,
+        referredBy: vendor.referredBy || null,
+        referrerName,
+        referrerRole,
+        referredUsers,
+        referredVendors,
+        referredUsersCount: referredUsers.length,
+        referredVendorsCount: referredVendors.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral stats:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const generateMyReferralCode = async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    if (vendor.referralCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Referral code already exists',
+        referralCode: vendor.referralCode
+      });
+    }
+
+    // Generate unique referral code (same logic as pre-save hook)
+    let isUnique = false;
+    let code = '';
+    while (!isUnique) {
+      code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const userMatch = await User.findOne({ referralCode: code });
+      const vendorMatch = await Vendor.findOne({ referralCode: code });
+      if (!userMatch && !vendorMatch) {
+        isUnique = true;
+      }
+    }
+
+    vendor.referralCode = code;
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Referral code generated successfully',
+      referralCode: code
+    });
+  } catch (error) {
+    console.error('Error generating referral code:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

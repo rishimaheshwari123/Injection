@@ -30,6 +30,9 @@ const BookingDetailPage = () => {
   const { user } = useAppSelector((state: any) => state.auth);
   
   const isAdminPath = location.pathname.startsWith('/admin');
+  const isVendorPath = location.pathname.startsWith('/vendor');
+  const isUserPath = location.pathname.startsWith('/user');
+  const isDashboardLayout = isAdminPath || isVendorPath || isUserPath;
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
@@ -257,6 +260,19 @@ const BookingDetailPage = () => {
   };
 
   // Vendor Action triggers
+  const handleAcceptBooking = async () => {
+    if (!id) return;
+    try {
+      const res = await bookingAPI.acceptBooking(id);
+      if (res.data && res.data.success) {
+        toast.success('Booking accepted successfully!');
+        setBooking(res.data.data);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to accept booking');
+    }
+  };
+
   const handleStartService = async () => {
     if (!id) return;
     try {
@@ -327,29 +343,29 @@ const BookingDetailPage = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-slate-50 flex flex-col ${isAdminPath ? 'p-6' : ''}`}>
-        {!isAdminPath && <Navigation />}
+      <div className={`min-h-screen bg-slate-50 flex flex-col ${isDashboardLayout ? 'p-6' : ''}`}>
+        {!isDashboardLayout && <Navigation />}
         <div className="flex-1 flex flex-col items-center justify-center py-20 gap-3">
           <div className="w-12 h-12 border-4 border-slate-200 border-t-[#3DB9A6] rounded-full animate-spin" />
           <p className="text-sm font-semibold text-slate-550">Loading booking details...</p>
         </div>
-        {!isAdminPath && <Footer />}
+        {!isDashboardLayout && <Footer />}
       </div>
     );
   }
 
   if (!booking) {
     return (
-      <div className={`min-h-screen bg-slate-50 flex flex-col ${isAdminPath ? 'p-6' : ''}`}>
-        {!isAdminPath && <Navigation />}
+      <div className={`min-h-screen bg-slate-50 flex flex-col ${isDashboardLayout ? 'p-6' : ''}`}>
+        {!isDashboardLayout && <Navigation />}
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-500">
           <AlertCircle size={48} className="text-red-500 mb-2" />
           <p className="text-lg font-bold">Booking Not Found</p>
-          <Link to={isAdminPath ? '/admin/bookings' : '/'} className="text-blue-650 font-semibold hover:underline mt-2">
-            {isAdminPath ? 'Back to Bookings' : 'Go Home'}
+          <Link to={isAdminPath ? '/admin/bookings' : (isVendorPath ? '/vendor/bookings' : '/')} className="text-blue-650 font-semibold hover:underline mt-2">
+            {isAdminPath ? 'Back to Bookings' : (isVendorPath ? 'Back to Bookings' : 'Go Home')}
           </Link>
         </div>
-        {!isAdminPath && <Footer />}
+        {!isDashboardLayout && <Footer />}
       </div>
     );
   }
@@ -378,11 +394,11 @@ const BookingDetailPage = () => {
   };
 
   return (
-    <div className={isAdminPath ? "bg-[#F8FAFC]" : "min-h-screen bg-[#F8FAFC]"}>
-      {!isAdminPath && <Navigation />}
+    <div className={isDashboardLayout ? "bg-[#F8FAFC]" : "min-h-screen bg-[#F8FAFC]"}>
+      {!isDashboardLayout && <Navigation />}
 
       {/* Main Container */}
-      <div className={isAdminPath ? "w-full p-2 sm:p-4" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"}>
+      <div className={isDashboardLayout ? "w-full p-2 sm:p-4" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"}>
         
         {/* Back Button & Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-wrap">
@@ -1021,6 +1037,15 @@ const BookingDetailPage = () => {
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
                 <h3 className="text-xs uppercase font-extrabold text-slate-450 tracking-wider">Service Provider Controls</h3>
                 
+                {booking.bookingStatus === 'pending' && (
+                  <button
+                    onClick={handleAcceptBooking}
+                    className="w-full py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 size={14} /> Accept Booking Assignment
+                  </button>
+                )}
+
                 {booking.bookingStatus === 'accepted' && (
                   <button
                     onClick={handleStartService}
@@ -1261,7 +1286,7 @@ const BookingDetailPage = () => {
         />
       )}
 
-      {!isAdminPath && <Footer />}
+      {!isDashboardLayout && <Footer />}
     </div>
   );
 };

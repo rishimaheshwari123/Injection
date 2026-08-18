@@ -9,7 +9,11 @@ interface User {
   age: number;
   gender: string;
   address: string;
+  city?: string;
+  state?: string;
   pincode: string;
+  longitude?: number;
+  latitude?: number;
   isActive: boolean;
   createdAt: string;
 }

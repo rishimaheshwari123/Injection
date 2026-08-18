@@ -65,6 +65,8 @@ export const userAPI = {
   deleteFamilyMember: (memberId: string) => api.delete(`/users/profile/family/${memberId}`),
   adminAddFamilyMember: (userId: string, data: any) => api.post(`/users/${userId}/family`, data),
   adminDeleteFamilyMember: (userId: string, memberId: string) => api.delete(`/users/${userId}/family/${memberId}`),
+  getReferralStats: () => api.get("/users/referrals/stats"),
+  generateReferralCode: () => api.post("/users/referrals/generate"),
 };
 
 // Vendor APIs
@@ -100,6 +102,8 @@ export const vendorAPI = {
   },
   getReviews: (vendorId: string) => api.get(`/vendors/${vendorId}/reviews`),
   getIdCardDetails: (vendorId: string) => api.get(`/vendors/${vendorId}/id-card`),
+  getReferralStats: () => api.get("/vendors/referrals/stats"),
+  generateReferralCode: () => api.post("/vendors/referrals/generate"),
 };
 
 // Service APIs
@@ -138,6 +142,8 @@ export const bookingAPI = {
   getBookingById: (id: string) => api.get(API_ENDPOINTS.BOOKINGS.BY_ID(id)),
   createBooking: (bookingData: any) =>
     api.post(API_ENDPOINTS.BOOKINGS.CREATE, bookingData),
+  createUserBooking: (bookingData: any) =>
+    api.post("/user-bookings/create", bookingData),
   getUserBookings: (params?: any) => api.get(API_ENDPOINTS.BOOKINGS.USER_BOOKINGS, { params }),
   submitReview: (bookingId: string, rating: number, reviewText: string) =>
     api.post(`/bookings/${bookingId}/review/vendor`, { rating, reviewText }),
@@ -145,6 +151,8 @@ export const bookingAPI = {
     api.post(`/bookings/${bookingId}/review/user`, { rating, reviewText }),
   getVendorBookings: () => api.get(API_ENDPOINTS.BOOKINGS.VENDOR_BOOKINGS),
   getAvailableBookings: () => api.get(API_ENDPOINTS.BOOKINGS.AVAILABLE),
+  getVendorNotifications: () => api.get("/user-bookings/notifications"),
+  acceptUserBooking: (bookingId: string) => api.put(`/user-bookings/accept/${bookingId}`),
   acceptBooking: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.ACCEPT(id)),
   startService: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.START(id)),
   completeService: (id: string) => api.put(API_ENDPOINTS.BOOKINGS.COMPLETE(id)),
@@ -388,6 +396,26 @@ export const notificationAPI = {
 export const otpAPI = {
   sendOtp: (phone: string) => api.post(API_ENDPOINTS.OTP.SEND, { phone }),
   verifyOtp: (phone: string, otp: string) => api.post(API_ENDPOINTS.OTP.VERIFY, { phone, otp }),
+};
+
+// Team APIs
+export const teamAPI = {
+  getTeamMembers: () => api.get("/team"),
+  adminGetTeamMembers: () => api.get("/team/admin"),
+  getTeamMemberById: (id: string) => api.get(`/team/${id}`),
+  createTeamMember: (formData: FormData) =>
+    api.post("/team", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  updateTeamMember: (id: string, formData: FormData) =>
+    api.put(`/team/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  deleteTeamMember: (id: string) => api.delete(`/team/${id}`),
 };
 
 export default api;

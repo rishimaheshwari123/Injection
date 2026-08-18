@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
-import { authAPI } from '../services/api';
+import { authAPI, vendorAPI } from '../services/api';
 import { loginSuccess } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import Navigation from '../components/Navigation';
@@ -11,6 +11,7 @@ import Footer from '../components/Footer';
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [loginType, setLoginType] = useState<'user' | 'vendor'>('user');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,21 +31,31 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(formData.email, formData.password);
+      let response;
+      if (loginType === 'vendor') {
+        response = await vendorAPI.login(formData.email, formData.password);
+      } else {
+        response = await authAPI.login(formData.email, formData.password);
+      }
 
       if (response.data.success) {
-        const { user, token } = response.data.data;
+        const { user, vendor, token } = response.data.data;
+        const loggedInUser = loginType === 'vendor' ? { ...vendor, role: 'vendor' } : user;
 
         // Dispatch login action
-        dispatch(loginSuccess({ user: user, token }));
+        dispatch(loginSuccess({ user: loggedInUser, token }));
 
         // Show success toast
-        toast.success(`Welcome back, ${user.name}!`);
+        toast.success(`Welcome back, ${loggedInUser.name}!`);
 
         // Redirect based on role
         setTimeout(() => {
-          if (user.role === 'admin') {
+          if (loggedInUser.role === 'admin') {
             navigate('/admin');
+          } else if (loggedInUser.role === 'vendor') {
+            navigate('/vendor');
+          } else if (loggedInUser.role === 'user') {
+            navigate('/user');
           } else {
             navigate('/');
           }
@@ -70,6 +81,38 @@ const LoginPage = () => {
             <p className="text-gray-600 mt-2">Sign in to your account</p>
           </div>
 
+          {/* Login Type Tab Selector */}
+          <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginType('user');
+                setFormData({ email: '', password: '' });
+              }}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                loginType === 'user'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              User & Staff
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginType('vendor');
+                setFormData({ email: '', password: '' });
+              }}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                loginType === 'vendor'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Vendor Partner
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -82,7 +125,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
-                placeholder="admin@example.com"
+                placeholder={loginType === 'vendor' ? 'vendor@example.com' : 'admin@example.com'}
               />
             </div>
 

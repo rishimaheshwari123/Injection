@@ -1,15 +1,106 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { User, Briefcase, MapPin, CreditCard, ChevronRight, ChevronLeft, Check, Package, Upload, FileText, X } from 'lucide-react';
-import { vendorAPI, serviceAPI } from '../services/api';
+import { vendorAPI, serviceAPI, otpAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { LocationAutocomplete } from '../components/LocationAutocomplete';
 
 const VendorRegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [servicesList, setServicesList] = useState<any[]>([]);
   const [fetchingServices, setFetchingServices] = useState(true);
+
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setFormData(prev => ({
+        ...prev,
+        referredBy: refCode.toUpperCase()
+      }));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            longitude: position.coords.longitude.toString(),
+            latitude: position.coords.latitude.toString()
+          }));
+        },
+        (error) => {
+          console.error("Error getting geolocation:", error);
+          setFormData(prev => ({
+            ...prev,
+            longitude: "75.8577",
+            latitude: "22.7196"
+          }));
+        }
+      );
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        longitude: "75.8577",
+        latitude: "22.7196"
+      }));
+    }
+  }, []);
+
+  // OTP Verification States
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [lastVerifiedPhone, setLastVerifiedPhone] = useState('');
+
+  const handleSendOtp = async () => {
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const response = await otpAPI.sendOtp(formData.phone);
+      if (response.data.success) {
+        setOtpSent(true);
+        toast.success('OTP sent successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^[0-9]{6}$/.test(otpCode)) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const response = await otpAPI.verifyOtp(formData.phone, otpCode);
+      if (response.data.success) {
+        setIsPhoneVerified(true);
+        setLastVerifiedPhone(formData.phone);
+        setOtpSent(false);
+        setOtpCode('');
+        toast.success('Phone number verified successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +119,8 @@ const VendorRegisterPage = () => {
     city: '',
     state: '',
     pincode: '',
+    longitude: '',
+    latitude: '',
     bio: '',
     bankDetails: {
       accountHolderName: '',
@@ -43,8 +136,11 @@ const VendorRegisterPage = () => {
       businessLicense: { type: 'Business License', url: '' },
       insuranceCertificate: { type: 'Insurance Certificate', url: '' },
       policeVerification: { type: 'Police Verification', url: '' }
-    }
+    },
+    referredBy: ''
   });
+
+
 
   const [uploadingFiles, setUploadingFiles] = useState({
     profileImage: false,
@@ -80,12 +176,12 @@ const VendorRegisterPage = () => {
             documents: {
               ...prev.documents,
               [fieldName]: {
-                type: fieldName === 'identityProof' ? 'Identity Proof' 
-                      : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
-                      : fieldName === 'businessLicense' ? 'Business License'
+                type: fieldName === 'identityProof' ? 'Identity Proof'
+                  : fieldName === 'qualificationCertificate' ? 'Qualification Certificate'
+                    : fieldName === 'businessLicense' ? 'Business License'
                       : fieldName === 'insuranceCertificate' ? 'Insurance Certificate'
-                      : fieldName === 'policeVerification' ? 'Police Verification'
-                      : 'Document',
+                        : fieldName === 'policeVerification' ? 'Police Verification'
+                          : 'Document',
                 url: fileUrl
               }
             }
@@ -123,6 +219,13 @@ const VendorRegisterPage = () => {
       ...prev,
       [name]: value
     }));
+    if (name === "phone") {
+      if (value === lastVerifiedPhone && lastVerifiedPhone !== "") {
+        setIsPhoneVerified(true);
+      } else {
+        setIsPhoneVerified(false);
+      }
+    }
   };
 
   const handleBankDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +261,7 @@ const VendorRegisterPage = () => {
       if (!formData.email.trim() || !formData.email.includes('@')) return 'Provide a valid email';
       if (formData.password.length < 6) return 'Password must be at least 6 characters';
       if (!/^[0-9]{10}$/.test(formData.phone)) return 'Provide a valid 10-digit phone number';
+      if (!isPhoneVerified) return 'Please verify the phone number via OTP first';
       if (formData.alternatePhone && !/^[0-9]{10}$/.test(formData.alternatePhone)) return 'Provide a valid 10-digit alternate phone number';
     } else if (currentStep === 2) {
       if (!formData.businessName.trim()) return 'Business Name is required';
@@ -226,13 +330,13 @@ const VendorRegisterPage = () => {
       <div className="flex-1 flex items-center justify-center p-4 py-12">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden border border-slate-100">
           <div className="grid grid-cols-1 md:grid-cols-4">
-            
+
             {/* Left Sidebar - Steps */}
             <div className="bg-gradient-to-b from-[#63D64F] to-[#3DB9A6] p-8 text-white flex flex-col justify-between md:col-span-1">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight mb-2">Partner Portal</h2>
                 <p className="text-xs text-white/80 mb-8">Register as a vendor and start providing high-quality healthcare and training services.</p>
-                
+
                 <div className="space-y-6">
                   {[
                     { step: 1, label: 'Account Info', icon: User },
@@ -243,13 +347,12 @@ const VendorRegisterPage = () => {
                     const Icon = s.icon;
                     return (
                       <div key={s.step} className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                          currentStep === s.step 
-                            ? 'bg-white text-[#3DB9A6] scale-110 shadow-md' 
-                            : currentStep > s.step 
-                              ? 'bg-white/30 text-white' 
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${currentStep === s.step
+                            ? 'bg-white text-[#3DB9A6] scale-110 shadow-md'
+                            : currentStep > s.step
+                              ? 'bg-white/30 text-white'
                               : 'bg-white/10 text-white/60'
-                        }`}>
+                          }`}>
                           {currentStep > s.step ? <Check size={16} /> : <Icon size={16} />}
                         </div>
                         <div className="hidden md:block">
@@ -288,30 +391,82 @@ const VendorRegisterPage = () => {
                       <User size={18} className="text-[#3DB9A6]" /> Account Details
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Owner Name *</label>
                         <input type="text" name="name" value={formData.name} onChange={handleChange} required
                           placeholder="John Doe"
                           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address *</label>
                         <input type="email" name="email" value={formData.email} onChange={handleChange} required
                           placeholder="john@example.com"
                           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Password *</label>
                         <input type="password" name="password" value={formData.password} onChange={handleChange} required
                           placeholder="••••••••"
                           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
                       </div>
-                      <div>
+
+                      <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Phone Number *</label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required
-                          placeholder="9876543210"
-                          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
+                        <div className="flex gap-3">
+                          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required
+                            disabled={otpSent}
+                            placeholder="9876543210"
+                            className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition ${isPhoneVerified ? "border-green-300 bg-green-50 text-green-700 font-semibold" : "border-slate-200"
+                              }`} />
+                          {!isPhoneVerified ? (
+                            <button
+                              type="button"
+                              onClick={handleSendOtp}
+                              disabled={sendingOtp || otpSent || !/^[0-9]{10}$/.test(formData.phone)}
+                              className="px-6 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white font-semibold rounded-lg hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center min-w-[100px]"
+                            >
+                              {sendingOtp ? 'Sending...' : otpSent ? 'Sent' : 'Verify'}
+                            </button>
+                          ) : (
+                            <span className="px-5 py-2 bg-green-100 text-green-700 font-bold rounded-lg text-xs flex items-center gap-1">
+                              ✓ Verified
+                            </span>
+                          )}
+                        </div>
                       </div>
+
+                      {otpSent && (
+                        <div className="md:col-span-2 bg-[#f4fbf3] border border-[#d2f4cc] rounded-xl p-4 mt-2 animate-fadeIn">
+                          <p className="text-xs text-slate-650 mb-2.5 font-semibold">
+                            An OTP has been sent to {formData.phone}. Please enter the 6-digit verification code below:
+                          </p>
+                          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                            <input
+                              type="text"
+                              maxLength={6}
+                              placeholder="Enter OTP"
+                              value={otpCode}
+                              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                              className="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none text-center font-bold tracking-widest text-base bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              disabled={verifyingOtp || otpCode.length !== 6}
+                              className="flex-1 sm:flex-none px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg hover:shadow-md transition disabled:opacity-50 text-xs"
+                            >
+                              {verifyingOtp ? 'Verifying...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOtpSent(false)}
+                              className="text-xs text-gray-500 hover:text-gray-700 hover:underline font-semibold text-center sm:text-left py-1"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Alternate Phone</label>
                         <input type="tel" name="alternatePhone" value={formData.alternatePhone} onChange={handleChange}
@@ -326,6 +481,12 @@ const VendorRegisterPage = () => {
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
                         </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Referral Code (Optional)</label>
+                        <input type="text" name="referredBy" value={formData.referredBy} onChange={handleChange}
+                          placeholder="REF-XXXXXX"
+                          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition font-mono uppercase" />
                       </div>
                     </div>
                   </div>
@@ -388,22 +549,41 @@ const VendorRegisterPage = () => {
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">City *</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleChange} required
-                          placeholder="Indore"
-                          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
+                        <div className="relative">
+                          <LocationAutocomplete
+                            value={formData.city}
+                            onChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+                            type="(cities)"
+                            placeholder="Bhopal"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">State *</label>
-                        <input type="text" name="state" value={formData.state} onChange={handleChange} required
-                          placeholder="Madhya Pradesh"
-                          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
+                        <div className="relative">
+                          <LocationAutocomplete
+                            value={formData.state}
+                            onChange={(val) => setFormData(prev => ({ ...prev, state: val }))}
+                            type="(regions)"
+                            placeholder="Madhya Pradesh"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pincode *</label>
-                        <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} required
-                          placeholder="452001"
-                          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition" />
+                        <div className="relative">
+                          <LocationAutocomplete
+                            value={formData.pincode}
+                            onChange={(val) => setFormData(prev => ({ ...prev, pincode: val }))}
+                            type="postal_code"
+                            placeholder="452001"
+                            className="w-full pl-4 pr-10 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
+                          />
+                        </div>
                       </div>
+
                       <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Short Bio</label>
                         <textarea name="bio" value={formData.bio} onChange={handleChange} rows={2} maxLength={500}
@@ -417,14 +597,14 @@ const VendorRegisterPage = () => {
                 {/* STEP 3: Services & Bank Details */}
                 {currentStep === 3 && (
                   <div className="space-y-6 animate-fadeIn">
-                    
+
                     {/* Services Selection */}
                     <div>
                       <h3 className="text-md font-semibold text-slate-700 flex items-center gap-2 mb-3">
                         <Package size={18} className="text-[#3DB9A6]" /> Services Offered *
                       </h3>
                       <p className="text-xs text-slate-500 mb-2">Select the healthcare, training, or survey services you offer</p>
-                      
+
                       {fetchingServices ? (
                         <div className="text-center py-4">
                           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#3DB9A6]"></div>
@@ -432,11 +612,10 @@ const VendorRegisterPage = () => {
                       ) : (
                         <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50/50">
                           {servicesList.map((service) => (
-                            <label key={service._id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
-                              formData.services.includes(service._id) 
-                                ? 'bg-[#3DB9A6]/5 border-[#3DB9A6]' 
+                            <label key={service._id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${formData.services.includes(service._id)
+                                ? 'bg-[#3DB9A6]/5 border-[#3DB9A6]'
                                 : 'bg-white border-slate-200 hover:border-slate-300'
-                            }`}>
+                              }`}>
                               <input
                                 type="checkbox"
                                 checked={formData.services.includes(service._id)}
@@ -582,9 +761,8 @@ const VendorRegisterPage = () => {
                                   </button>
                                 </>
                               ) : (
-                                <label className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition cursor-pointer text-xs font-semibold shadow-sm w-full justify-center ${
-                                  isUploading ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                                }`}>
+                                <label className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition cursor-pointer text-xs font-semibold shadow-sm w-full justify-center ${isUploading ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                  }`}>
                                   {isUploading ? (
                                     <>
                                       <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-slate-400 border-t-transparent"></div>
