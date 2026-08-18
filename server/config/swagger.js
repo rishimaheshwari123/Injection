@@ -43,7 +43,13 @@ const doc = {
     { name: 'Advertisements', description: 'Advertisement management' },
     { name: 'Jobs', description: 'Job postings' },
     { name: 'Blogs', description: 'Blog management' },
-    { name: 'Vendor Service Requests', description: 'Vendor service assignment requests' }
+    { name: 'Vendor Service Requests', description: 'Vendor service assignment requests' },
+    { name: 'Notifications', description: 'Notification management' },
+    { name: 'Gallery', description: 'Gallery management' },
+    { name: 'Hero', description: 'Hero section management' },
+    { name: 'Categories', description: 'Category management' },
+    { name: 'Admin Settings', description: 'Admin settings management' },
+    { name: 'User Booking', description: 'User booking management' }
   ]
 };
 
@@ -65,7 +71,13 @@ const TAG_MAP = [
   { prefix: '/api/advertisements', tag: 'Advertisements' },
   { prefix: '/api/jobs', tag: 'Jobs' },
   { prefix: '/api/blogs', tag: 'Blogs' },
-  { prefix: '/api/vendor-service-requests', tag: 'Vendor Service Requests' }
+  { prefix: '/api/vendor-service-requests', tag: 'Vendor Service Requests' },
+  { prefix: '/api/notifications', tag: 'Notifications' },
+  { prefix: '/api/gallery', tag: 'Gallery' },
+  { prefix: '/api/hero', tag: 'Hero' },
+  { prefix: '/api/categories', tag: 'Categories' },
+  { prefix: '/api/admin-settings', tag: 'Admin Settings' },
+  { prefix: '/api/user-bookings', tag: 'User Booking' }
 ];
 
 function assignTagsFromPaths(outputFile) {
