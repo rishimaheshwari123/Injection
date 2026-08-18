@@ -15,6 +15,7 @@ interface User {
   pincode?: string;
   longitude?: number;
   latitude?: number;
+  referralCode?: string;
   familyMembers?: any[];
   permissions?: {
     dashboard: boolean;

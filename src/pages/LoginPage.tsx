@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
-import { authAPI, vendorAPI } from '../services/api';
+import { authAPI, vendorAPI, ambassadorAPI } from '../services/api';
 import { loginSuccess } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import Navigation from '../components/Navigation';
@@ -11,7 +11,7 @@ import Footer from '../components/Footer';
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [loginType, setLoginType] = useState<'user' | 'vendor'>('user');
+  const [loginType, setLoginType] = useState<'user' | 'vendor' | 'ambassador'>('user');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -34,13 +34,22 @@ const LoginPage = () => {
       let response;
       if (loginType === 'vendor') {
         response = await vendorAPI.login(formData.email, formData.password);
+      } else if (loginType === 'ambassador') {
+        response = await ambassadorAPI.login(formData.email, formData.password);
       } else {
         response = await authAPI.login(formData.email, formData.password);
       }
 
       if (response.data.success) {
-        const { user, vendor, token } = response.data.data;
-        const loggedInUser = loginType === 'vendor' ? { ...vendor, role: 'vendor' } : user;
+        const { user, vendor, ambassador, token } = response.data.data;
+        let loggedInUser;
+        if (loginType === 'vendor') {
+          loggedInUser = { ...vendor, role: 'vendor' };
+        } else if (loginType === 'ambassador') {
+          loggedInUser = { ...(ambassador || user), role: 'ambassador' };
+        } else {
+          loggedInUser = user;
+        }
 
         // Dispatch login action
         dispatch(loginSuccess({ user: loggedInUser, token }));
@@ -54,6 +63,8 @@ const LoginPage = () => {
             navigate('/admin');
           } else if (loggedInUser.role === 'vendor') {
             navigate('/vendor');
+          } else if (loggedInUser.role === 'ambassador') {
+            navigate('/ambassador');
           } else if (loggedInUser.role === 'user') {
             navigate('/user');
           } else {
@@ -89,7 +100,7 @@ const LoginPage = () => {
                 setLoginType('user');
                 setFormData({ email: '', password: '' });
               }}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all ${
                 loginType === 'user'
                   ? 'bg-white text-gray-800 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -103,13 +114,27 @@ const LoginPage = () => {
                 setLoginType('vendor');
                 setFormData({ email: '', password: '' });
               }}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all ${
                 loginType === 'vendor'
                   ? 'bg-white text-gray-800 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Vendor Partner
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginType('ambassador');
+                setFormData({ email: '', password: '' });
+              }}
+              className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all ${
+                loginType === 'ambassador'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Ambassador
             </button>
           </div>
 
@@ -125,7 +150,7 @@ const LoginPage = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none transition"
-                placeholder={loginType === 'vendor' ? 'vendor@example.com' : 'admin@example.com'}
+                placeholder={loginType === 'vendor' ? 'vendor@example.com' : loginType === 'ambassador' ? 'ambassador@example.com' : 'admin@example.com'}
               />
             </div>
 

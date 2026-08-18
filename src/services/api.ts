@@ -106,6 +106,39 @@ export const vendorAPI = {
   generateReferralCode: () => api.post("/vendors/referrals/generate"),
 };
 
+// Ambassador APIs
+export const ambassadorAPI = {
+  register: (data: any) => api.post(API_ENDPOINTS.AMBASSADORS.REGISTER, data),
+  login: (email: string, password: string) =>
+    api.post(API_ENDPOINTS.AMBASSADORS.LOGIN, { email, password }),
+  getMe: () => api.get(API_ENDPOINTS.AMBASSADORS.ME),
+  getVendors: () => api.get(API_ENDPOINTS.AMBASSADORS.VENDORS),
+  registerVendor: (data: any) =>
+    api.post(API_ENDPOINTS.AMBASSADORS.REGISTER_VENDOR, data),
+  getWalletHistory: () => api.get(API_ENDPOINTS.AMBASSADORS.WALLET_HISTORY),
+  uploadFile: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(API_ENDPOINTS.AMBASSADORS.UPLOAD, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  adminGetAll: () => api.get(API_ENDPOINTS.AMBASSADORS.ADMIN_ALL),
+  adminGetById: (id: string) => api.get(API_ENDPOINTS.AMBASSADORS.ADMIN_BY_ID(id)),
+  adminToggleStatus: (id: string) =>
+    api.put(API_ENDPOINTS.AMBASSADORS.ADMIN_TOGGLE_STATUS(id)),
+  adminGetVendors: (id: string) =>
+    api.get(API_ENDPOINTS.AMBASSADORS.ADMIN_VENDORS(id)),
+  withdraw: (amount: number) => api.post(API_ENDPOINTS.AMBASSADORS.WITHDRAW, { amount }),
+  getWithdrawals: () => api.get(API_ENDPOINTS.AMBASSADORS.WITHDRAWALS),
+  adminGetWithdrawals: () => api.get(API_ENDPOINTS.AMBASSADORS.ADMIN_WITHDRAWALS),
+  adminUpdateWithdrawal: (ambassadorId: string, requestId: string, status: string, notes: string) =>
+    api.put(API_ENDPOINTS.AMBASSADORS.ADMIN_UPDATE_WITHDRAWAL(ambassadorId, requestId), { status, notes }),
+};
+
+
 // Service APIs
 export const serviceAPI = {
   getAllServices: () => api.get("/services/admin/all"),

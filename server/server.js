@@ -30,6 +30,7 @@ import heroRoutes from './routes/heroRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import otpRoutes from './routes/otpRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
+import ambassadorRoutes from './routes/ambassadorRoutes.js';
 import fs from 'fs';
 
 // Load env vars
@@ -210,6 +211,7 @@ app.use('/api/hero', heroRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/ambassadors', ambassadorRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

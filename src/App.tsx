@@ -62,6 +62,15 @@ import VendorRegisterPage from "./pages/VendorRegisterPage";
 import VendorIdCardPage from "./pages/VendorIdCardPage";
 import UserIdCardPage from "./pages/UserIdCardPage";
 import MyReferralsPage from "./pages/MyReferralsPage";
+import AmbassadorRegisterPage from "./pages/AmbassadorRegisterPage";
+import AmbassadorLayout from "./components/AmbassadorLayout";
+import AmbassadorDashboardPage from "./pages/ambassador/AmbassadorDashboardPage";
+import AmbassadorRegisterVendorPage from "./pages/ambassador/AmbassadorRegisterVendorPage";
+import MyVendorsPage from "./pages/ambassador/MyVendorsPage";
+import WalletPage from "./pages/ambassador/WalletPage";
+import AdminAmbassadorsPage from "./pages/admin/AmbassadorsPage";
+import AmbassadorDetailsPage from "./pages/admin/AmbassadorDetailsPage";
+import AdminWithdrawalsPage from "./pages/admin/WithdrawalsPage";
 
 
 // Layout wrapper for public pages
@@ -83,6 +92,14 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Navigate to="/register/user" replace />} />
         <Route path="/register/user" element={<UserRegisterPage />} />
+        <Route
+          path="/register/ambassador"
+          element={
+            <PublicLayout>
+              <AmbassadorRegisterPage />
+            </PublicLayout>
+          }
+        />
         <Route
           path="/vendor/register"
           element={
@@ -242,6 +259,21 @@ function App() {
           <Route path="referrals" element={<MyReferralsPage />} />
         </Route>
 
+        {/* Ambassador Routes */}
+        <Route
+          path="/ambassador"
+          element={
+            <ProtectedRoute requireAmbassador={true}>
+              <AmbassadorLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AmbassadorDashboardPage />} />
+          <Route path="register-vendor" element={<AmbassadorRegisterVendorPage />} />
+          <Route path="my-vendors" element={<MyVendorsPage />} />
+          <Route path="wallet" element={<WalletPage />} />
+        </Route>
+
         <Route
           path="/booking/:id"
           element={
@@ -291,6 +323,30 @@ function App() {
             element={
               <PermissionGuard permission="vendors">
                 <VendorsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="ambassadors"
+            element={
+              <PermissionGuard permission="users">
+                <AdminAmbassadorsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="ambassadors/:id"
+            element={
+              <PermissionGuard permission="users">
+                <AmbassadorDetailsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="withdrawals"
+            element={
+              <PermissionGuard permission="users">
+                <AdminWithdrawalsPage />
               </PermissionGuard>
             }
           />

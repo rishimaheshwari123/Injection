@@ -25,6 +25,7 @@ import {
   ClipboardList,
   Bell,
   Award,
+  Wallet,
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
@@ -54,11 +55,24 @@ const AdminLayout = () => {
       permission: "dashboard",
     },
     { path: "/admin/users", icon: Users, label: "Users", permission: "users" },
+
     {
       path: "/admin/vendors",
       icon: Building2,
       label: "Vendors",
       permission: "vendors",
+    },
+    {
+      path: "/admin/ambassadors",
+      icon: Users,
+      label: "Ambassadors",
+      permission: "users",
+    },
+    {
+      path: "/admin/withdrawals",
+      icon: Wallet,
+      label: "Withdrawals Requests",
+      permission: "users",
     },
     {
       path: "/admin/vendor-service-requests",

@@ -6,9 +6,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
   requireVendor?: boolean;
+  requireAmbassador?: boolean;
 }
 
-const ProtectedRoute = ({ children, requireAdmin = false, requireVendor = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ 
+  children, 
+  requireAdmin = false, 
+  requireVendor = false,
+  requireAmbassador = false 
+}: ProtectedRouteProps) => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   if (!isAuthenticated) {
@@ -20,6 +26,10 @@ const ProtectedRoute = ({ children, requireAdmin = false, requireVendor = false 
   }
 
   if (requireVendor && user?.role !== 'vendor') {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireAmbassador && user?.role !== 'ambassador') {
     return <Navigate to="/" replace />;
   }
 

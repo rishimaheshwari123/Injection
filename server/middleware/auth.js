@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
+import Ambassador from '../models/Ambassador.js';
 
 // Protect routes - verify JWT token
 export const protect = async (req, res, next) => {
@@ -21,13 +22,21 @@ export const protect = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Check if user or vendor
+      // Check if user, vendor, or ambassador
       if (decoded.role === 'vendor') {
         req.vendor = await Vendor.findById(decoded.id);
         if (!req.vendor) {
           return res.status(401).json({
             success: false,
             message: 'Vendor not found'
+          });
+        }
+      } else if (decoded.role === 'ambassador') {
+        req.ambassador = await Ambassador.findById(decoded.id);
+        if (!req.ambassador) {
+          return res.status(401).json({
+            success: false,
+            message: 'Ambassador not found'
           });
         }
       } else {
@@ -81,12 +90,24 @@ export const vendorOnly = (req, res, next) => {
 
 // User only access
 export const userOnly = (req, res, next) => {
-  if (req.user && !req.vendor) {
+  if (req.user && !req.vendor && !req.ambassador) {
     next();
   } else {
     return res.status(403).json({
       success: false,
       message: 'Access denied. User only.'
+    });
+  }
+};
+
+// Ambassador only access
+export const ambassadorOnly = (req, res, next) => {
+  if (req.ambassador) {
+    next();
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Ambassador only.'
     });
   }
 };

@@ -41,6 +41,26 @@ export const API_ENDPOINTS = {
     UPDATE_PROFILE: "/vendors/profile",
   },
 
+  // Ambassadors
+  AMBASSADORS: {
+    BASE: "/ambassadors",
+    REGISTER: "/ambassadors/register",
+    LOGIN: "/ambassadors/login",
+    ME: "/ambassadors/me",
+    VENDORS: "/ambassadors/vendors",
+    REGISTER_VENDOR: "/ambassadors/register-vendor",
+    WALLET_HISTORY: "/ambassadors/wallet-history",
+    WITHDRAW: "/ambassadors/withdraw",
+    WITHDRAWALS: "/ambassadors/withdrawals",
+    UPLOAD: "/ambassadors/upload",
+    ADMIN_ALL: "/ambassadors/admin/all",
+    ADMIN_BY_ID: (id: string) => `/ambassadors/admin/${id}`,
+    ADMIN_TOGGLE_STATUS: (id: string) => `/ambassadors/admin/${id}/toggle-status`,
+    ADMIN_VENDORS: (id: string) => `/ambassadors/admin/${id}/vendors`,
+    ADMIN_WITHDRAWALS: "/ambassadors/admin/withdrawals/all",
+    ADMIN_UPDATE_WITHDRAWAL: (ambassadorId: string, requestId: string) => `/ambassadors/admin/withdrawals/${ambassadorId}/${requestId}`
+  },
+
   // Services
   SERVICES: {
     BASE: "/services",

@@ -87,6 +87,13 @@ export const vendorRegister = async (req, res) => {
         if (referringVendor) {
           referredByRef = referringVendor._id;
           referredByModel = 'Vendor';
+        } else {
+          const Ambassador = (await import('../models/Ambassador.js')).default;
+          const referringAmbassador = await Ambassador.findOne({ referralCode: trimmedRefCode });
+          if (referringAmbassador) {
+            referredByRef = referringAmbassador._id;
+            referredByModel = 'Ambassador';
+          }
         }
       }
     }
@@ -195,8 +202,25 @@ export const vendorRegister = async (req, res) => {
 
       referredBy: referredBy || '',
       referredByRef,
-      referredByModel
+      referredByModel,
+      ambassadorId: referredByModel === 'Ambassador' ? referredByRef : null
     });
+
+    // If referred by Ambassador, add pending reward to their history
+    if (referredByModel === 'Ambassador' && referredByRef) {
+      const Ambassador = (await import('../models/Ambassador.js')).default;
+      const ambassador = await Ambassador.findById(referredByRef);
+      if (ambassador) {
+        ambassador.walletHistory.push({
+          vendorId: vendor._id,
+          vendorName: vendor.name,
+          amount: 100,
+          status: 'pending',
+          date: new Date()
+        });
+        await ambassador.save();
+      }
+    }
 
     // Bidirectional sync: add this vendor to the selected services
     if (finalServices.length > 0) {
@@ -444,6 +468,11 @@ export const activateVendor = async (req, res) => {
     vendor.isVerified = true;
     vendor.verificationStatus = 'verified';
     vendor.verificationDate = new Date();
+
+    // Credit Ambassador if referred
+    const { creditAmbassadorForVendor } = await import('./ambassadorController.js');
+    await creditAmbassadorForVendor(vendor);
+
     await vendor.save();
 
     res.status(200).json({
@@ -835,6 +864,11 @@ export const updateVendorByAdmin = async (req, res) => {
     if (isActive !== undefined) vendor.isActive = isActive;
     if (isVerified !== undefined) vendor.isVerified = isVerified;
     if (verificationStatus !== undefined) vendor.verificationStatus = verificationStatus;
+
+    if (vendor.isVerified || vendor.verificationStatus === 'verified') {
+      const { creditAmbassadorForVendor } = await import('./ambassadorController.js');
+      await creditAmbassadorForVendor(vendor);
+    }
 
     await vendor.save();
 

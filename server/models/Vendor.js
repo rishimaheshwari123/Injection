@@ -244,7 +244,16 @@ const vendorSchema = new mongoose.Schema({
   },
   referredByModel: {
     type: String,
-    enum: ['User', 'Vendor']
+    enum: ['User', 'Vendor', 'Ambassador']
+  },
+  ambassadorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ambassador',
+    default: null
+  },
+  isAmbassadorCredited: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

@@ -524,6 +524,15 @@ const Navigation = () => {
                             Vendor Profile
                           </Link>
                         )}
+                        {user?.role === "ambassador" && (
+                          <Link
+                            to="/ambassador"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 font-semibold"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            Ambassador Panel
+                          </Link>
+                        )}
                         {user?.role === "user" && (
                           <>
                             <Link
@@ -598,6 +607,14 @@ const Navigation = () => {
                           >
                             <Briefcase size={16} className="text-gray-400" />
                             <span>Vendor Register</span>
+                          </Link>
+                          <Link
+                            to="/register/ambassador"
+                            className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-50 hover:text-[#3DB9A6] font-semibold transition-colors"
+                            onClick={() => setIsRegisterDropdownOpen(false)}
+                          >
+                            <UserPlus size={16} className="text-gray-400" />
+                            <span>Ambassador Register</span>
                           </Link>
                         </motion.div>
                       )}
@@ -771,6 +788,15 @@ const Navigation = () => {
                           Vendor Profile
                         </Link>
                       )}
+                      {user?.role === "ambassador" && (
+                        <Link
+                          to="/ambassador"
+                          className="flex items-center justify-center w-full border border-slate-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all duration-300"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Ambassador Panel
+                        </Link>
+                      )}
                       {user?.role === "user" && (
                         <>
                           <Link
@@ -823,6 +849,13 @@ const Navigation = () => {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <span>Vendor Register</span>
+                      </Link>
+                      <Link
+                        to="/register/ambassador"
+                        className="flex items-center justify-center space-x-2 w-full text-white bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] px-6 py-3 rounded-lg font-semibold hover:shadow-md transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <span>Ambassador Register</span>
                       </Link>
                     </div>
                   )}
