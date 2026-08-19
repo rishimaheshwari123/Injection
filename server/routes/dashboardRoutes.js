@@ -1,8 +1,17 @@
 import express from 'express';
-import { getDashboardStats, getUserDashboardStats } from '../controllers/dashboardController.js';
+import { 
+  getDashboardStats, 
+  getUserDashboardStats, 
+  incrementVisitorCount, 
+  getVisitorCount 
+} from '../controllers/dashboardController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Public routes for visitors count
+router.post('/visitors/increment', incrementVisitorCount);
+router.get('/visitors', getVisitorCount);
 
 // User dashboard (requires authentication only)
 router.get('/user/stats', protect, getUserDashboardStats);

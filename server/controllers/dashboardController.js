@@ -3,6 +3,7 @@ import Vendor from '../models/Vendor.js';
 import Service from '../models/Service.js';
 import Booking from '../models/Booking.js';
 import LabPartner from '../models/LabPartner.js';
+import Counter from '../models/Counter.js';
 
 // @desc    Get user dashboard statistics
 // @route   GET /api/dashboard/user/stats
@@ -149,6 +150,10 @@ export const getDashboardStats = async (req, res) => {
     const totalServices = await Service.countDocuments();
     const totalBookings = await Booking.countDocuments();
     const totalLabEntries = await LabPartner.countDocuments();
+    
+    // Get visitor count
+    const visitorCounter = await Counter.findOne({ id: 'visitors' });
+    const totalVisitors = visitorCounter ? visitorCounter.seq : 0;
 
     // Booking status breakdown
     const bookingsByStatus = await Booking.aggregate([
@@ -253,7 +258,8 @@ export const getDashboardStats = async (req, res) => {
           vendors: totalVendors,
           services: totalServices,
           bookings: totalBookings,
-          labEntries: totalLabEntries
+          labEntries: totalLabEntries,
+          visitors: totalVisitors
         },
         bookingsByStatus,
         revenue: revenueData[0]?.totalRevenue || 0,
@@ -266,6 +272,52 @@ export const getDashboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Increment visitor counter
+// @route   POST /api/dashboard/visitors/increment
+// @access  Public
+export const incrementVisitorCount = async (req, res) => {
+  try {
+    const counter = await Counter.findOneAndUpdate(
+      { id: 'visitors' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    res.status(200).json({
+      success: true,
+      data: {
+        visitors: counter.seq
+      }
+    });
+  } catch (error) {
+    console.error('Increment visitor count error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get visitor count
+// @route   GET /api/dashboard/visitors
+// @access  Public
+export const getVisitorCount = async (req, res) => {
+  try {
+    const counter = await Counter.findOne({ id: 'visitors' });
+    res.status(200).json({
+      success: true,
+      data: {
+        visitors: counter ? counter.seq : 0
+      }
+    });
+  } catch (error) {
+    console.error('Get visitor count error:', error);
     res.status(500).json({
       success: false,
       message: error.message

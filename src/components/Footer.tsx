@@ -1,8 +1,26 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Instagram, Youtube } from 'lucide-react'
+import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Instagram, Youtube, Eye } from 'lucide-react'
 import logo from '../assets/logo.png'
+import { dashboardAPI } from '../services/api'
 
 const Footer = () => {
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const response = await dashboardAPI.getVisitorCount();
+        if (response.data.success) {
+          setVisitorCount(response.data.data.visitors);
+        }
+      } catch (err) {
+        console.error("Failed to load visitor count:", err);
+      }
+    };
+    fetchCount();
+  }, []);
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="w-[90vw] mx-auto px-4 py-12">
@@ -100,9 +118,15 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-gray-400 text-sm">
-            © 2024 PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. All rights reserved.
+        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-gray-400 text-sm">
+            <span>© 2024 PRLT Health Care and Research Solutions (OPC) Pvt. Ltd. All rights reserved.</span>
+            {visitorCount !== null && (
+              <span className="flex items-center gap-1.5 bg-gray-800/40 text-xs px-2.5 py-1 rounded-full border border-gray-800 shrink-0">
+                <Eye size={12} className="text-teal-400" />
+                <span>Visitors: <strong className="text-white font-medium">{visitorCount.toLocaleString()}</strong></span>
+              </span>
+            )}
           </div>
 
           <div className="flex space-x-4 mt-4 md:mt-0">

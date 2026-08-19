@@ -297,6 +297,8 @@ export const labPartnerAPI = {
 // Dashboard APIs
 export const dashboardAPI = {
   getStats: () => api.get("/dashboard/stats"),
+  getVisitorCount: () => api.get("/dashboard/visitors"),
+  incrementVisitor: () => api.post("/dashboard/visitors/increment"),
 };
 
 // Blog APIs

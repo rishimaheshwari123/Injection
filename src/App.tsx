@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { dashboardAPI } from "./services/api";
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
@@ -84,6 +86,21 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 );
 
 function App() {
+  useEffect(() => {
+    const recordVisit = async () => {
+      try {
+        const visited = sessionStorage.getItem("visitor_counted");
+        if (!visited) {
+          await dashboardAPI.incrementVisitor();
+          sessionStorage.setItem("visitor_counted", "true");
+        }
+      } catch (err) {
+        console.error("Failed to record visit:", err);
+      }
+    };
+    recordVisit();
+  }, []);
+
   return (
     <>
       <ScrollToTop />

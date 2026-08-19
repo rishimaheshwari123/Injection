@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building2, Package, Calendar, TrendingUp, FlaskConical, IndianRupee } from 'lucide-react';
+import { Users, Building2, Package, Calendar, TrendingUp, FlaskConical, IndianRupee, Eye } from 'lucide-react';
 import { dashboardAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import {
@@ -78,7 +78,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <div 
           onClick={() => navigate('/admin/users')}
           className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
@@ -128,6 +128,18 @@ const DashboardPage = () => {
               <p className="text-3xl font-bold mt-2">{stats.counts.bookings}</p>
             </div>
             <Calendar size={40} className="opacity-80" />
+          </div>
+        </div>
+
+        <div 
+          className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-rose-100 text-sm">Total Visitors</p>
+              <p className="text-3xl font-bold mt-2">{stats.counts.visitors || 0}</p>
+            </div>
+            <Eye size={40} className="opacity-80" />
           </div>
         </div>
       </div>
