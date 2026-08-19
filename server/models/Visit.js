@@ -25,6 +25,14 @@ const visitSchema = new mongoose.Schema({
   email: {
     type: String
   },
+  state: {
+    type: String,
+    default: ''
+  },
+  city: {
+    type: String,
+    default: ''
+  },
   count: {
     type: Number,
     default: 1

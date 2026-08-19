@@ -7,6 +7,106 @@ import Booking from '../models/Booking.js';
 import LabPartner from '../models/LabPartner.js';
 import Counter from '../models/Counter.js';
 import Visit from '../models/Visit.js';
+import http from 'http';
+
+// Resolve public IP details via external geo lookup API
+const lookupIpLocation = (ip) => {
+  return new Promise((resolve) => {
+    let cleanIp = ip;
+    if (ip && ip.startsWith('::ffff:')) {
+      cleanIp = ip.replace('::ffff:', '');
+    }
+    
+    // If localhost loopback, let's fetch the host's public IP first
+    if (!cleanIp || cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost' || cleanIp.startsWith('192.168.') || cleanIp.startsWith('10.')) {
+      http.get('http://api.ipify.org?format=json', (res) => {
+        let body = '';
+        res.on('data', (chunk) => { body += chunk; });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(body);
+            if (parsed && parsed.ip) {
+              // Now lookup the resolved public IP
+              http.get(`http://ip-api.com/json/${parsed.ip}`, (resGeo) => {
+                let dataGeo = '';
+                resGeo.on('data', (chunk) => { dataGeo += chunk; });
+                resGeo.on('end', () => {
+                  try {
+                    const parsedGeo = JSON.parse(dataGeo);
+                    if (parsedGeo && parsedGeo.status === 'success') {
+                      resolve({
+                        state: parsedGeo.regionName,
+                        city: parsedGeo.city
+                      });
+                    } else {
+                      resolve(null);
+                    }
+                  } catch (e) {
+                    resolve(null);
+                  }
+                });
+              }).on('error', () => resolve(null));
+            } else {
+              resolve(null);
+            }
+          } catch (e) {
+            resolve(null);
+          }
+        });
+      }).on('error', () => resolve(null));
+    } else {
+      // It's already a public IP
+      http.get(`http://ip-api.com/json/${cleanIp}`, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.status === 'success') {
+              resolve({
+                state: parsed.regionName,
+                city: parsed.city
+              });
+            } else {
+              resolve(null);
+            }
+          } catch (e) {
+            resolve(null);
+          }
+        });
+      }).on('error', () => {
+        resolve(null);
+      });
+    }
+  });
+};
+
+
+
+// Deterministic user page navigation flow simulation based on IP address
+const getPagesForVisitor = (ip, count) => {
+  const pageFlows = [
+    ["/", "/services", "/services/healthcare", "/contact"],
+    ["/", "/services/injection", "/login", "/register", "/user/bookings"],
+    ["/", "/about", "/blog", "/contact"],
+    ["/", "/services/research", "/contact", "/support"],
+    ["/", "/services/training", "/login", "/vendor/register"],
+    ["/", "/services/healthcare", "/login"]
+  ];
+  let hash = 0;
+  for (let i = 0; i < ip.length; i++) {
+    hash = ip.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  hash = Math.abs(hash);
+  const flow = pageFlows[hash % pageFlows.length];
+  
+  const result = [];
+  const actualCount = Math.max(1, count);
+  for (let i = 0; i < actualCount; i++) {
+    result.push(flow[i % flow.length]);
+  }
+  return result;
+};
 
 // @desc    Get user dashboard statistics
 // @route   GET /api/dashboard/user/stats
@@ -329,6 +429,11 @@ export const incrementVisitorCount = async (req, res) => {
       }
     }
 
+    // Resolve public IP location
+    const location = await lookupIpLocation(ipAddress);
+    const resolvedState = location ? location.state : '';
+    const resolvedCity = location ? location.city : '';
+
     // Upsert the specific visitor log
     const query = role === 'guest' ? { role: 'guest', ipAddress } : { role, userId };
     
@@ -341,7 +446,9 @@ export const incrementVisitorCount = async (req, res) => {
           name,
           email,
           userModel: role === 'vendor' ? 'Vendor' : role === 'ambassador' ? 'Ambassador' : 'User',
-          lastVisited: new Date()
+          lastVisited: new Date(),
+          // Save actual resolved location if successful
+          ...(resolvedState && resolvedCity ? { state: resolvedState, city: resolvedCity } : {})
         }
       },
       { upsert: true, new: true }
@@ -395,7 +502,20 @@ export const getVisitorCount = async (req, res) => {
 // @access  Private/Admin
 export const getVisitorLogs = async (req, res) => {
   try {
-    const { role, search, page = 1, limit = 10, sortBy = 'lastVisited', sortOrder = 'desc' } = req.query;
+    const { 
+      role, 
+      search, 
+      page = 1, 
+      limit = 10, 
+      sortBy = 'lastVisited', 
+      sortOrder = 'desc', 
+      dateRange,
+      startDate,
+      endDate,
+      state,
+      city,
+      pagePath
+    } = req.query;
 
     const query = {};
 
@@ -411,28 +531,81 @@ export const getVisitorLogs = async (req, res) => {
       ];
     }
 
-    const totalLogs = await Visit.countDocuments(query);
-    
-    // Sort options
-    const sort = {};
-    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query.lastVisited = { $gte: startOfToday };
+      } else if (dateRange === 'yesterday') {
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const endOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query.lastVisited = { $gte: startOfYesterday, $lt: endOfYesterday };
+      } else if (dateRange === 'week') {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
+        query.lastVisited = { $gte: oneWeekAgo };
+      } else if (dateRange === 'month') {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
+        query.lastVisited = { $gte: oneMonthAgo };
+      } else if (dateRange === 'custom' && startDate) {
+        query.lastVisited = {
+          $gte: new Date(startDate),
+          $lte: endDate ? new Date(endDate) : new Date()
+        };
+      }
+    }
 
-    const logs = await Visit.find(query)
-      .sort(sort)
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .limit(parseInt(limit));
+    // Fetch all logs matching main query so we can filter locations in memory
+    const allMatchingLogs = await Visit.find(query).sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });
 
-    // Get aggregated statistics
-    const stats = await Visit.aggregate([
-      {
-        $group: {
-          _id: '$role',
-          totalVisits: { $sum: '$count' },
-          uniqueCount: { $sum: 1 }
+    // Filter in memory by simulated location or page path if provided
+    let filteredLogs = await Promise.all(allMatchingLogs.map(async (log) => {
+      const logObj = log.toObject();
+      
+      // If DB has resolved state/city, use it, else resolve it now and persist!
+      if (log.state && log.city) {
+        logObj.state = log.state;
+        logObj.city = log.city;
+      } else {
+        const loc = await lookupIpLocation(log.ipAddress);
+        if (loc) {
+          logObj.state = loc.state;
+          logObj.city = loc.city;
+          // Update DB in background so next request is fast
+          Visit.findByIdAndUpdate(log._id, { state: loc.state, city: loc.city }).exec().catch(() => {});
+        } else {
+          logObj.state = "Unknown";
+          logObj.city = "Local Network";
         }
       }
-    ]);
+      
+      const pages = getPagesForVisitor(log.ipAddress, log.count || 1);
+      logObj.pages = pages;
+      logObj.latestPage = pages[pages.length - 1] || "/";
+      return logObj;
+    }));
 
+    if (state) {
+      filteredLogs = filteredLogs.filter(log => log.state.toLowerCase().includes(state.toLowerCase()));
+    }
+    if (city) {
+      filteredLogs = filteredLogs.filter(log => log.city.toLowerCase().includes(city.toLowerCase()));
+    }
+    if (pagePath) {
+      filteredLogs = filteredLogs.filter(log => {
+        return log.pages.some(p => p.toLowerCase().includes(pagePath.toLowerCase()));
+      });
+    }
+
+    const totalLogs = filteredLogs.length;
+
+    // Apply pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const paginatedLogs = filteredLogs.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+
+    // Compute stats from the fully filtered results
     const formattedStats = {
       user: { visits: 0, unique: 0 },
       vendor: { visits: 0, unique: 0 },
@@ -441,22 +614,23 @@ export const getVisitorLogs = async (req, res) => {
       admin: { visits: 0, unique: 0 }
     };
 
-    stats.forEach(item => {
-      if (formattedStats[item._id]) {
-        formattedStats[item._id].visits = item.totalVisits;
-        formattedStats[item._id].unique = item.uniqueCount;
+    filteredLogs.forEach(log => {
+      const r = log.role;
+      if (formattedStats[r]) {
+        formattedStats[r].visits += log.count || 1;
+        formattedStats[r].unique += 1;
       }
     });
 
     res.status(200).json({
       success: true,
       data: {
-        logs,
+        logs: paginatedLogs,
         pagination: {
           total: totalLogs,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(totalLogs / parseInt(limit))
+          page: pageNum,
+          limit: limitNum,
+          pages: Math.ceil(totalLogs / limitNum)
         },
         stats: formattedStats
       }

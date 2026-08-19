@@ -204,7 +204,7 @@ const AdminLayout = () => {
     {
       path: "/admin/website-counter",
       icon: Eye,
-      label: "Website Counter",
+      label: "Visits & Web Analytics",
       permission: "dashboard",
     },
   ];
