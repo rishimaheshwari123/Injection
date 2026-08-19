@@ -3,7 +3,8 @@ import {
   getDashboardStats, 
   getUserDashboardStats, 
   incrementVisitorCount, 
-  getVisitorCount 
+  getVisitorCount,
+  getVisitorLogs
 } from '../controllers/dashboardController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -15,6 +16,9 @@ router.get('/visitors', getVisitorCount);
 
 // User dashboard (requires authentication only)
 router.get('/user/stats', protect, getUserDashboardStats);
+
+// Detailed visitor logs for admin
+router.get('/visitors/logs', protect, adminOnly, getVisitorLogs);
 
 // Admin dashboard (requires authentication and admin access)
 router.use(protect);

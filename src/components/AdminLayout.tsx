@@ -26,6 +26,7 @@ import {
   Bell,
   Award,
   Wallet,
+  Eye,
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
@@ -199,6 +200,12 @@ const AdminLayout = () => {
       icon: Award,
       label: "Vendor ID Card",
       permission: "vendors",
+    },
+    {
+      path: "/admin/website-counter",
+      icon: Eye,
+      label: "Website Counter",
+      permission: "dashboard",
     },
   ];
 

@@ -299,6 +299,7 @@ export const dashboardAPI = {
   getStats: () => api.get("/dashboard/stats"),
   getVisitorCount: () => api.get("/dashboard/visitors"),
   incrementVisitor: () => api.post("/dashboard/visitors/increment"),
+  getVisitorLogs: (params?: any) => api.get("/dashboard/visitors/logs", { params }),
 };
 
 // Blog APIs

@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "./store/store";
 import { dashboardAPI } from "./services/api";
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
@@ -73,6 +75,7 @@ import WalletPage from "./pages/ambassador/WalletPage";
 import AdminAmbassadorsPage from "./pages/admin/AmbassadorsPage";
 import AmbassadorDetailsPage from "./pages/admin/AmbassadorDetailsPage";
 import AdminWithdrawalsPage from "./pages/admin/WithdrawalsPage";
+import WebsiteCounterPage from "./pages/admin/WebsiteCounterPage";
 
 
 // Layout wrapper for public pages
@@ -86,20 +89,25 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 );
 
 function App() {
+  const { user } = useSelector((state: RootState) => state.auth);
+
   useEffect(() => {
     const recordVisit = async () => {
       try {
-        const visited = sessionStorage.getItem("visitor_counted");
+        const role = user ? user.role : "guest";
+        const userId = user ? user._id : "";
+        const sessionKey = `visitor_counted_${role}_${userId}`;
+        const visited = sessionStorage.getItem(sessionKey);
         if (!visited) {
           await dashboardAPI.incrementVisitor();
-          sessionStorage.setItem("visitor_counted", "true");
+          sessionStorage.setItem(sessionKey, "true");
         }
       } catch (err) {
         console.error("Failed to record visit:", err);
       }
     };
     recordVisit();
-  }, []);
+  }, [user]);
 
   return (
     <>
@@ -388,6 +396,14 @@ function App() {
             element={
               <PermissionGuard permission="vendors">
                 <AdminVendorIdCardPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="website-counter"
+            element={
+              <PermissionGuard permission="dashboard">
+                <WebsiteCounterPage />
               </PermissionGuard>
             }
           />

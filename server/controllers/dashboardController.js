@@ -1,9 +1,12 @@
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Vendor from '../models/Vendor.js';
+import Ambassador from '../models/Ambassador.js';
 import Service from '../models/Service.js';
 import Booking from '../models/Booking.js';
 import LabPartner from '../models/LabPartner.js';
 import Counter from '../models/Counter.js';
+import Visit from '../models/Visit.js';
 
 // @desc    Get user dashboard statistics
 // @route   GET /api/dashboard/user/stats
@@ -284,11 +287,73 @@ export const getDashboardStats = async (req, res) => {
 // @access  Public
 export const incrementVisitorCount = async (req, res) => {
   try {
+    let role = 'guest';
+    let userId = null;
+    let name = 'Guest';
+    let email = '';
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+
+    // Check if token exists in header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (decoded.role === 'vendor') {
+          const vendor = await Vendor.findById(decoded.id);
+          if (vendor) {
+            role = 'vendor';
+            userId = vendor._id;
+            name = vendor.name;
+            email = vendor.email;
+          }
+        } else if (decoded.role === 'ambassador') {
+          const ambassador = await Ambassador.findById(decoded.id);
+          if (ambassador) {
+            role = 'ambassador';
+            userId = ambassador._id;
+            name = ambassador.name;
+            email = ambassador.email;
+          }
+        } else {
+          const user = await User.findById(decoded.id);
+          if (user) {
+            role = user.role === 'admin' ? 'admin' : 'user';
+            userId = user._id;
+            name = user.name;
+            email = user.email;
+          }
+        }
+      } catch (err) {
+        // Token invalid, ignore and treat as guest
+      }
+    }
+
+    // Upsert the specific visitor log
+    const query = role === 'guest' ? { role: 'guest', ipAddress } : { role, userId };
+    
+    await Visit.findOneAndUpdate(
+      query,
+      {
+        $inc: { count: 1 },
+        $set: {
+          ipAddress,
+          name,
+          email,
+          userModel: role === 'vendor' ? 'Vendor' : role === 'ambassador' ? 'Ambassador' : 'User',
+          lastVisited: new Date()
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    // Also update global visitors sequence in Counter
     const counter = await Counter.findOneAndUpdate(
       { id: 'visitors' },
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
+
     res.status(200).json({
       success: true,
       data: {
@@ -318,6 +383,86 @@ export const getVisitorCount = async (req, res) => {
     });
   } catch (error) {
     console.error('Get visitor count error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get detailed visitor logs
+// @route   GET /api/dashboard/visitors/logs
+// @access  Private/Admin
+export const getVisitorLogs = async (req, res) => {
+  try {
+    const { role, search, page = 1, limit = 10, sortBy = 'lastVisited', sortOrder = 'desc' } = req.query;
+
+    const query = {};
+
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { ipAddress: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const totalLogs = await Visit.countDocuments(query);
+    
+    // Sort options
+    const sort = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    const logs = await Visit.find(query)
+      .sort(sort)
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+
+    // Get aggregated statistics
+    const stats = await Visit.aggregate([
+      {
+        $group: {
+          _id: '$role',
+          totalVisits: { $sum: '$count' },
+          uniqueCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const formattedStats = {
+      user: { visits: 0, unique: 0 },
+      vendor: { visits: 0, unique: 0 },
+      ambassador: { visits: 0, unique: 0 },
+      guest: { visits: 0, unique: 0 },
+      admin: { visits: 0, unique: 0 }
+    };
+
+    stats.forEach(item => {
+      if (formattedStats[item._id]) {
+        formattedStats[item._id].visits = item.totalVisits;
+        formattedStats[item._id].unique = item.uniqueCount;
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        logs,
+        pagination: {
+          total: totalLogs,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(totalLogs / parseInt(limit))
+        },
+        stats: formattedStats
+      }
+    });
+  } catch (error) {
+    console.error('Get visitor logs error:', error);
     res.status(500).json({
       success: false,
       message: error.message
