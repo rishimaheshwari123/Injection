@@ -67,6 +67,8 @@ export const userAPI = {
   adminDeleteFamilyMember: (userId: string, memberId: string) => api.delete(`/users/${userId}/family/${memberId}`),
   getReferralStats: () => api.get("/users/referrals/stats"),
   generateReferralCode: () => api.post("/users/referrals/generate"),
+  adminResetPassword: (id: string, newPassword: string) =>
+    api.put(`/users/${id}/reset-password-admin`, { newPassword }),
 };
 
 // Vendor APIs
@@ -104,6 +106,8 @@ export const vendorAPI = {
   getIdCardDetails: (vendorId: string) => api.get(`/vendors/${vendorId}/id-card`),
   getReferralStats: () => api.get("/vendors/referrals/stats"),
   generateReferralCode: () => api.post("/vendors/referrals/generate"),
+  adminResetPassword: (id: string, newPassword: string) =>
+    api.put(`/vendors/${id}/reset-password-admin`, { newPassword }),
 };
 
 // Ambassador APIs
@@ -430,8 +434,11 @@ export const notificationAPI = {
 
 // OTP APIs
 export const otpAPI = {
-  sendOtp: (phone: string) => api.post(API_ENDPOINTS.OTP.SEND, { phone }),
+  sendOtp: (phone: string, type: string, isForgotPassword?: boolean) => 
+    api.post(API_ENDPOINTS.OTP.SEND, { phone, type, isForgotPassword }),
   verifyOtp: (phone: string, otp: string) => api.post(API_ENDPOINTS.OTP.VERIFY, { phone, otp }),
+  resetPassword: (phone: string, type: string, newPassword: string) =>
+    api.post("/otp/reset-password", { phone, type, newPassword }),
 };
 
 // Team APIs

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText } from 'lucide-react';
+import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText, Key } from 'lucide-react';
 import { vendorAPI, serviceAPI, vendorServiceRequestAPI, otpAPI } from '../../services/api';
 import { setVendors, setLoading, updateVendorStatus, addVendor, updateVendor, removeVendor } from '../../store/slices/vendorSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -32,6 +32,42 @@ const VendorsPage = () => {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [selectedServicesToRequest, setSelectedServicesToRequest] = useState<string[]>([]);
   const [submittingRequest, setSubmittingRequest] = useState(false);
+
+  // Reset Password states
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetVendorId, setResetVendorId] = useState('');
+  const [resetVendorName, setResetVendorName] = useState('');
+  const [resetVendorEmail, setResetVendorEmail] = useState('');
+  const [resetPasswordVal, setResetPasswordVal] = useState('');
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  const handleResetPasswordClick = (vendor: any) => {
+    setResetVendorId(vendor._id);
+    setResetVendorName(vendor.name || vendor.businessName);
+    setResetVendorEmail(vendor.email);
+    setResetPasswordVal(Math.random().toString(36).substring(2, 10));
+    setShowResetModal(true);
+  };
+
+  const handleResetPasswordSubmit = async () => {
+    if (!resetPasswordVal || resetPasswordVal.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    setResetPasswordLoading(true);
+    try {
+      const response = await vendorAPI.adminResetPassword(resetVendorId, resetPasswordVal);
+      if (response.data.success) {
+        toast.success(`Password reset successfully! Account credentials sent to ${resetVendorEmail}`);
+        setShowResetModal(false);
+        setResetPasswordVal('');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
 
   console.log('VendorsPage render - vendors count:', vendors.length);
   console.log('Vendors:', vendors);
@@ -86,7 +122,7 @@ const VendorsPage = () => {
 
     setSendingOtp(true);
     try {
-      const response = await otpAPI.sendOtp(formData.phone);
+      const response = await otpAPI.sendOtp(formData.phone, 'vendor');
       if (response.data.success) {
         setOtpSent(true);
         toast.success('OTP sent successfully!');
@@ -689,6 +725,9 @@ const VendorsPage = () => {
                                 </button>
                                 <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   {vendor.isActive ? <><UserX size={16} className="text-orange-500" /> Deactivate</> : <><UserCheck size={16} className="text-emerald-500" /> Activate</>}
+                                </button>
+                                <button onClick={() => { handleResetPasswordClick(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                  <Key size={16} className="text-[#3DB9A6]" /> Reset Password
                                 </button>
                                 <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50/50 flex items-center gap-2 transition-colors">
                                   <Trash2 size={16} /> Delete Vendor
@@ -1353,6 +1392,68 @@ const VendorsPage = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => {
+                setShowResetModal(false);
+                setResetPasswordVal('');
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Reset Password</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Enter a new password for <strong>{resetVendorName}</strong>. The new password will be emailed to <strong>{resetVendorEmail}</strong>.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="text"
+                    value={resetPasswordVal}
+                    onChange={(e) => setResetPasswordVal(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] outline-none"
+                    placeholder="At least 6 characters"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setResetPasswordVal(Math.random().toString(36).substring(2, 10))}
+                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg font-semibold transition"
+                  >
+                    Generate Random Password
+                  </button>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowResetModal(false);
+                      setResetPasswordVal('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResetPasswordSubmit}
+                    disabled={resetPasswordLoading || !resetPasswordVal || resetPasswordVal.length < 6}
+                    className="px-4 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-lg hover:shadow-lg transition disabled:opacity-50"
+                  >
+                    {resetPasswordLoading ? 'Resetting...' : 'Reset & Email'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

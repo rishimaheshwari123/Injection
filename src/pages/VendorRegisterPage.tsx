@@ -67,7 +67,7 @@ const VendorRegisterPage = () => {
 
     setSendingOtp(true);
     try {
-      const response = await otpAPI.sendOtp(formData.phone);
+      const response = await otpAPI.sendOtp(formData.phone, 'vendor');
       if (response.data.success) {
         setOtpSent(true);
         toast.success('OTP sent successfully!');

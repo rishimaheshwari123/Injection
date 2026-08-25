@@ -68,7 +68,7 @@ export default function UserRegisterPage() {
 
     setSendingOtp(true);
     try {
-      const response = await otpAPI.sendOtp(formData.phone);
+      const response = await otpAPI.sendOtp(formData.phone, "user");
       if (response.data.success) {
         setOtpSent(true);
         toast.success("OTP sent successfully!");

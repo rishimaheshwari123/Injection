@@ -18,7 +18,8 @@ import {
   addFamilyMember,
   deleteFamilyMember,
   getReferralStats,
-  generateMyReferralCode
+  generateMyReferralCode,
+  adminResetUserPassword
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -49,6 +50,7 @@ router.post('/:id/family', protect, adminOnly, addFamilyMember);
 router.delete('/:id/family/:memberId', protect, adminOnly, deleteFamilyMember);
 
 router.put('/:id', protect, adminOnly, updateUserByAdmin);
+router.put('/:id/reset-password-admin', protect, adminOnly, adminResetUserPassword);
 
 router.put('/:id/activate', protect, adminOnly, activateUser);
 

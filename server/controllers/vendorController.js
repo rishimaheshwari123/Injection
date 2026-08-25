@@ -130,7 +130,7 @@ export const vendorRegister = async (req, res) => {
     }
 
     // Check if vendor already exists
-    const vendorExists = await Vendor.findOne({ email });
+    const vendorExists = await Vendor.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
     if (vendorExists) {
       if (process.env.NODE_ENV === 'development') {
         // Clean up references and delete existing vendor in development to allow recreating
@@ -139,7 +139,9 @@ export const vendorRegister = async (req, res) => {
       } else {
         return res.status(400).json({
           success: false,
-          message: 'Vendor already exists with this email'
+          message: vendorExists.email === email 
+            ? 'Vendor already exists with this email' 
+            : 'Vendor already exists with this phone number'
         });
       }
     }
@@ -380,6 +382,13 @@ export const updateVendorProfile = async (req, res) => {
           return res.status(400).json({
             success: false,
             message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        const phoneTaken = await Vendor.findOne({ phone: normalizedInput, _id: { $ne: vendor._id } });
+        if (phoneTaken) {
+          return res.status(400).json({
+            success: false,
+            message: 'Phone number is already registered by another vendor account'
           });
         }
         vendor.isPhoneVerified = true;
@@ -643,14 +652,14 @@ export const createVendorByAdmin = async (req, res) => {
     }
 
     // Check if vendor already exists
-    const vendorExists = await Vendor.findOne({ email });
+    const vendorExists = await Vendor.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
     if (vendorExists) {
-
       return res.status(400).json({
         success: false,
-        message: 'Vendor already exists with this email'
+        message: vendorExists.email === email 
+          ? 'Vendor already exists with this email' 
+          : 'Vendor already exists with this phone number'
       });
-
     }
 
     const finalServices = Array.isArray(services) ? services : (services ? [services] : []);
@@ -812,6 +821,13 @@ export const updateVendorByAdmin = async (req, res) => {
             message: 'Mobile number is not verified. Please verify using OTP first.'
           });
         }
+        const phoneTaken = await Vendor.findOne({ phone: normalizedInput, _id: { $ne: vendor._id } });
+        if (phoneTaken) {
+          return res.status(400).json({
+            success: false,
+            message: 'Phone number is already registered by another vendor account'
+          });
+        }
         vendor.isPhoneVerified = true;
         shouldDeleteOtpPhone = normalizedInput;
       }
@@ -829,7 +845,16 @@ export const updateVendorByAdmin = async (req, res) => {
 
     // Update fields only if provided
     if (name !== undefined) vendor.name = name;
-    if (email !== undefined) vendor.email = email;
+    if (email !== undefined) {
+      const emailTaken = await Vendor.findOne({ email, _id: { $ne: vendor._id } });
+      if (emailTaken) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already registered by another vendor account'
+        });
+      }
+      vendor.email = email;
+    }
     if (phone !== undefined) vendor.phone = phone;
     if (alternatePhone !== undefined) vendor.alternatePhone = alternatePhone;
     if (gender !== undefined) vendor.gender = gender;
@@ -1228,6 +1253,45 @@ export const generateMyReferralCode = async (req, res) => {
   } catch (error) {
     console.error('Error generating referral code:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const adminResetVendorPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const vendorId = req.params.id;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    vendor.password = newPassword;
+    await vendor.save();
+
+    // Send email using nodemailer utility
+    const { sendResetPasswordEmail } = await import('../utils/mail.js');
+    await sendResetPasswordEmail(vendor.email, vendor.name, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully and email sent'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

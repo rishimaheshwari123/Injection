@@ -122,11 +122,13 @@ export const userRegister = async (req, res) => {
     }
 
     // Check if user already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
     if (userExists) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email'
+        message: userExists.email === email 
+          ? 'User already exists with this email' 
+          : 'User already exists with this phone number'
       });
     }
 
@@ -373,6 +375,13 @@ export const updateUserProfile = async (req, res) => {
             message: 'Mobile number is not verified. Please verify using OTP first.'
           });
         }
+        const phoneTaken = await User.findOne({ phone: normalizedInput, _id: { $ne: user._id } });
+        if (phoneTaken) {
+          return res.status(400).json({
+            success: false,
+            message: 'Phone number is already in use by another user'
+          });
+        }
         user.isPhoneVerified = true;
         shouldDeleteOtpPhone = normalizedInput;
       }
@@ -529,15 +538,6 @@ export const createUserByAdmin = async (req, res) => {
       otherDocument
     } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
-    }
-
     // Validation
     if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
       return res.status(400).json({
@@ -547,6 +547,17 @@ export const createUserByAdmin = async (req, res) => {
     }
 
     const normalizedPhone = normalizePhone(phone);
+
+    // Check if user already exists
+    const userExists = await User.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: userExists.email === email 
+          ? 'User already exists with this email' 
+          : 'User already exists with this phone number'
+      });
+    }
     const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
     if (!otpRecord) {
       return res.status(400).json({
@@ -718,6 +729,13 @@ export const updateUserByAdmin = async (req, res) => {
           return res.status(400).json({
             success: false,
             message: 'Mobile number is not verified. Please verify using OTP first.'
+          });
+        }
+        const phoneTaken = await User.findOne({ phone: normalizedInput, _id: { $ne: user._id } });
+        if (phoneTaken) {
+          return res.status(400).json({
+            success: false,
+            message: 'Phone number is already in use by another user'
           });
         }
         user.isPhoneVerified = true;
@@ -1298,5 +1316,44 @@ export const generateMyReferralCode = async (req, res) => {
   } catch (error) {
     console.error('Error generating referral code:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const adminResetUserPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const userId = req.params.id;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    // Send email using nodemailer utility
+    const { sendResetPasswordEmail } = await import('../utils/mail.js');
+    await sendResetPasswordEmail(user.email, user.name, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully and email sent'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

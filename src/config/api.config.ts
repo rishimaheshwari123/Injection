@@ -1,7 +1,7 @@
 export const API_CONFIG = {
-  // BASE_URL: "http://localhost:8080/api",
+  BASE_URL: "http://localhost:8080/api",
   // BASE_URL: "https://injection-hkgt.onrender.com/api",
-  BASE_URL: "https://api.prlthealthcare.com/api",
+  // BASE_URL: "https://api.prlthealthcare.com/api",
   TIMEOUT: 30000, // 30 seconds
 };
 

@@ -88,11 +88,13 @@ export const ambassadorRegister = async (req, res) => {
     }
 
     // Check if Ambassador already exists
-    const ambassadorExists = await Ambassador.findOne({ email });
+    const ambassadorExists = await Ambassador.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
     if (ambassadorExists) {
       return res.status(400).json({
         success: false,
-        message: 'Ambassador already exists with this email address'
+        message: ambassadorExists.email === email 
+          ? 'Ambassador already exists with this email address' 
+          : 'Ambassador already exists with this phone number'
       });
     }
 
@@ -299,12 +301,15 @@ export const registerVendor = async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizePhone(phone);
     // Check if vendor already exists
-    const vendorExists = await Vendor.findOne({ email });
+    const vendorExists = await Vendor.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
     if (vendorExists) {
       return res.status(400).json({
         success: false,
-        message: 'Vendor already exists with this email address'
+        message: vendorExists.email === email 
+          ? 'Vendor already exists with this email address' 
+          : 'Vendor already exists with this phone number'
       });
     }
 
@@ -315,7 +320,7 @@ export const registerVendor = async (req, res) => {
       name,
       email,
       password,
-      phone,
+      phone: normalizedPhone,
       isPhoneVerified: true,
       alternatePhone,
       gender,

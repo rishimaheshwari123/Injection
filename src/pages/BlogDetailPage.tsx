@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  ArrowLeft, 
-  Tag, 
-  Eye, 
-  Share2, 
+import {
+  Calendar,
+  Clock,
+  User,
+  ArrowLeft,
+  Tag,
+  Eye,
+  Share2,
   Heart,
+  Heart,
+
   Star,
   AlertTriangle,
   Info
@@ -70,10 +72,9 @@ function FAQAccordionItem({ question, answer }: { question: string; answer: stri
           </svg>
         </span>
       </button>
-      <div 
-        className={`transition-all duration-350 ease-in-out overflow-hidden ${
-          isOpen ? 'max-h-96 border-t border-gray-150 p-5' : 'max-h-0'
-        }`}
+      <div
+        className={`transition-all duration-350 ease-in-out overflow-hidden ${isOpen ? 'max-h-96 border-t border-gray-150 p-5' : 'max-h-0'
+          }`}
       >
         <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">{answer}</p>
       </div>
@@ -102,8 +103,8 @@ export default function BlogDetailPage() {
 
       // Helper to create or update meta tag
       const setMetaTag = (nameOrProperty: string, content: string, isProperty = false) => {
-        const selector = isProperty 
-          ? `meta[property="${nameOrProperty}"]` 
+        const selector = isProperty
+          ? `meta[property="${nameOrProperty}"]`
           : `meta[name="${nameOrProperty}"]`;
         let element = document.querySelector(selector);
         if (!element) {
@@ -237,7 +238,7 @@ export default function BlogDetailPage() {
       setLoading(true);
       const response = await blogAPI.getBlogBySlug(slug!);
       setBlog(response.data.data);
-      
+
       // Fetch related blogs from same category
       if (response.data.data.category) {
         const relatedResponse = await blogAPI.getBlogsByCategory(response.data.data.category);
@@ -361,10 +362,9 @@ export default function BlogDetailPage() {
                 </span>
               )}
               {blog.status && blog.status !== 'published' && (
-                <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
-                  blog.status === 'draft' ? 'bg-amber-500 text-white border border-amber-400/30' :
-                  'bg-rose-500 text-white border border-rose-400/30'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${blog.status === 'draft' ? 'bg-amber-500 text-white border border-amber-400/30' :
+                    'bg-rose-500 text-white border border-rose-400/30'
+                  }`}>
                   {blog.status}
                 </span>
               )}
@@ -439,19 +439,19 @@ export default function BlogDetailPage() {
             transition={{ delay: 0.4 }}
             className="prose prose-lg max-w-none"
           >
-            <div 
+            <div
               className="text-gray-700 leading-relaxed [&_a]:text-teal-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-teal-800 [&_a]:font-medium transition-all [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-4 [&_blockquote]:border-teal-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold"
-              dangerouslySetInnerHTML={{ 
-                __html: (blog.content.trim().startsWith('<') || blog.content.includes('</')) 
-                  ? blog.content 
+              dangerouslySetInnerHTML={{
+                __html: (blog.content.trim().startsWith('<') || blog.content.includes('</'))
+                  ? blog.content
                   : blog.content
-                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
-                        const isExternal = url.startsWith('http://') || url.startsWith('https://');
-                        const target = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
-                        return `<a href="${url}" ${target}>${text}</a>`;
-                      })
-                      .replace(/\n/g, '<br />')
-              }} 
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+                      const isExternal = url.startsWith('http://') || url.startsWith('https://');
+                      const target = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
+                      return `<a href="${url}" ${target}>${text}</a>`;
+                    })
+                    .replace(/\n/g, '<br />')
+              }}
             />
           </motion.div>
 
@@ -492,30 +492,30 @@ export default function BlogDetailPage() {
                 <Info size={14} className="text-slate-400" />
                 <span>Meta Publishing Auditor</span>
               </div>
-              
+
               <div className="space-y-2.5 text-slate-600">
                 <div>
                   <span className="text-slate-400 font-bold mr-1.5">Meta Title:</span>
                   <span className="text-slate-700 font-semibold">{blog.metaTitle || blog.title}</span>
                 </div>
-                
+
                 <div>
                   <span className="text-slate-400 font-bold mr-1.5">Meta Description:</span>
                   <span className="text-slate-700 font-medium leading-relaxed">{blog.metaDescription || blog.excerpt || 'No description provided.'}</span>
                 </div>
-                
+
                 <div>
                   <span className="text-slate-400 font-bold mr-1.5">Canonical URL:</span>
-                  <a 
-                    href={blog.canonicalUrl || window.location.href} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href={blog.canonicalUrl || window.location.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-orange-600 hover:underline font-semibold"
                   >
                     {blog.canonicalUrl || window.location.href}
                   </a>
                 </div>
-                
+
                 <div>
                   <span className="text-slate-400 font-bold mr-1.5">Indexing Status:</span>
                   <span className={blog.noIndex ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold'}>
@@ -560,7 +560,7 @@ export default function BlogDetailPage() {
                   <p className="text-sm text-gray-500 font-medium">Medical Expert</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleLike}
@@ -569,7 +569,7 @@ export default function BlogDetailPage() {
                   <Heart size={16} className="fill-rose-600 text-rose-600" />
                   <span>Like ({blog.likes || 0})</span>
                 </button>
-                
+
                 <button
                   onClick={handleShare}
                   className="flex items-center gap-2 bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"

@@ -16,7 +16,8 @@ import {
   getVendorReviews,
   getVendorIdCardDetails,
   getReferralStats,
-  generateMyReferralCode
+  generateMyReferralCode,
+  adminResetVendorPassword
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -54,5 +55,6 @@ router.put('/:id/verify-document', protect, adminOnly, verifyVendorDocument);
 router.delete('/:id', protect, adminOnly, deleteVendor);
 
 router.put('/:id', protect, adminOnly, updateVendorByAdmin);
+router.put('/:id/reset-password-admin', protect, adminOnly, adminResetVendorPassword);
 
 export default router;

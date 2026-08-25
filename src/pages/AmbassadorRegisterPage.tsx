@@ -41,7 +41,7 @@ const AmbassadorRegisterPage = () => {
 
     setSendingOtp(true);
     try {
-      const response = await otpAPI.sendOtp(formData.phone);
+      const response = await otpAPI.sendOtp(formData.phone, 'ambassador');
       if (response.data.success) {
         setOtpSent(true);
         toast.success('OTP sent successfully!');
