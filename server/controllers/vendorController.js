@@ -939,7 +939,7 @@ export const getAllVendorsByPagination = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    let query = { isActive: { $ne: false } };
+    let query = {};
 
     if (search) {
       query.$or = [
