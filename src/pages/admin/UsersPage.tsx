@@ -660,7 +660,7 @@ const UsersPage = () => {
                                   top: rect.bottom + window.scrollY,
                                   left: rect.right - 192 + window.scrollX,
                                 });
-                                setOpenDropdown(openDropdown === user._id ? null : user._id);
+                                toggleDropdown(user._id);
                               }}
                               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Actions"

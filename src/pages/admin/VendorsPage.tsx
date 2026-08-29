@@ -726,7 +726,7 @@ const VendorsPage = () => {
                                   top: rect.bottom + window.scrollY,
                                   left: rect.right - 192 + window.scrollX,
                                 });
-                                setOpenDropdown(openDropdown === vendor._id ? null : vendor._id);
+                                toggleDropdown(vendor._id);
                               }}
                               className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                             >
