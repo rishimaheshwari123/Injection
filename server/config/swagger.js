@@ -1,5 +1,13 @@
 import swaggerAutogen from 'swagger-autogen';
 import fs from 'fs';
+import dotenv from 'dotenv';
+
+// Load env variables
+dotenv.config();
+
+if (process.env.NODE_ENV === 'production') {
+  process.exit(0);
+}
 
 const swagger = swaggerAutogen({
   openapi: '3.0.0'

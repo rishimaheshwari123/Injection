@@ -177,11 +177,17 @@ app.use(fileUpload({
 
 // Swagger Documentation - Only in development
 if (process.env.NODE_ENV === 'development') {
-  const swaggerFile = JSON.parse(
-    fs.readFileSync('./config/swagger-output.json', 'utf-8')
-  );
-
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+  try {
+    const swaggerFilePath = './config/swagger-output.json';
+    if (fs.existsSync(swaggerFilePath)) {
+      const swaggerFile = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf-8'));
+      app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+    } else {
+      console.warn('⚠️ Swagger output file not found. Run "npm run swagger" to generate it.');
+    }
+  } catch (error) {
+    console.error('❌ Failed to load Swagger documentation:', error.message);
+  }
 }
 
 // Routes
@@ -224,12 +230,15 @@ app.get('/health', (req, res) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.status(200).json({
+  const response = {
     success: true,
     message: 'Healthcare Service Platform API',
-    documentation: '/api-docs',
     version: '1.0.0'
-  });
+  };
+  if (process.env.NODE_ENV === 'development') {
+    response.documentation = '/api-docs';
+  }
+  res.status(200).json(response);
 });
 
 // 404 handler
@@ -252,8 +261,10 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+  }
 });
 
 export default app;

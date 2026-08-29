@@ -10,7 +10,6 @@ import {
   Eye,
   Share2,
   Heart,
-  Heart,
 
   Star,
   AlertTriangle,
@@ -363,7 +362,7 @@ export default function BlogDetailPage() {
               )}
               {blog.status && blog.status !== 'published' && (
                 <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${blog.status === 'draft' ? 'bg-amber-500 text-white border border-amber-400/30' :
-                    'bg-rose-500 text-white border border-rose-400/30'
+                  'bg-rose-500 text-white border border-rose-400/30'
                   }`}>
                   {blog.status}
                 </span>

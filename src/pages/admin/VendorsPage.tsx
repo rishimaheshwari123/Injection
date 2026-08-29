@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, UserCheck, UserX, Package, Check, FileText, Key } from 'lucide-react';
 import { vendorAPI, serviceAPI, vendorServiceRequestAPI, otpAPI } from '../../services/api';
@@ -40,6 +41,9 @@ const VendorsPage = () => {
   const [resetVendorEmail, setResetVendorEmail] = useState('');
   const [resetPasswordVal, setResetPasswordVal] = useState('');
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  // Portal positioning state
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
   const handleResetPasswordClick = (vendor: any) => {
     setResetVendorId(vendor._id);
@@ -470,11 +474,19 @@ const VendorsPage = () => {
     setOpenDropdown(openDropdown === vendorId ? null : vendorId);
   };
 
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
-    const handleClickOutside = () => setOpenDropdown(null);
+    const handleClose = () => {
+      setOpenDropdown(null);
+      setDropdownPosition(null);
+    };
     if (openDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener('click', handleClose);
+      window.addEventListener('scroll', handleClose, true);
+      return () => {
+        document.removeEventListener('click', handleClose);
+        window.removeEventListener('scroll', handleClose, true);
+      };
     }
   }, [openDropdown]);
 
@@ -705,34 +717,52 @@ const VendorsPage = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="relative">
+                          <div>
                             <button
-                              onClick={(e) => { e.stopPropagation(); toggleDropdown(vendor._id); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setDropdownPosition({
+                                  top: rect.bottom + window.scrollY,
+                                  left: rect.right - 192 + window.scrollX,
+                                });
+                                setOpenDropdown(openDropdown === vendor._id ? null : vendor._id);
+                              }}
                               className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                             >
                               <MoreVertical size={18} />
                             </button>
-                            {openDropdown === vendor._id && (
-                              <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-10 py-1 divide-y divide-slate-50 font-sans">
-                                <button onClick={() => handleViewVendor(vendor)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                            {openDropdown === vendor._id && dropdownPosition && createPortal(
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: `${dropdownPosition.top}px`,
+                                  left: `${dropdownPosition.left}px`,
+                                  width: '12rem',
+                                }}
+                                className="bg-white rounded-xl shadow-lg border border-slate-100 z-50 py-1 divide-y divide-slate-50 font-sans"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button onClick={() => { handleViewVendor(vendor); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   <Eye size={16} className="text-[#3DB9A6]" /> View Profile
                                 </button>
-                                <button onClick={() => { handleOpenModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <button onClick={() => { handleOpenModal(vendor); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   <Edit size={16} className="text-blue-500" /> Edit Vendor
                                 </button>
-                                <button onClick={() => { handleOpenRequestsModal(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <button onClick={() => { handleOpenRequestsModal(vendor); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   <FileText size={16} className="text-purple-500" /> Service Requests
                                 </button>
-                                <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <button onClick={() => { handleToggleStatus(vendor._id, vendor.isActive, vendor.businessName); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   {vendor.isActive ? <><UserX size={16} className="text-orange-500" /> Deactivate</> : <><UserCheck size={16} className="text-emerald-500" /> Activate</>}
                                 </button>
-                                <button onClick={() => { handleResetPasswordClick(vendor); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                                <button onClick={() => { handleResetPasswordClick(vendor); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
                                   <Key size={16} className="text-[#3DB9A6]" /> Reset Password
                                 </button>
-                                <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); }} className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50/50 flex items-center gap-2 transition-colors">
+                                <button onClick={() => { handleDelete(vendor._id, vendor.businessName); setOpenDropdown(null); setDropdownPosition(null); }} className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50/50 flex items-center gap-2 transition-colors">
                                   <Trash2 size={16} /> Delete Vendor
                                 </button>
-                              </div>
+                              </div>,
+                              document.body
                             )}
                           </div>
                         </td>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Search, UserCheck, UserX, Download, Plus, Edit, Trash2, X, Eye, MoreVertical, Check, Key } from 'lucide-react';
 import { userAPI, otpAPI } from '../../services/api';
@@ -146,6 +147,9 @@ const UsersPage = () => {
   const [resetUserEmail, setResetUserEmail] = useState('');
   const [resetPasswordVal, setResetPasswordVal] = useState('');
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  // Portal positioning state
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
   const handleResetPasswordClick = (user: any) => {
     setResetUserId(user._id);
@@ -453,12 +457,19 @@ const UsersPage = () => {
     setOpenDropdown(openDropdown === userId ? null : userId);
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
-    const handleClickOutside = () => setOpenDropdown(null);
+    const handleClose = () => {
+      setOpenDropdown(null);
+      setDropdownPosition(null);
+    };
     if (openDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener('click', handleClose);
+      window.addEventListener('scroll', handleClose, true);
+      return () => {
+        document.removeEventListener('click', handleClose);
+        window.removeEventListener('scroll', handleClose, true);
+      };
     }
   }, [openDropdown]);
 
@@ -640,11 +651,16 @@ const UsersPage = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="relative">
+                          <div>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleDropdown(user._id);
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setDropdownPosition({
+                                  top: rect.bottom + window.scrollY,
+                                  left: rect.right - 192 + window.scrollX,
+                                });
+                                setOpenDropdown(openDropdown === user._id ? null : user._id);
                               }}
                               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Actions"
@@ -652,69 +668,81 @@ const UsersPage = () => {
                               <MoreVertical size={20} />
                             </button>
 
-                            {openDropdown === user._id && (
-                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                                <div className="py-1">
-                                  <button
-                                    onClick={() => {
-                                      handleViewUser(user);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                  >
-                                    <Eye size={16} className="text-green-600" />
-                                    View Profile
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleOpenModal(user);
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                  >
-                                    <Edit size={16} className="text-blue-600" />
-                                    Edit User
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleToggleStatus(user._id, user.isActive, user.name);
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                  >
-                                    {user.isActive ? (
-                                      <>
-                                        <UserX size={16} className="text-orange-600" />
-                                        Deactivate User
-                                      </>
-                                    ) : (
-                                      <>
-                                        <UserCheck size={16} className="text-green-600" />
-                                        Activate User
-                                      </>
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleResetPasswordClick(user);
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t"
-                                  >
-                                    <Key size={16} className="text-[#3DB9A6]" />
-                                    Reset Password
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleDelete(user._id, user.name);
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t"
-                                  >
-                                    <Trash2 size={16} />
-                                    Delete User
-                                  </button>
-                                </div>
-                              </div>
+                            {openDropdown === user._id && dropdownPosition && createPortal(
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: `${dropdownPosition.top}px`,
+                                  left: `${dropdownPosition.left}px`,
+                                  width: '12rem',
+                                }}
+                                className="bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={() => {
+                                    handleViewUser(user);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                  <Eye size={16} className="text-green-600" />
+                                  View Profile
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleOpenModal(user);
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                  <Edit size={16} className="text-blue-600" />
+                                  Edit User
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleToggleStatus(user._id, user.isActive, user.name);
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                >
+                                  {user.isActive ? (
+                                    <>
+                                      <UserX size={16} className="text-orange-600" />
+                                      Deactivate User
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck size={16} className="text-green-600" />
+                                      Activate User
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleResetPasswordClick(user);
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t"
+                                >
+                                  <Key size={16} className="text-[#3DB9A6]" />
+                                  Reset Password
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleDelete(user._id, user.name);
+                                    setOpenDropdown(null);
+                                    setDropdownPosition(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t"
+                                >
+                                  <Trash2 size={16} />
+                                  Delete User
+                                </button>
+                              </div>,
+                              document.body
                             )}
                           </div>
                         </td>
