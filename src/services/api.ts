@@ -203,6 +203,8 @@ export const bookingAPI = {
   ) => api.put(`/bookings/${id}/reschedule`, { newDate, newTime, reason }),
   updateBookingStatus: (id: string, status: string) =>
     api.put(API_ENDPOINTS.BOOKINGS.UPDATE_STATUS(id), { status }),
+  updateBookingByUser: (id: string, bookingData: any) =>
+    api.put(`/bookings/bookingUpdateByUser/${id}`, bookingData),
   updateBooking: (id: string, bookingData: any) =>
     api.put(`/bookings/${id}`, bookingData),
   addBookingNote: (id: string, text: string) =>

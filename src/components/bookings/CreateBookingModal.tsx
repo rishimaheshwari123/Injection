@@ -133,10 +133,11 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
           timeVal = parts[1] || '';
         }
 
-        const mappedServices = (bookingToEdit.selectedServices || []).map((s: any) => ({
-          serviceId: s.serviceId?._id || s.serviceId,
-          serviceName: s.serviceName,
-          price: s.price,
+        const rawServices = bookingToEdit.selectedServices || bookingToEdit.services || [];
+        const mappedServices = rawServices.map((s: any) => ({
+          serviceId: s.serviceId?._id || s.serviceId || s._id,
+          serviceName: s.serviceName || s.serviceId?.serviceName || 'Healthcare Service',
+          price: s.price !== undefined ? s.price : (s.basePrice || 0),
           quantity: s.quantity || 1,
           vendorId: s.vendorId?._id || s.vendorId || ''
         }));
@@ -170,47 +171,77 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
 
         if (userExists) {
           setSelectedUser(uId || '');
-          setSelectedFamilyMemberId(bookingToEdit.familyMemberId || 'self');
+        } else if (users.length === 1) {
+          setSelectedUser(users[0]._id);
         } else {
-          setSelectedUser('');
-          setSelectedFamilyMemberId('self');
+          setSelectedUser(uId || '');
         }
+        setSelectedFamilyMemberId(bookingToEdit.familyMemberId || 'self');
 
         setDateTimeSlots([{ date: dateVal, time: timeVal }]);
         setVendorSearchTerm('');
         setServiceSearchTerm('');
       } else {
-        setSelectedUser('');
-        setSelectedFamilyMemberId('self');
-        setFormData({
-          patientName: '',
-          age: '',
-          sex: 'Male',
-          address: '',
-          pincode: '',
-          currentLocation: '',
-          alternateMobile: '',
-          email: '',
-          selectedServices: [],
-          additionalRequirements: '',
-          hasInsurance: false,
-          insurancePolicyNumber: '',
-          freeComplimentaryService: 'None',
-          preferredTimeSlot: '',
-          preferredDate: '',
-          preferredTime: '',
-          staffPreference: 'Any Available',
-          serviceLocation: 'At Home',
-          vendorId: '',
-          paymentMethod: 'cash',
-          paymentStatus: 'pending'
-        });
+        if (users.length === 1) {
+          const u = users[0];
+          setSelectedUser(u._id);
+          setSelectedFamilyMemberId('self');
+          setFormData({
+            patientName: u.name || '',
+            age: u.age?.toString() || '',
+            sex: u.gender || u.sex || 'Male',
+            address: u.address || '',
+            pincode: u.pincode || '',
+            currentLocation: u.currentLocation || u.city || '',
+            alternateMobile: u.alternateMobile || u.phone || '',
+            email: u.email || '',
+            selectedServices: [],
+            additionalRequirements: '',
+            hasInsurance: false,
+            insurancePolicyNumber: '',
+            freeComplimentaryService: 'None',
+            preferredTimeSlot: '',
+            preferredDate: '',
+            preferredTime: '',
+            staffPreference: 'Any Available',
+            serviceLocation: 'At Home',
+            vendorId: '',
+            paymentMethod: 'cash',
+            paymentStatus: 'pending'
+          });
+        } else {
+          setSelectedUser('');
+          setSelectedFamilyMemberId('self');
+          setFormData({
+            patientName: '',
+            age: '',
+            sex: 'Male',
+            address: '',
+            pincode: '',
+            currentLocation: '',
+            alternateMobile: '',
+            email: '',
+            selectedServices: [],
+            additionalRequirements: '',
+            hasInsurance: false,
+            insurancePolicyNumber: '',
+            freeComplimentaryService: 'None',
+            preferredTimeSlot: '',
+            preferredDate: '',
+            preferredTime: '',
+            staffPreference: 'Any Available',
+            serviceLocation: 'At Home',
+            vendorId: '',
+            paymentMethod: 'cash',
+            paymentStatus: 'pending'
+          });
+        }
         setDateTimeSlots([{ date: '', time: '' }]);
         setVendorSearchTerm('');
         setServiceSearchTerm('');
       }
     }
-  }, [show, bookingToEdit, services]);
+  }, [show, bookingToEdit, services, users]);
 
   const [serviceSearchTerm, setServiceSearchTerm] = useState('');
 
@@ -357,63 +388,79 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Select User Account */}
+          {/* Select User Account / Patient profile */}
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Select Patient Account <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedUser}
-                onChange={(e) => {
-                  const userId = e.target.value;
-                  setSelectedUser(userId);
-                  setSelectedFamilyMemberId('self');
-                  
-                  if (userId) {
-                    const user = users.find((u: any) => u._id === userId);
-                    if (user) {
+            {users.length > 1 ? (
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Select Patient Account <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => {
+                    const userId = e.target.value;
+                    setSelectedUser(userId);
+                    setSelectedFamilyMemberId('self');
+                    
+                    if (userId) {
+                      const user = users.find((u: any) => u._id === userId);
+                      if (user) {
+                        setFormData(prev => ({
+                          ...prev,
+                          patientName: user.name || '',
+                          email: user.email || '',
+                          age: user.age?.toString() || '',
+                          sex: user.gender || user.sex || 'Male',
+                          alternateMobile: user.alternateMobile || user.phone || '',
+                          address: user.address || '',
+                          pincode: user.pincode || '',
+                          currentLocation: user.currentLocation || user.city || ''
+                        }));
+                        toast.success('Patient details auto-filled!');
+                      }
+                    } else {
                       setFormData(prev => ({
                         ...prev,
-                        patientName: user.name || '',
-                        email: user.email || '',
-                        age: user.age?.toString() || '',
-                        sex: user.gender || user.sex || 'Male',
-                        alternateMobile: user.alternateMobile || user.phone || '',
-                        address: user.address || '',
-                        pincode: user.pincode || '',
-                        currentLocation: user.currentLocation || user.city || ''
+                        patientName: '',
+                        email: '',
+                        age: '',
+                        sex: 'Male',
+                        alternateMobile: '',
+                        address: '',
+                        pincode: '',
+                        currentLocation: ''
                       }));
-                      toast.success('Patient details auto-filled!');
                     }
-                  } else {
-                    setFormData(prev => ({
-                      ...prev,
-                      patientName: '',
-                      email: '',
-                      age: '',
-                      sex: 'Male',
-                      alternateMobile: '',
-                      address: '',
-                      pincode: '',
-                      currentLocation: ''
-                    }));
-                  }
-                }}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white font-medium"
-              >
-                <option value="">Choose a patient account ({users.length} available)</option>
-                {users.map((user) => (
-                  <option key={user._id} value={user._id}>
-                    {user.name} - {user.email} (PAT ID: {user.patientId || 'N/A'})
-                  </option>
-                ))}
-              </select>
-            </div>
+                  }}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white font-medium"
+                >
+                  <option value="">Choose a patient account ({users.length} available)</option>
+                  {users.map((user) => (
+                    <option key={user._id} value={user._id}>
+                      {user.name} - {user.email} (PAT ID: {user.patientId || 'N/A'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                    Account Holder
+                  </span>
+                  <span className="text-sm font-bold text-slate-800">
+                    {users[0]?.name || formData.patientName || "User"} ({users[0]?.email || formData.email})
+                  </span>
+                </div>
+                <span className="text-xs bg-green-100 text-green-700 font-bold px-2.5 py-1 rounded-full">
+                  Active User
+                </span>
+              </div>
+            )}
 
             {/* Who is this booking for? */}
-            {selectedUser && (
+            {(selectedUser || users.length === 1) && (
               <div className="pt-2 border-t border-slate-200">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Who is this booking for? <span className="text-red-500">*</span>
@@ -423,7 +470,7 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   onChange={(e) => {
                     const memberId = e.target.value;
                     setSelectedFamilyMemberId(memberId);
-                    const user = users.find((u: any) => u._id === selectedUser);
+                    const user = users.find((u: any) => u._id === (selectedUser || users[0]?._id)) || users[0];
                     if (user) {
                       if (memberId === 'self') {
                         setFormData(prev => ({
@@ -458,8 +505,8 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white font-medium"
                 >
-                  <option value="self">Myself (Account Owner - {users.find(u => u._id === selectedUser)?.name})</option>
-                  {users.find(u => u._id === selectedUser)?.familyMembers?.map((member: any) => (
+                  <option value="self">Myself ({users.find(u => u._id === (selectedUser || users[0]?._id))?.name || users[0]?.name || 'Self'})</option>
+                  {(users.find(u => u._id === (selectedUser || users[0]?._id)) || users[0])?.familyMembers?.map((member: any) => (
                     <option key={member._id} value={member._id}>
                       {member.name} ({member.relationship})
                     </option>
@@ -688,81 +735,129 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
           {/* Prescription Upload (Optional) - Truncated for brevity */}
           {/* Add prescription form here similar to original */}
 
-          {/* Preferences - Multiple Date & Time Slots */}
+          {/* Preferences - Date & Time Slot(s) */}
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Booking Slots</h3>
-              <button
-                type="button"
-                onClick={() => setDateTimeSlots([...dateTimeSlots, { date: '', time: '' }])}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <Plus size={16} />
-                Add More Slot
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {dateTimeSlots.map((slot, index) => (
-                <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={slot.date}
-                        onChange={(e) => {
-                          const newSlots = [...dateTimeSlots];
-                          newSlots[index].date = e.target.value;
-                          setDateTimeSlots(newSlots);
-                        }}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="time"
-                        value={slot.time}
-                        onChange={(e) => {
-                          const newSlots = [...dateTimeSlots];
-                          newSlots[index].time = e.target.value;
-                          setDateTimeSlots(newSlots);
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-                  {dateTimeSlots.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newSlots = dateTimeSlots.filter((_, i) => i !== index);
+            {bookingToEdit ? (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Scheduled Appointment Slot</h3>
+                <p className="text-xs text-gray-500 mb-4">Choose your preferred date and time for the healthcare service</p>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Appointment Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={dateTimeSlots[0]?.date || ''}
+                      onChange={(e) => {
+                        const newSlots = [...dateTimeSlots];
+                        if (newSlots.length === 0) newSlots.push({ date: '', time: '' });
+                        newSlots[0].date = e.target.value;
                         setDateTimeSlots(newSlots);
+                        setFormData(prev => ({ ...prev, preferredDate: e.target.value }));
                       }}
-                      className="flex-shrink-0 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Remove this slot"
-                    >
-                      <X size={20} />
-                    </button>
-                  )}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Preferred Time Slot <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={dateTimeSlots[0]?.time || ''}
+                      onChange={(e) => {
+                        const newSlots = [...dateTimeSlots];
+                        if (newSlots.length === 0) newSlots.push({ date: '', time: '' });
+                        newSlots[0].time = e.target.value;
+                        setDateTimeSlots(newSlots);
+                        setFormData(prev => ({ ...prev, preferredTime: e.target.value }));
+                      }}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Booking Slots</h3>
+                  <button
+                    type="button"
+                    onClick={() => setDateTimeSlots([...dateTimeSlots, { date: '', time: '' }])}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <Plus size={16} />
+                    Add More Slot
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {dateTimeSlots.map((slot, index) => (
+                    <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Date <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={slot.date}
+                            onChange={(e) => {
+                              const newSlots = [...dateTimeSlots];
+                              newSlots[index].date = e.target.value;
+                              setDateTimeSlots(newSlots);
+                            }}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Time <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="time"
+                            value={slot.time}
+                            onChange={(e) => {
+                              const newSlots = [...dateTimeSlots];
+                              newSlots[index].time = e.target.value;
+                              setDateTimeSlots(newSlots);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                      {dateTimeSlots.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSlots = dateTimeSlots.filter((_, i) => i !== index);
+                            setDateTimeSlots(newSlots);
+                          }}
+                          className="flex-shrink-0 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove this slot"
+                        >
+                          <X size={20} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-            {dateTimeSlots.filter(s => s.date && s.time).length > 0 && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm font-medium text-green-800">
-                  ✓ {dateTimeSlots.filter(s => s.date && s.time).length} booking slot(s) will be created
-                </p>
+                {dateTimeSlots.filter(s => s.date && s.time).length > 0 && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">
+                      ✓ {dateTimeSlots.filter(s => s.date && s.time).length} booking slot(s) will be created
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -774,7 +869,7 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                 name="staffPreference"
                 value={formData.staffPreference}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none bg-white"
               >
                 <option value="Any Available">Any Available</option>
                 <option value="Male Staff">Male Staff</option>
@@ -782,115 +877,118 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
               </select>
             </div>
 
-            <div className="mt-4 relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assign Vendor (Optional)
-              </label>
-              
-              <button
-                type="button"
-                disabled={formData.selectedServices.length === 0}
-                onClick={() => setVendorSearchOpen(!vendorSearchOpen)}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg text-left focus:ring-2 focus:ring-[#63D64F] outline-none flex items-center justify-between text-sm shadow-xs transition-colors ${
-                  formData.selectedServices.length === 0
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white hover:bg-gray-50'
-                }`}
-              >
-                <span>
-                  {formData.selectedServices.length === 0 ? (
-                    "Please select service(s) first"
-                  ) : formData.vendorId ? (
-                    (() => {
-                      const selected = vendors.find(v => v._id === formData.vendorId);
-                      if (selected) {
-                        const isAvailable = checkVendorAvailability(selected._id);
-                        return `${selected.businessName || selected.name} (${selected.email}) - ${isAvailable ? "🟢 Available" : "🔴 Busy"}`;
-                      }
-                      return "Selected Vendor";
-                    })()
-                  ) : (
-                    "Auto Assign (Based on service default)"
-                  )}
-                </span>
-                <span className="text-gray-400">▼</span>
-              </button>
+            {/* Admin only: Assign vendor */}
+            {users.length > 1 && (
+              <div className="mt-4 relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign Vendor (Optional)
+                </label>
+                
+                <button
+                  type="button"
+                  disabled={formData.selectedServices.length === 0}
+                  onClick={() => setVendorSearchOpen(!vendorSearchOpen)}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg text-left focus:ring-2 focus:ring-[#63D64F] outline-none flex items-center justify-between text-sm shadow-xs transition-colors ${
+                    formData.selectedServices.length === 0
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <span>
+                    {formData.selectedServices.length === 0 ? (
+                      "Please select service(s) first"
+                    ) : formData.vendorId ? (
+                      (() => {
+                        const selected = vendors.find(v => v._id === formData.vendorId);
+                        if (selected) {
+                          const isAvailable = checkVendorAvailability(selected._id);
+                          return `${selected.businessName || selected.name} (${selected.email}) - ${isAvailable ? "🟢 Available" : "🔴 Busy"}`;
+                        }
+                        return "Selected Vendor";
+                      })()
+                    ) : (
+                      "Auto Assign (Based on service default)"
+                    )}
+                  </span>
+                  <span className="text-gray-400">▼</span>
+                </button>
 
-              {vendorSearchOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setVendorSearchOpen(false)}
-                  />
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-40 max-h-64 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="p-2 border-b border-gray-100 bg-gray-50">
-                      <input
-                        type="text"
-                        placeholder="Type to search vendor..."
-                        value={vendorSearchTerm}
-                        onChange={(e) => setVendorSearchTerm(e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-xs bg-white"
-                        autoFocus
-                      />
+                {vendorSearchOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setVendorSearchOpen(false)}
+                    />
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-40 max-h-64 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="p-2 border-b border-gray-100 bg-gray-50">
+                        <input
+                          type="text"
+                          placeholder="Type to search vendor..."
+                          value={vendorSearchTerm}
+                          onChange={(e) => setVendorSearchTerm(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-xs bg-white"
+                          autoFocus
+                        />
+                      </div>
+
+                      <div className="overflow-y-auto flex-1 py-1 max-h-48 divide-y divide-gray-50">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, vendorId: '' }));
+                            setVendorSearchOpen(false);
+                            setVendorSearchTerm('');
+                          }}
+                          className={`w-full px-4 py-2 text-left text-xs font-semibold hover:bg-gray-100 transition-colors ${
+                            !formData.vendorId ? 'bg-green-50 text-[#3DB9A6]' : 'text-gray-700'
+                          }`}
+                        >
+                          Auto Assign (Based on service default)
+                        </button>
+
+                        {filteredVendors.map((vendor: any) => {
+                          const isAvailable = checkVendorAvailability(vendor._id);
+                          const isSelected = formData.vendorId === vendor._id;
+                          return (
+                            <button
+                              key={vendor._id}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, vendorId: vendor._id }));
+                                setVendorSearchOpen(false);
+                                setVendorSearchTerm('');
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs hover:bg-gray-100 transition-colors flex items-center justify-between gap-2 ${
+                                isSelected ? 'bg-green-50 text-[#3DB9A6] font-bold' : 'text-gray-700'
+                              }`}
+                            >
+                              <span className="truncate">
+                                {vendor.businessName || vendor.name} ({vendor.email})
+                              </span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-bold ${
+                                isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                {isAvailable ? "Available" : "Busy"}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {filteredVendors.length === 0 && (
+                          <div className="px-4 py-3 text-center text-xs text-gray-500 italic">
+                            No vendors match your search
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="overflow-y-auto flex-1 py-1 max-h-48 divide-y divide-gray-50">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, vendorId: '' }));
-                          setVendorSearchOpen(false);
-                          setVendorSearchTerm('');
-                        }}
-                        className={`w-full px-4 py-2 text-left text-xs font-semibold hover:bg-gray-100 transition-colors ${
-                          !formData.vendorId ? 'bg-green-50 text-[#3DB9A6]' : 'text-gray-700'
-                        }`}
-                      >
-                        Auto Assign (Based on service default)
-                      </button>
-
-                      {filteredVendors.map((vendor: any) => {
-                        const isAvailable = checkVendorAvailability(vendor._id);
-                        const isSelected = formData.vendorId === vendor._id;
-                        return (
-                          <button
-                            key={vendor._id}
-                            type="button"
-                            onClick={() => {
-                              setFormData(prev => ({ ...prev, vendorId: vendor._id }));
-                              setVendorSearchOpen(false);
-                              setVendorSearchTerm('');
-                            }}
-                            className={`w-full px-4 py-2 text-left text-xs hover:bg-gray-100 transition-colors flex items-center justify-between gap-2 ${
-                              isSelected ? 'bg-green-50 text-[#3DB9A6] font-bold' : 'text-gray-700'
-                            }`}
-                          >
-                            <span className="truncate">
-                              {vendor.businessName || vendor.name} ({vendor.email})
-                            </span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-bold ${
-                              isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                            }`}>
-                              {isAvailable ? "Available" : "Busy"}
-                            </span>
-                          </button>
-                        );
-                      })}
-
-                      {filteredVendors.length === 0 && (
-                        <div className="px-4 py-3 text-center text-xs text-gray-500 italic">
-                          No vendors match your search
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Payment Method & Status */}
-          <div className="grid md:grid-cols-2 gap-4 border-t pt-4">
+          <div className={`grid ${users.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'} gap-4 border-t pt-4`}>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Payment Method</label>
               <select
@@ -899,21 +997,23 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
               >
                 <option value="cash">Cash</option>
-                <option value="razorpay">Razorpay</option>
+                <option value="razorpay">Online (Razorpay)</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Payment Status</label>
-              <select
-                value={formData.paymentStatus}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentStatus: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
-              >
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
+            {users.length > 1 && (
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Payment Status</label>
+                <select
+                  value={formData.paymentStatus}
+                  onChange={(e) => setFormData(prev => ({ ...prev, paymentStatus: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none text-sm bg-white"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Pricing Summary */}

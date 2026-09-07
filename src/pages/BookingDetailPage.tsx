@@ -4,9 +4,9 @@ import {
   ArrowLeft, Calendar, Clock, User, Mail, Phone, MapPin, 
   ShoppingBag, ShieldAlert, Receipt, 
   MessageSquare, FileText, Plus, AlertCircle, Play, 
-  CheckCircle2, Tag, Loader2, Download
+  CheckCircle2, Tag, Loader2, Download, Edit2
 } from 'lucide-react';
-import { bookingAPI, prescriptionAPI, reportAPI, invoiceAPI } from '../services/api';
+import { bookingAPI, prescriptionAPI, reportAPI, invoiceAPI, serviceAPI, vendorAPI } from '../services/api';
 import { useAppSelector } from '../store/hooks';
 import { toast } from 'react-toastify';
 import Navigation from '../components/Navigation';
@@ -20,7 +20,9 @@ import {
   StatusUpdateModal,
   AddPrescriptionModal,
   ReportUploadModal,
-  PrescriptionSummaryModal
+  PrescriptionSummaryModal,
+  CreateBookingModal,
+  ServiceDetailModal
 } from '../components/bookings';
 
 const BookingDetailPage = () => {
@@ -44,11 +46,69 @@ const BookingDetailPage = () => {
   const [showAddPrescriptionModal, setShowAddPrescriptionModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Autocomplete data for edit modal
+  const [services, setServices] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [selectedServiceForDetail, setSelectedServiceForDetail] = useState<any>(null);
+  const [showServiceDetailModal, setShowServiceDetailModal] = useState(false);
   
   // Runtime note state
   const [newRuntimeNote, setNewRuntimeNote] = useState('');
   const [submittingNote, setSubmittingNote] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+
+  useEffect(() => {
+    const loadLookups = async () => {
+      try {
+        const [servicesRes, vendorsRes] = await Promise.allSettled([
+          serviceAPI.getPublicServices(),
+          vendorAPI.getAllVendors()
+        ]);
+        if (servicesRes.status === "fulfilled" && servicesRes.value.data.success) {
+          setServices(servicesRes.value.data.data || []);
+        }
+        if (vendorsRes.status === "fulfilled" && vendorsRes.value.data.success) {
+          setVendors(vendorsRes.value.data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load lookups for edit modal", err);
+      }
+    };
+    loadLookups();
+  }, []);
+
+  const handleUpdateBooking = async (data: any) => {
+    const { formData, selectedUser, selectedFamilyMemberId, dateTimeSlots } = data;
+    const subtotal = formData.selectedServices.reduce(
+      (sum: number, s: any) => sum + s.price * s.quantity,
+      0
+    );
+    const grandTotal = subtotal;
+    const validSlot = dateTimeSlots.find((s: any) => s.date && s.time);
+    const preferredTimeSlot = validSlot ? `${validSlot.date} ${validSlot.time}` : formData.preferredTimeSlot;
+
+    const updatePayload = {
+      ...formData,
+      preferredTimeSlot,
+      userId: selectedUser || booking?.userId?._id || booking?.userId,
+      familyMemberId: selectedFamilyMemberId || null,
+      subtotal,
+      grandTotal
+    };
+
+    try {
+      const res = await bookingAPI.updateBookingByUser(booking._id, updatePayload);
+      if (res.data.success) {
+        toast.success("Booking updated successfully!");
+        setBooking(res.data.data);
+        setShowEditModal(false);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update booking");
+    }
+  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -423,6 +483,16 @@ const BookingDetailPage = () => {
           </div>
           
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Edit Booking button: user can edit when booking is pending and unassigned, or admin can edit */}
+            {(isAdmin || (isUser && booking.bookingStatus === 'pending' && !booking.vendorId)) && (
+              <button 
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all shadow-xs"
+              >
+                <Edit2 size={16} /> Edit Booking
+              </button>
+            )}
+
             {/* Download invoice button */}
             <button 
               onClick={handleDownloadInvoice}
@@ -1283,6 +1353,33 @@ const BookingDetailPage = () => {
           onClose={() => setShowSummaryModal(false)}
           onSubmit={handleUpdateSummary}
           booking={booking}
+        />
+      )}
+
+      {showEditModal && (
+        <CreateBookingModal
+          show={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSubmit={handleUpdateBooking}
+          services={services}
+          users={booking.userId ? [booking.userId] : (user ? [user] : [])}
+          vendors={vendors}
+          bookingToEdit={booking}
+          onServiceDetailClick={(service) => {
+            setSelectedServiceForDetail(service);
+            setShowServiceDetailModal(true);
+          }}
+        />
+      )}
+
+      {showServiceDetailModal && selectedServiceForDetail && (
+        <ServiceDetailModal
+          show={showServiceDetailModal}
+          onClose={() => {
+            setShowServiceDetailModal(false);
+            setSelectedServiceForDetail(null);
+          }}
+          service={selectedServiceForDetail}
         />
       )}
 

@@ -57,7 +57,8 @@ router.put('/:id/prescription', protect, adminOnly, updatePrescription);
 router.put('/:id/prescription-summary', protect, adminOnly, updatePrescriptionSummary);
 router.post('/:id/review/vendor', protect, createVendorReview);
 router.post('/:id/review/user', protect, vendorOnly, createUserReview);
-router.put('/:id', protect, adminOnly, updateBooking);
+router.put('/bookingUpdateByUser/:id', protect, updateBooking);
+router.put('/:id', protect, updateBooking);
 router.delete('/:id', protect, adminOnly, deleteBooking);
 
 router.put('/:id/requested-items', protect, updateRequestedItems);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { bookingAPI, serviceAPI, vendorAPI, prescriptionAPI } from "../../services/api";
+import { bookingAPI, serviceAPI, vendorAPI, prescriptionAPI, userAPI } from "../../services/api";
 import { useAppSelector } from "../../store/hooks";
 import { CreateBookingModal, ServiceDetailModal } from "../../components/bookings";
 import { toast } from "react-toastify";
@@ -15,6 +15,7 @@ import {
   User,
   ClipboardList,
   Plus,
+  Edit2,
 } from "lucide-react";
 
 interface Booking {
@@ -26,22 +27,45 @@ interface Booking {
     phone: string;
     businessName: string;
   };
-  services: Array<{
-    serviceId: {
+  services?: Array<{
+    serviceId?: {
       serviceName: string;
     };
     serviceName: string;
     price: number;
+    quantity?: number;
+  }>;
+  selectedServices?: Array<{
+    serviceId?: any;
+    serviceName: string;
+    price: number;
+    quantity?: number;
   }>;
   bookingStatus: "pending" | "accepted" | "in-progress" | "completed" | "cancelled";
   preferredTimeSlot?: string;
   paymentStatus: string;
   grandTotal: number;
   createdAt: string;
+  patientName?: string;
+  age?: number;
+  sex?: string;
+  address?: string;
+  pincode?: string;
+  currentLocation?: string;
+  alternateMobile?: string;
+  email?: string;
+  additionalRequirements?: string;
+  hasInsurance?: boolean;
+  insurancePolicyNumber?: string;
+  freeComplimentaryService?: string;
+  staffPreference?: string;
+  serviceLocation?: string;
+  familyMemberId?: string;
 }
 
 export default function UserBookingsPage() {
   const { user } = useAppSelector((state: any) => state.auth);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
@@ -49,6 +73,7 @@ export default function UserBookingsPage() {
 
   // Modal and Autocomplete states
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [bookingToEdit, setBookingToEdit] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [selectedServiceForDetail, setSelectedServiceForDetail] = useState<any>(null);
@@ -61,14 +86,20 @@ export default function UserBookingsPage() {
 
   const loadModalData = async () => {
     try {
-      const servicesRes = await serviceAPI.getPublicServices();
-      if (servicesRes.data.success) {
-        setServices(servicesRes.data.data || []);
+      const [servicesRes, vendorsRes, meRes] = await Promise.allSettled([
+        serviceAPI.getPublicServices(),
+        vendorAPI.getAllVendors(),
+        userAPI.getMe()
+      ]);
+
+      if (servicesRes.status === "fulfilled" && servicesRes.value.data.success) {
+        setServices(servicesRes.value.data.data || []);
       }
-      
-      const vendorsRes = await vendorAPI.getAllVendors();
-      if (vendorsRes.data.success) {
-        setVendors(vendorsRes.data.data || []);
+      if (vendorsRes.status === "fulfilled" && vendorsRes.value.data.success) {
+        setVendors(vendorsRes.value.data.data || []);
+      }
+      if (meRes.status === "fulfilled" && meRes.value.data.success) {
+        setUserProfile(meRes.value.data.data || null);
       }
     } catch (error) {
       console.error("Failed to load autocomplete data for bookings", error);
@@ -91,7 +122,7 @@ export default function UserBookingsPage() {
     }
   };
 
-  const handleCreateBooking = async (data: any) => {
+  const handleSaveBooking = async (data: any) => {
     const {
       formData,
       selectedUser,
@@ -107,6 +138,35 @@ export default function UserBookingsPage() {
     );
     const grandTotal = subtotal;
 
+    // Handle EDIT mode
+    if (bookingToEdit) {
+      try {
+        const validSlot = dateTimeSlots.find((s: any) => s.date && s.time);
+        const preferredTimeSlot = validSlot ? `${validSlot.date} ${validSlot.time}` : formData.preferredTimeSlot;
+
+        const updatePayload = {
+          ...formData,
+          preferredTimeSlot,
+          userId: selectedUser || userProfile?._id || user?._id,
+          familyMemberId: selectedFamilyMemberId || null,
+          subtotal,
+          grandTotal,
+        };
+
+        const response = await bookingAPI.updateBookingByUser(bookingToEdit._id, updatePayload);
+        if (response.data.success) {
+          toast.success("Booking updated successfully!");
+          setShowCreateModal(false);
+          setBookingToEdit(null);
+          fetchBookings();
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to update booking");
+      }
+      return;
+    }
+
+    // Handle CREATE mode
     const vendorId = formData.vendorId || (
       formData.selectedServices.length > 0
         ? formData.selectedServices[0].vendorId
@@ -124,7 +184,7 @@ export default function UserBookingsPage() {
           ...formData,
           preferredTimeSlot,
           vendorId,
-          userId: selectedUser,
+          userId: selectedUser || userProfile?._id || user?._id,
           familyMemberId: selectedFamilyMemberId || null,
           subtotal,
           gstAmount: 0,
@@ -192,6 +252,7 @@ export default function UserBookingsPage() {
           `${createdBookings.length} booking(s) created successfully!`
         );
         setShowCreateModal(false);
+        setBookingToEdit(null);
         fetchBookings();
       }
     } catch (error: any) {
@@ -300,7 +361,10 @@ export default function UserBookingsPage() {
           <p className="text-slate-500 mt-1">Track and manage your healthcare service requests</p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setBookingToEdit(null);
+            setShowCreateModal(true);
+          }}
           className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl hover:shadow-lg font-bold transition-all text-sm"
         >
           <Plus size={18} />
@@ -458,7 +522,7 @@ export default function UserBookingsPage() {
                           #{booking.bookingId || booking._id.slice(-8).toUpperCase()}
                         </div>
                         <div className="flex flex-wrap gap-1 max-w-[250px]">
-                          {booking.services?.map((s, idx) => (
+                          {(booking.selectedServices || booking.services || []).map((s: any, idx: number) => (
                             <span
                               key={idx}
                               className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold"
@@ -531,14 +595,31 @@ export default function UserBookingsPage() {
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
-                        <Link
-                          to={`/user/bookings/${booking._id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F]/10 to-[#3DB9A6]/10 text-teal-800 hover:from-[#63D64F]/20 hover:to-[#3DB9A6]/20 transition-all text-xs font-bold rounded-xl border border-teal-200/50"
-                        >
-                          <Eye size={13} />
-                          Details
-                          <ChevronRight size={12} />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Edit button allowed only when booking is pending and unassigned */}
+                          {booking.bookingStatus === "pending" && !booking.vendorId && (
+                            <button
+                              onClick={() => {
+                                setBookingToEdit(booking);
+                                setShowCreateModal(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all text-xs font-bold rounded-xl border border-amber-200 shadow-xs"
+                              title="Edit booking details"
+                            >
+                              <Edit2 size={13} />
+                              Edit
+                            </button>
+                          )}
+
+                          <Link
+                            to={`/user/bookings/${booking._id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F]/10 to-[#3DB9A6]/10 text-teal-800 hover:from-[#63D64F]/20 hover:to-[#3DB9A6]/20 transition-all text-xs font-bold rounded-xl border border-teal-200/50"
+                          >
+                            <Eye size={13} />
+                            Details
+                            <ChevronRight size={12} />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -552,11 +633,15 @@ export default function UserBookingsPage() {
       {showCreateModal && (
         <CreateBookingModal
           show={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateBooking}
+          onClose={() => {
+            setShowCreateModal(false);
+            setBookingToEdit(null);
+          }}
+          onSubmit={handleSaveBooking}
           services={services}
-          users={user ? [user] : []}
+          users={userProfile ? [userProfile] : (user ? [user] : [])}
           vendors={vendors}
+          bookingToEdit={bookingToEdit}
           onServiceDetailClick={(service) => {
             setSelectedServiceForDetail(service);
             setShowServiceDetailModal(true);

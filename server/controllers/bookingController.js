@@ -8,6 +8,7 @@ import Coupon from '../models/Coupon.js';
 import Review from '../models/Review.js';
 import UserReview from '../models/UserReview.js';
 import Counter from '../models/Counter.js';
+import Notification from '../models/Notification.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
 
 // Helper function to generate unique booking ID
@@ -739,9 +740,9 @@ export const updateBookingStatus = async (req, res) => {
   }
 };
 
-// @desc    Update booking (Admin)
-// @route   PUT /api/bookings/:id
-// @access  Private/Admin
+// @desc    Update booking (User / Admin)
+// @route   PUT /api/bookings/bookingUpdateByUser/:id or PUT /api/bookings/:id
+// @access  Private
 export const updateBooking = async (req, res) => {
   try {
     const {
@@ -763,8 +764,11 @@ export const updateBooking = async (req, res) => {
       staffPreference,
       serviceLocation,
       estimatedDuration,
+      familyMemberId,
       vendorId,
-      userId
+      userId,
+      paymentMethod,
+      paymentStatus
     } = req.body;
 
     const booking = await Booking.findById(req.params.id);
@@ -774,6 +778,26 @@ export const updateBooking = async (req, res) => {
         success: false,
         message: 'Booking not found'
       });
+    }
+
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isOwner = req.user && booking.userId && booking.userId.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to update this booking'
+      });
+    }
+
+    // If user is not admin, only allow edit if booking is pending and NOT yet accepted by vendor
+    if (!isAdmin) {
+      if (booking.bookingStatus !== 'pending' || booking.vendorId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Booking has already been accepted by a vendor and cannot be edited.'
+        });
+      }
     }
 
     // Update patient information
@@ -787,7 +811,7 @@ export const updateBooking = async (req, res) => {
     if (email !== undefined) booking.email = email;
 
     // Update selected services
-    if (selectedServices !== undefined) {
+    if (selectedServices !== undefined && Array.isArray(selectedServices)) {
       booking.selectedServices = selectedServices;
     }
 
@@ -796,9 +820,11 @@ export const updateBooking = async (req, res) => {
     if (hasInsurance !== undefined) booking.hasInsurance = hasInsurance;
     if (insurancePolicyNumber !== undefined) booking.insurancePolicyNumber = insurancePolicyNumber;
 
-    // Pricing (force GST to 0 and grandTotal to subtotal + additional items)
+    // Pricing
     if (subtotal !== undefined) {
       booking.subtotal = subtotal;
+    } else if (selectedServices !== undefined && Array.isArray(selectedServices)) {
+      booking.subtotal = selectedServices.reduce((sum, s) => sum + (s.price || 0) * (s.quantity || 1), 0);
     }
     recalculateBookingTotals(booking);
 
@@ -808,14 +834,65 @@ export const updateBooking = async (req, res) => {
     if (staffPreference !== undefined) booking.staffPreference = staffPreference;
     if (serviceLocation !== undefined) booking.serviceLocation = serviceLocation;
     if (estimatedDuration !== undefined) booking.estimatedDuration = estimatedDuration;
+    if (familyMemberId !== undefined) booking.familyMemberId = familyMemberId || null;
 
-    // References
-    if (vendorId !== undefined) booking.vendorId = vendorId || null;
-    if (userId !== undefined && /^[0-9a-fA-F]{24}$/.test(userId)) {
-      booking.userId = userId;
+    // Admin only modifications
+    if (isAdmin) {
+      if (vendorId !== undefined) booking.vendorId = vendorId || null;
+      if (userId !== undefined && /^[0-9a-fA-F]{24}$/.test(userId)) {
+        booking.userId = userId;
+      }
+      if (paymentMethod !== undefined) booking.paymentMethod = paymentMethod;
+      if (paymentStatus !== undefined) booking.paymentStatus = paymentStatus;
     }
 
     await booking.save();
+
+    // If booking is pending and unassigned, update vendor notifications to match updated pincode / gender / services
+    if (booking.bookingStatus === 'pending' && !booking.vendorId) {
+      try {
+        const serviceIds = (booking.selectedServices || []).map(s => s.serviceId);
+        const vendorQuery = {
+          isActive: true,
+          verificationStatus: 'verified',
+          $or: [
+            { pincode: booking.pincode },
+            { serviceAreas: booking.pincode }
+          ]
+        };
+
+        if (serviceIds.length > 0) {
+          vendorQuery.services = { $in: serviceIds };
+        }
+
+        if (booking.staffPreference === 'Male Staff') {
+          vendorQuery.gender = 'Male';
+        } else if (booking.staffPreference === 'Female Staff') {
+          vendorQuery.gender = 'Female';
+        }
+
+        const matchingVendors = await Vendor.find(vendorQuery);
+        const matchedVendorIds = matchingVendors.map(v => v._id);
+        const vendorStatus = matchedVendorIds.map(vId => ({
+          vendorId: vId,
+          isRead: false,
+          isAccepted: false
+        }));
+
+        await Notification.findOneAndUpdate(
+          { bookingId: booking._id },
+          {
+            vendorId: matchedVendorIds,
+            message: `Booking update: Available request in your service area (${booking.pincode}). Patient: ${booking.patientName}`,
+            type: 'new_booking',
+            vendorStatus: vendorStatus
+          },
+          { upsert: true, new: true }
+        );
+      } catch (notifErr) {
+        console.error('Error updating vendor notifications on booking update:', notifErr);
+      }
+    }
 
     // Populate user and vendor details before returning
     await booking.populate('userId', 'name email phone');
