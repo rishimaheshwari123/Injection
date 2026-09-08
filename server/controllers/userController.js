@@ -539,10 +539,10 @@ export const createUserByAdmin = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!name || !email || !password || !phone || !gender || !age || !address || !city || !state || !pincode || longitude === undefined || latitude === undefined) {
+    if (!name || !email || !password || !phone || !gender) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, phone, gender, age, address, city, state, pincode, longitude, latitude'
+        message: 'Please provide required fields: name, email, password, phone, gender'
       });
     }
 
@@ -556,13 +556,6 @@ export const createUserByAdmin = async (req, res) => {
         message: userExists.email === email 
           ? 'User already exists with this email' 
           : 'User already exists with this phone number'
-      });
-    }
-    const otpRecord = await Otp.findOne({ phone: normalizedPhone, verified: true });
-    if (!otpRecord) {
-      return res.status(400).json({
-        success: false,
-        message: 'Mobile number is not verified. Please verify using OTP first.'
       });
     }
 
@@ -622,13 +615,13 @@ export const createUserByAdmin = async (req, res) => {
       phone,
       isPhoneVerified: true,
       gender,
-      age,
-      address,
-      city,
-      state,
-      pincode,
-      longitude: Number(longitude),
-      latitude: Number(latitude),
+      age: Number(age) || 25,
+      address: address || 'N/A',
+      city: city || 'N/A',
+      state: state || 'N/A',
+      pincode: pincode || '000000',
+      longitude: Number(longitude) || 0,
+      latitude: Number(latitude) || 0,
       alternateMobile: alternateMobile || '',
       currentLocation: currentLocation || '',
       hasInsurance: hasInsurance === 'true' || hasInsurance === true,

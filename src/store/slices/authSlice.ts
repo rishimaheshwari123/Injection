@@ -18,21 +18,33 @@ interface User {
   referralCode?: string;
   familyMembers?: any[];
   permissions?: {
-    dashboard: boolean;
-    users: boolean;
-    vendors: boolean;
-    services: boolean;
-    bookings: boolean;
-    prescriptions: boolean;
-    reports: boolean;
-    labPartners: boolean;
-    insuranceClaims: boolean;
-    faqs: boolean;
-    coupons: boolean;
-    supportTickets: boolean;
-    contactInquiries: boolean;
-    advertisements: boolean;
-    staff: boolean;
+    dashboard?: boolean;
+    users?: boolean;
+    vendors?: boolean;
+    ambassadors?: boolean;
+    withdrawals?: boolean;
+    vendorServiceRequests?: boolean;
+    vendorIdCard?: boolean;
+    services?: boolean;
+    bookings?: boolean;
+    prescriptions?: boolean;
+    reports?: boolean;
+    labPartners?: boolean;
+    insuranceClaims?: boolean;
+    faqs?: boolean;
+    coupons?: boolean;
+    supportTickets?: boolean;
+    contactInquiries?: boolean;
+    advertisements?: boolean;
+    jobs?: boolean;
+    blogs?: boolean;
+    gallery?: boolean;
+    hero?: boolean;
+    team?: boolean;
+    staff?: boolean;
+    notifications?: boolean;
+    settings?: boolean;
+    websiteCounter?: boolean;
   };
 }
 

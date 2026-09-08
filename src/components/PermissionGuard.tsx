@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 import { ShieldAlert } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 interface PermissionGuardProps {
   children: ReactNode;
@@ -7,8 +9,17 @@ interface PermissionGuardProps {
 }
 
 export default function PermissionGuard({ children, permission }: PermissionGuardProps) {
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const { user: reduxUser } = useSelector((state: RootState) => state.auth);
+  
+  let user = reduxUser;
+  if (!user) {
+    try {
+      const userStr = localStorage.getItem('user');
+      user = userStr ? JSON.parse(userStr) : null;
+    } catch {
+      user = null;
+    }
+  }
 
   // Super admin has all permissions
   if (user?.role === 'admin' && !user?.isStaff) {
@@ -16,7 +27,7 @@ export default function PermissionGuard({ children, permission }: PermissionGuar
   }
 
   // Check if staff has permission
-  if (user?.isStaff && user?.permissions?.[permission]) {
+  if ((user?.isStaff || user?.role === 'staff') && user?.permissions?.[permission as keyof typeof user.permissions]) {
     return <>{children}</>;
   }
 
@@ -31,3 +42,4 @@ export default function PermissionGuard({ children, permission }: PermissionGuar
     </div>
   );
 }
+

@@ -354,7 +354,7 @@ function App() {
           <Route
             path="ambassadors"
             element={
-              <PermissionGuard permission="users">
+              <PermissionGuard permission="ambassadors">
                 <AdminAmbassadorsPage />
               </PermissionGuard>
             }
@@ -362,7 +362,7 @@ function App() {
           <Route
             path="ambassadors/:id"
             element={
-              <PermissionGuard permission="users">
+              <PermissionGuard permission="ambassadors">
                 <AmbassadorDetailsPage />
               </PermissionGuard>
             }
@@ -370,7 +370,7 @@ function App() {
           <Route
             path="withdrawals"
             element={
-              <PermissionGuard permission="users">
+              <PermissionGuard permission="withdrawals">
                 <AdminWithdrawalsPage />
               </PermissionGuard>
             }
@@ -386,7 +386,7 @@ function App() {
           <Route
             path="vendor-service-requests"
             element={
-              <PermissionGuard permission="vendors">
+              <PermissionGuard permission="vendorServiceRequests">
                 <VendorServiceRequestsPage />
               </PermissionGuard>
             }
@@ -394,7 +394,7 @@ function App() {
           <Route
             path="vendor-id-card"
             element={
-              <PermissionGuard permission="vendors">
+              <PermissionGuard permission="vendorIdCard">
                 <AdminVendorIdCardPage />
               </PermissionGuard>
             }
@@ -402,7 +402,7 @@ function App() {
           <Route
             path="website-counter"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="websiteCounter">
                 <WebsiteCounterPage />
               </PermissionGuard>
             }
@@ -445,6 +445,12 @@ function App() {
               <PermissionGuard permission="reports">
                 <ReportsPage />
               </PermissionGuard>
+            }
+          />
+          <Route
+            path="labPartners"
+            element={
+              <Navigate to="/admin/lab-partners" replace />
             }
           />
           <Route
@@ -514,7 +520,7 @@ function App() {
           <Route
             path="jobs"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="jobs">
                 <JobsPage />
               </PermissionGuard>
             }
@@ -522,7 +528,7 @@ function App() {
           <Route
             path="job-applications"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="jobs">
                 <JobApplicationsPage />
               </PermissionGuard>
             }
@@ -530,7 +536,7 @@ function App() {
           <Route
             path="job-applications/:jobId"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="jobs">
                 <JobApplicationsPage />
               </PermissionGuard>
             }
@@ -538,7 +544,7 @@ function App() {
           <Route
             path="blogs"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="blogs">
                 <BlogsPage />
               </PermissionGuard>
             }
@@ -546,7 +552,7 @@ function App() {
           <Route
             path="gallery"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="gallery">
                 <GalleryPage />
               </PermissionGuard>
             }
@@ -554,7 +560,7 @@ function App() {
           <Route
             path="hero"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="hero">
                 <HeroPage />
               </PermissionGuard>
             }
@@ -562,7 +568,7 @@ function App() {
           <Route
             path="team"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="team">
                 <TeamPage />
               </PermissionGuard>
             }
@@ -570,7 +576,7 @@ function App() {
           <Route
             path="notifications"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="notifications">
                 <NotificationsPage />
               </PermissionGuard>
             }
@@ -578,7 +584,7 @@ function App() {
           <Route
             path="settings"
             element={
-              <PermissionGuard permission="dashboard">
+              <PermissionGuard permission="settings">
                 <SettingsPage />
               </PermissionGuard>
             }

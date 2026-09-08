@@ -50,26 +50,25 @@ const userSchema = new mongoose.Schema({
   },
   city: {
     type: String,
-    required: [true, 'City is required'],
-    trim: true
+    trim: true,
+    default: 'N/A'
   },
   state: {
     type: String,
-    required: [true, 'State is required'],
-    trim: true
+    trim: true,
+    default: 'N/A'
   },
   pincode: {
     type: String,
-    required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
   },
   longitude: {
     type: Number,
-    required: [true, 'Longitude is required']
+    default: 0
   },
   latitude: {
     type: Number,
-    required: [true, 'Latitude is required']
+    default: 0
   },
   alternateMobile: {
     type: String
@@ -158,6 +157,10 @@ const userSchema = new mongoose.Schema({
     dashboard: { type: Boolean, default: false },
     users: { type: Boolean, default: false },
     vendors: { type: Boolean, default: false },
+    ambassadors: { type: Boolean, default: false },
+    withdrawals: { type: Boolean, default: false },
+    vendorServiceRequests: { type: Boolean, default: false },
+    vendorIdCard: { type: Boolean, default: false },
     services: { type: Boolean, default: false },
     bookings: { type: Boolean, default: false },
     prescriptions: { type: Boolean, default: false },
@@ -169,7 +172,15 @@ const userSchema = new mongoose.Schema({
     supportTickets: { type: Boolean, default: false },
     contactInquiries: { type: Boolean, default: false },
     advertisements: { type: Boolean, default: false },
-    staff: { type: Boolean, default: false }
+    jobs: { type: Boolean, default: false },
+    blogs: { type: Boolean, default: false },
+    gallery: { type: Boolean, default: false },
+    hero: { type: Boolean, default: false },
+    team: { type: Boolean, default: false },
+    staff: { type: Boolean, default: false },
+    notifications: { type: Boolean, default: false },
+    settings: { type: Boolean, default: false },
+    websiteCounter: { type: Boolean, default: false }
   },
   isActive: {
     type: Boolean,

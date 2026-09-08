@@ -56,7 +56,6 @@ const AdminLayout = () => {
       permission: "dashboard",
     },
     { path: "/admin/users", icon: Users, label: "Users", permission: "users" },
-
     {
       path: "/admin/vendors",
       icon: Building2,
@@ -67,19 +66,19 @@ const AdminLayout = () => {
       path: "/admin/ambassadors",
       icon: Users,
       label: "Ambassadors",
-      permission: "users",
+      permission: "ambassadors",
     },
     {
       path: "/admin/withdrawals",
       icon: Wallet,
       label: "Withdrawals Requests",
-      permission: "users",
+      permission: "withdrawals",
     },
     {
       path: "/admin/vendor-service-requests",
       icon: ClipboardList,
       label: "Service Requests",
-      permission: "vendors",
+      permission: "vendorServiceRequests",
     },
     {
       path: "/admin/services",
@@ -151,31 +150,31 @@ const AdminLayout = () => {
       path: "/admin/jobs",
       icon: Briefcase,
       label: "Job Postings",
-      permission: "dashboard",
+      permission: "jobs",
     },
     {
       path: "/admin/blogs",
       icon: BookOpen,
       label: "Blogs",
-      permission: "dashboard",
+      permission: "blogs",
     },
     {
       path: "/admin/gallery",
       icon: Image,
       label: "Gallery",
-      permission: "dashboard",
+      permission: "gallery",
     },
     {
       path: "/admin/hero",
       icon: Image,
       label: "Hero Slider",
-      permission: "dashboard",
+      permission: "hero",
     },
     {
       path: "/admin/team",
       icon: Users,
       label: "Team Management",
-      permission: "dashboard",
+      permission: "team",
     },
     {
       path: "/admin/staff",
@@ -187,25 +186,25 @@ const AdminLayout = () => {
       path: "/admin/notifications",
       icon: Bell,
       label: "Notifications",
-      permission: "dashboard",
+      permission: "notifications",
     },
     {
       path: "/admin/settings",
       icon: Settings,
       label: "Settings",
-      permission: "dashboard",
+      permission: "settings",
     },
     {
       path: "/admin/vendor-id-card",
       icon: Award,
       label: "Vendor ID Card",
-      permission: "vendors",
+      permission: "vendorIdCard",
     },
     {
       path: "/admin/website-counter",
       icon: Eye,
       label: "Visits & Web Analytics",
-      permission: "dashboard",
+      permission: "websiteCounter",
     },
   ];
 
@@ -215,10 +214,10 @@ const AdminLayout = () => {
       return true;
     }
     // Check staff permissions
-    return (
-      user?.isStaff &&
-      user?.permissions?.[permission as keyof typeof user.permissions]
-    );
+    if (user?.isStaff || user?.role === "staff") {
+      return Boolean(user?.permissions?.[permission as keyof typeof user.permissions]);
+    }
+    return false;
   };
 
   return (
