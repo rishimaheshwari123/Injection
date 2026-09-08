@@ -18,8 +18,12 @@ export const uploadPrescription = async (req, res) => {
       });
     }
 
-    // Check if user owns this booking
-    if (booking.userId.toString() !== req.user._id.toString()) {
+    // Check if user owns this booking or is admin or is vendor
+    const isUser = req.user && booking.userId && (booking.userId._id ? booking.userId._id.toString() : booking.userId.toString()) === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && (booking.vendorId._id ? booking.vendorId._id.toString() : booking.vendorId.toString()) === req.vendor._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    if (!isUser && !isAdmin && !isVendor) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to upload prescription for this booking'
@@ -61,8 +65,8 @@ export const getPrescription = async (req, res) => {
     }
 
     // Check authorization
-    const isUser = req.user && booking.userId._id.toString() === req.user._id.toString();
-    const isVendor = req.vendor && booking.vendorId && booking.vendorId._id.toString() === req.vendor._id.toString();
+    const isUser = req.user && booking.userId && (booking.userId._id ? booking.userId._id.toString() : booking.userId.toString()) === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && (booking.vendorId._id ? booking.vendorId._id.toString() : booking.vendorId.toString()) === req.vendor._id.toString();
     const isAdmin = req.user && req.user.role === 'admin';
 
     if (!isUser && !isVendor && !isAdmin) {
@@ -91,7 +95,7 @@ export const getPrescription = async (req, res) => {
 
 // @desc    Delete prescription
 // @route   DELETE /api/prescriptions/:bookingId
-// @access  Private/User
+// @access  Private (User/Admin)
 export const deletePrescription = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -105,8 +109,11 @@ export const deletePrescription = async (req, res) => {
       });
     }
 
-    // Check if user owns this booking
-    if (booking.userId.toString() !== req.user._id.toString()) {
+    // Check if user owns this booking or is admin
+    const isUser = req.user && booking.userId && (booking.userId._id ? booking.userId._id.toString() : booking.userId.toString()) === req.user._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    if (!isUser && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete prescription for this booking'

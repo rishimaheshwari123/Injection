@@ -209,7 +209,7 @@ export const getReport = async (req, res) => {
 
 // @desc    Upload report (alternative method)
 // @route   POST /api/reports/upload/:bookingId
-// @access  Private/Vendor/Admin
+// @access  Private (User/Vendor/Admin)
 export const uploadReport = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -224,15 +224,20 @@ export const uploadReport = async (req, res) => {
       });
     }
 
-    // Check if vendor owns this booking or is admin
-    const isVendor = req.vendor && booking.vendorId && booking.vendorId._id.toString() === req.vendor._id.toString();
+    // Check if vendor owns this booking or is admin or is user
+    const isUser = req.user && booking.userId && (booking.userId._id ? booking.userId._id.toString() : booking.userId.toString()) === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && (booking.vendorId._id ? booking.vendorId._id.toString() : booking.vendorId.toString()) === req.vendor._id.toString();
     const isAdmin = req.user && req.user.role === 'admin';
 
-    if (!isVendor && !isAdmin) {
+    if (!isVendor && !isAdmin && !isUser) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to upload report for this booking'
       });
+    }
+
+    if (!booking.reports) {
+      booking.reports = [];
     }
 
     // Add report to reports array
@@ -240,7 +245,7 @@ export const uploadReport = async (req, res) => {
       reportUrl,
       reportType: reportType || 'general',
       reportName: reportName || `Report ${booking.reports.length + 1}`,
-      addedBy: req.user?.name || req.vendor?.name || 'Admin',
+      addedBy: req.user?.name || req.vendor?.name || (isAdmin ? 'Admin' : (isUser ? 'User' : 'Vendor')),
       addedAt: new Date()
     };
 
@@ -250,8 +255,8 @@ export const uploadReport = async (req, res) => {
     booking.reportUrl = reportUrl;
     booking.reportGeneratedAt = new Date();
     
-    // Update status to completed if not already
-    if (booking.bookingStatus !== 'completed') {
+    // Only update status to completed if uploaded by vendor or admin completing the test
+    if (booking.bookingStatus !== 'completed' && (isVendor || isAdmin)) {
       booking.bookingStatus = 'completed';
       booking.completedAt = new Date();
     }

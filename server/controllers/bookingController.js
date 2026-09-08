@@ -994,7 +994,7 @@ export const addNoteToBooking = async (req, res) => {
 
 // @desc    Add prescription to booking
 // @route   POST /api/bookings/:id/prescription
-// @access  Private/Admin
+// @access  Private (User/Vendor/Admin)
 export const addPrescription = async (req, res) => {
   try {
     const { prescriptionData, prescriptionType } = req.body;
@@ -1015,10 +1015,25 @@ export const addPrescription = async (req, res) => {
       });
     }
 
+    // Check authorization: Admin OR Vendor assigned to this booking OR User who owns this booking
+    const isUser = req.user && booking.userId && (booking.userId._id ? booking.userId._id.toString() : booking.userId.toString()) === req.user._id.toString();
+    const isVendor = req.vendor && booking.vendorId && (booking.vendorId._id ? booking.vendorId._id.toString() : booking.vendorId.toString()) === req.vendor._id.toString();
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    if (!isAdmin && !isVendor && !isUser) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add prescription for this booking'
+      });
+    }
+
+    // Determine who added it
+    const addedByName = req.user?.name || req.vendor?.name || (isAdmin ? 'Admin' : (isUser ? 'User' : 'Vendor'));
+
     // Create new prescription object
     const newPrescription = {
       type: prescriptionType,
-      addedBy: req.user?.name || 'Admin',
+      addedBy: addedByName,
       addedAt: new Date()
     };
 
@@ -1045,6 +1060,9 @@ export const addPrescription = async (req, res) => {
     }
 
     // Add to prescriptions array
+    if (!booking.prescriptions) {
+      booking.prescriptions = [];
+    }
     booking.prescriptions.push(newPrescription);
     await booking.save();
 
@@ -1067,7 +1085,7 @@ export const addPrescription = async (req, res) => {
 
 // @desc    Update prescription for booking (Legacy - now adds to array)
 // @route   PUT /api/bookings/:id/prescription
-// @access  Private/Admin
+// @access  Private (User/Vendor/Admin)
 export const updatePrescription = async (req, res) => {
   // Just call addPrescription for backward compatibility
   return addPrescription(req, res);

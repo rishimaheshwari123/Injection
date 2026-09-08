@@ -1,8 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { bookingAPI, serviceAPI, vendorAPI, prescriptionAPI, userAPI } from "../../services/api";
+import {
+  bookingAPI,
+  serviceAPI,
+  vendorAPI,
+  prescriptionAPI,
+  reportAPI,
+  userAPI,
+} from "../../services/api";
 import { useAppSelector } from "../../store/hooks";
-import { CreateBookingModal, ServiceDetailModal } from "../../components/bookings";
+import {
+  CreateBookingModal,
+  ServiceDetailModal,
+  AddPrescriptionModal,
+  ReportUploadModal,
+  ViewPrescriptionModal,
+  ViewReportsModal,
+} from "../../components/bookings";
 import { toast } from "react-toastify";
 import {
   Search,
@@ -16,6 +30,9 @@ import {
   ClipboardList,
   Plus,
   Edit2,
+  FileText,
+  Upload,
+  Image,
 } from "lucide-react";
 
 interface Booking {
@@ -61,6 +78,10 @@ interface Booking {
   staffPreference?: string;
   serviceLocation?: string;
   familyMemberId?: string;
+  prescriptions?: any[];
+  reports?: any[];
+  reportUrl?: string;
+  prescriptionDocument?: string;
 }
 
 export default function UserBookingsPage() {
@@ -78,6 +99,16 @@ export default function UserBookingsPage() {
   const [vendors, setVendors] = useState<any[]>([]);
   const [selectedServiceForDetail, setSelectedServiceForDetail] = useState<any>(null);
   const [showServiceDetailModal, setShowServiceDetailModal] = useState(false);
+
+  // Prescription & Report modals state
+  const [showAddPrescriptionModal, setShowAddPrescriptionModal] = useState(false);
+  const [selectedBookingForPrescription, setSelectedBookingForPrescription] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedBookingForReport, setSelectedBookingForReport] = useState<any>(null);
+  const [showViewPrescriptionModal, setShowViewPrescriptionModal] = useState(false);
+  const [selectedBookingForViewPrescription, setSelectedBookingForViewPrescription] = useState<any>(null);
+  const [showViewReportsModal, setShowViewReportsModal] = useState(false);
+  const [selectedBookingForViewReports, setSelectedBookingForViewReports] = useState<any>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -257,6 +288,96 @@ export default function UserBookingsPage() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create bookings");
+    }
+  };
+
+  // Handler for AddPrescriptionModal
+  const handleAddPrescription = async (
+    prescriptionData: any,
+    prescriptionFile: File | null,
+  ) => {
+    if (!selectedBookingForPrescription) return;
+
+    try {
+      if (prescriptionFile) {
+        try {
+          const uploadResponse = await prescriptionAPI.uploadImage(prescriptionFile);
+          if (uploadResponse.data.success) {
+            await bookingAPI.updatePrescription(
+              selectedBookingForPrescription._id,
+              {
+                ...prescriptionData,
+                supportingImageUrl: uploadResponse.data.data.url,
+              },
+              "form",
+            );
+            toast.success("Prescription added successfully!");
+          } else {
+            await bookingAPI.updatePrescription(
+              selectedBookingForPrescription._id,
+              prescriptionData,
+              "form",
+            );
+            toast.warning("Prescription details added without image");
+          }
+        } catch (error: any) {
+          await bookingAPI.updatePrescription(
+            selectedBookingForPrescription._id,
+            prescriptionData,
+            "form",
+          );
+          toast.warning("Prescription details added without image");
+        }
+      } else {
+        await bookingAPI.updatePrescription(
+          selectedBookingForPrescription._id,
+          prescriptionData,
+          "form",
+        );
+        toast.success("Prescription added successfully!");
+      }
+
+      fetchBookings();
+      setShowAddPrescriptionModal(false);
+      setSelectedBookingForPrescription(null);
+    } catch (error: any) {
+      toast.error(
+        "Failed to add prescription: " +
+        (error.response?.data?.message || error.message),
+      );
+    }
+  };
+
+  // Handler for ReportUploadModal
+  const handleUploadReport = async (
+    file: File,
+    reportType: string,
+    reportName: string,
+  ) => {
+    if (!selectedBookingForReport) return;
+
+    try {
+      const uploadResponse = await prescriptionAPI.uploadImage(file);
+      if (uploadResponse.data.success) {
+        const updateResponse = await reportAPI.uploadReport(
+          selectedBookingForReport._id,
+          uploadResponse.data.data.url,
+          reportType,
+          reportName,
+        );
+
+        if (updateResponse.data.success) {
+          toast.success("Report uploaded successfully!");
+          fetchBookings();
+          setShowReportModal(false);
+          setSelectedBookingForReport(null);
+        }
+      }
+    } catch (error: any) {
+      toast.error(
+        "Failed to upload report: " +
+        (error.response?.data?.message || error.message),
+      );
     }
   };
 
@@ -595,7 +716,63 @@ export default function UserBookingsPage() {
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          {/* Add Prescription */}
+                          <button
+                            onClick={() => {
+                              setSelectedBookingForPrescription(booking);
+                              setShowAddPrescriptionModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-all text-xs font-bold rounded-xl border border-violet-200 shadow-xs"
+                            title="Add Prescription"
+                          >
+                            <Plus size={12} />
+                            <span>Prescription</span>
+                          </button>
+
+                          {/* Upload Lab Report */}
+                          <button
+                            onClick={() => {
+                              setSelectedBookingForReport(booking);
+                              setShowReportModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-all text-xs font-bold rounded-xl border border-cyan-200 shadow-xs"
+                            title="Upload Lab Report"
+                          >
+                            <Upload size={12} />
+                            <span>Report</span>
+                          </button>
+
+                          {/* View Prescriptions if any exist */}
+                          {booking.prescriptions && booking.prescriptions.length > 0 && (
+                            <button
+                              onClick={() => {
+                                setSelectedBookingForViewPrescription(booking);
+                                setShowViewPrescriptionModal(true);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all text-xs font-bold rounded-xl border border-blue-200 shadow-xs"
+                              title={`View ${booking.prescriptions.length} Prescription(s)`}
+                            >
+                              <Image size={12} />
+                              <span>({booking.prescriptions.length})</span>
+                            </button>
+                          )}
+
+                          {/* View Reports if any exist */}
+                          {((booking.reports && booking.reports.length > 0) || booking.reportUrl) && (
+                            <button
+                              onClick={() => {
+                                setSelectedBookingForViewReports(booking);
+                                setShowViewReportsModal(true);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all text-xs font-bold rounded-xl border border-emerald-200 shadow-xs"
+                              title="View Reports"
+                            >
+                              <FileText size={12} />
+                              <span>({booking.reports?.length || 1})</span>
+                            </button>
+                          )}
+
                           {/* Edit button allowed only when booking is pending and unassigned */}
                           {booking.bookingStatus === "pending" && !booking.vendorId && (
                             <button
@@ -657,6 +834,53 @@ export default function UserBookingsPage() {
             setSelectedServiceForDetail(null);
           }}
           service={selectedServiceForDetail}
+        />
+      )}
+
+      {showAddPrescriptionModal && (
+        <AddPrescriptionModal
+          show={showAddPrescriptionModal}
+          onClose={() => {
+            setShowAddPrescriptionModal(false);
+            setSelectedBookingForPrescription(null);
+          }}
+          onSubmit={handleAddPrescription}
+          booking={selectedBookingForPrescription}
+        />
+      )}
+
+      {showReportModal && (
+        <ReportUploadModal
+          show={showReportModal}
+          onClose={() => {
+            setShowReportModal(false);
+            setSelectedBookingForReport(null);
+          }}
+          onSubmit={handleUploadReport}
+          booking={selectedBookingForReport}
+        />
+      )}
+
+      {showViewPrescriptionModal && selectedBookingForViewPrescription && (
+        <ViewPrescriptionModal
+          show={showViewPrescriptionModal}
+          onClose={() => {
+            setShowViewPrescriptionModal(false);
+            setSelectedBookingForViewPrescription(null);
+          }}
+          booking={selectedBookingForViewPrescription}
+          isAdmin={false}
+        />
+      )}
+
+      {showViewReportsModal && selectedBookingForViewReports && (
+        <ViewReportsModal
+          show={showViewReportsModal}
+          onClose={() => {
+            setShowViewReportsModal(false);
+            setSelectedBookingForViewReports(null);
+          }}
+          booking={selectedBookingForViewReports}
         />
       )}
     </div>

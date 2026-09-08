@@ -740,7 +740,7 @@ const BookingDetailPage = () => {
                 <h2 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
                   <FileText size={18} className="text-[#3DB9A6]" /> Doctor Prescriptions ({booking.prescriptions?.length || 0})
                 </h2>
-                {isAdmin && (
+                {(isAdmin || isUser) && (
                   <button
                     onClick={() => setShowAddPrescriptionModal(true)}
                     className="text-xs font-black text-violet-600 hover:text-violet-750 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
@@ -884,7 +884,7 @@ const BookingDetailPage = () => {
                 <h2 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
                   <FileText size={18} className="text-[#3DB9A6]" /> Lab Reports ({booking.reports?.length || 0})
                 </h2>
-                {isAdmin && (
+                {(isAdmin || isUser) && (
                   <button
                     onClick={() => setShowReportModal(true)}
                     className="text-xs font-black text-violet-600 hover:text-violet-750 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"

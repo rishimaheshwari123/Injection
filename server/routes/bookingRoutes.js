@@ -12,6 +12,7 @@ import {
   updateBooking,
   deleteBooking,
   addNoteToBooking,
+  addPrescription,
   updatePrescription,
   updatePrescriptionSummary,
   getVendorAllBookings,
@@ -53,7 +54,8 @@ router.put('/:id/status', protect, adminOnly, updateBookingStatus);
 
 router.post('/:id/notes', protect, adminOnly, addNoteToBooking);
 
-router.put('/:id/prescription', protect, adminOnly, updatePrescription);
+router.put('/:id/prescription', protect, updatePrescription);
+router.post('/:id/prescription', protect, addPrescription);
 router.put('/:id/prescription-summary', protect, adminOnly, updatePrescriptionSummary);
 router.post('/:id/review/vendor', protect, createVendorReview);
 router.post('/:id/review/user', protect, vendorOnly, createUserReview);
