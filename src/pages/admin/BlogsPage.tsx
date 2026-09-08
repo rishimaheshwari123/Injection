@@ -1,29 +1,29 @@
 import { useState, useEffect, useRef } from "react";
 import { blogAPI } from "../../services/api";
 import { toast } from "react-toastify";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Search, 
-  Undo, 
-  Redo, 
-  Bold, 
-  Italic, 
-  Underline, 
-  Strikethrough, 
-  Code, 
-  List, 
-  ListOrdered, 
-  Quote, 
-  Minus, 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  AlignJustify, 
-  Link2, 
-  Image as ImageIcon, 
-  Plus, 
-  Trash2, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Undo,
+  Redo,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Code,
+  List,
+  ListOrdered,
+  Quote,
+  Minus,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Link2,
+  Image as ImageIcon,
+  Plus,
+  Trash2,
   ArrowLeft,
   CheckCircle,
   XCircle
@@ -131,7 +131,7 @@ export default function BlogsPage() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Editor and tags state
   const editorRef = useRef<HTMLDivElement>(null);
   const editorImageInputRef = useRef<HTMLInputElement>(null);
@@ -597,317 +597,315 @@ export default function BlogsPage() {
       {!showModal ? (
         <>
           <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Blog Management</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Create New Blog
-        </button>
-      </div>
+            <h1 className="text-2xl font-bold">Blog Management</h1>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowModal(true);
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Create New Blog
+            </button>
+          </div>
 
-      {/* Filters */}
-      <div className="mb-6 flex justify-between items-center gap-4">
-        <div className="flex gap-4">
-          <select
-            value={filterStatus}
-            onChange={(e) => {
-              setFilterStatus(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-
-          <select
-            value={filterCategory}
-            onChange={(e) => {
-              setFilterCategory(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All Categories</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Search blogs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64"
-          />
-        </div>
-      </div>
-
-      {/* Blogs Table */}
-      <div className="bg-white rounded-lg shadow ">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Image
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Title
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Author
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Views
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredBlogs.map((blog) => (
-              <tr key={blog._id}>
-                <td className="px-6 py-4">
-                  {blog.featuredImage ? (
-                    <img
-                      src={blog.featuredImage}
-                      alt={blog.title}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No Image</span>
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {blog.title}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {blog.slug}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {blog.category}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {blog.authorName || blog.author?.name}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      blog.status === "published"
-                        ? "bg-green-100 text-green-800"
-                        : blog.status === "draft"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {blog.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {blog.views}
-                </td>
-                <td className="px-6 py-4 text-sm relative">
-                  <button
-                    onClick={() =>
-                      setOpenDropdown(
-                        openDropdown === blog._id ? null : blog._id,
-                      )
-                    }
-                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                    </svg>
-                  </button>
-
-                  {openDropdown === blog._id && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setOpenDropdown(null)}
-                      ></div>
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              handleEdit(blog);
-                              setOpenDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleToggleStatus(blog._id);
-                              setOpenDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {blog.status === "published"
-                              ? "📝 Unpublish"
-                              : "✅ Publish"}
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleToggleFeatured(blog._id);
-                              setOpenDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {blog.isFeatured ? "⭐ Unfeature" : "⭐ Feature"}
-                          </button>
-                          <hr className="my-1" />
-                          <button
-                            onClick={() => {
-                              handleDelete(blog._id);
-                              setOpenDropdown(null);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination Controls */}
-      {!loading && totalBlogs > 0 && (
-        <div className="mt-6 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-md gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Show:</span>
+          {/* Filters */}
+          <div className="mb-6 flex justify-between items-center gap-4">
+            <div className="flex gap-4">
               <select
-                value={limit}
+                value={filterStatus}
                 onChange={(e) => {
-                  setLimit(Number(e.target.value));
+                  setFilterStatus(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="border rounded px-3 py-2"
               >
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
+                <option value="all">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+
+              <select
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="border rounded px-3 py-2"
+              >
+                <option value="all">All Categories</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
               <input
-                type="number"
-                placeholder="Custom"
-                value={customLimit}
-                onChange={(e) => setCustomLimit(e.target.value)}
-                onBlur={() => {
-                  if (customLimit && Number(customLimit) > 0) {
-                    setLimit(Number(customLimit));
-                    setCurrentPage(1);
-                  }
-                }}
-                className="w-20 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                type="text"
+                placeholder="Search blogs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64"
               />
             </div>
-            <span className="text-sm text-gray-500">
-              Showing {Math.min((currentPage - 1) * limit + 1, totalBlogs)} to{" "}
-              {Math.min(currentPage * limit, totalBlogs)} of {totalBlogs} blogs
-            </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={20} className="text-gray-600" />
-            </button>
+          {/* Blogs Table */}
+          <div className="bg-white rounded-lg shadow ">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Image
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Title
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Author
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Views
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredBlogs.map((blog) => (
+                  <tr key={blog._id}>
+                    <td className="px-6 py-4">
+                      {blog.featuredImage ? (
+                        <img
+                          src={blog.featuredImage}
+                          alt={blog.title}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No Image</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {blog.title}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {blog.slug}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {blog.category}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {blog.authorName || blog.author?.name}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${blog.status === "published"
+                            ? "bg-green-100 text-green-800"
+                            : blog.status === "draft"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                      >
+                        {blog.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {blog.views}
+                    </td>
+                    <td className="px-6 py-4 text-sm relative">
+                      <button
+                        onClick={() =>
+                          setOpenDropdown(
+                            openDropdown === blog._id ? null : blog._id,
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
 
-            <div className="flex items-center gap-1">
-              {[...Array(totalPages)].map((_, i) => {
-                const pageNum = i + 1;
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                        currentPage === pageNum
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                } else if (
-                  pageNum === currentPage - 2 ||
-                  pageNum === currentPage + 2
-                ) {
-                  return (
-                    <span key={pageNum} className="px-1 text-gray-400">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              })}
+                      {openDropdown === blog._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setOpenDropdown(null)}
+                          ></div>
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                            <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  handleEdit(blog);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleToggleStatus(blog._id);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                {blog.status === "published"
+                                  ? "📝 Unpublish"
+                                  : "✅ Publish"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleToggleFeatured(blog._id);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                {blog.isFeatured ? "⭐ Unfeature" : "⭐ Feature"}
+                              </button>
+                              <hr className="my-1" />
+                              <button
+                                onClick={() => {
+                                  handleDelete(blog._id);
+                                  setOpenDropdown(null);
+                                }}
+                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {!loading && totalBlogs > 0 && (
+            <div className="mt-6 flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-md gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Show:</span>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Custom"
+                    value={customLimit}
+                    onChange={(e) => setCustomLimit(e.target.value)}
+                    onBlur={() => {
+                      if (customLimit && Number(customLimit) > 0) {
+                        setLimit(Number(customLimit));
+                        setCurrentPage(1);
+                      }
+                    }}
+                    className="w-20 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <span className="text-sm text-gray-500">
+                  Showing {Math.min((currentPage - 1) * limit + 1, totalBlogs)} to{" "}
+                  {Math.min(currentPage * limit, totalBlogs)} of {totalBlogs} blogs
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={20} className="text-gray-600" />
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${currentPage === pageNum
+                              ? "bg-blue-600 text-white shadow-md"
+                              : "text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      pageNum === currentPage - 2 ||
+                      pageNum === currentPage + 2
+                    ) {
+                      return (
+                        <span key={pageNum} className="px-1 text-gray-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={20} className="text-gray-600" />
+                </button>
+              </div>
             </div>
-
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={20} className="text-gray-600" />
-            </button>
-          </div>
-        </div>
-      )}
+          )}
         </>
       ) : (() => {
         const { score, checks } = calculateSEOScore();
@@ -927,7 +925,7 @@ export default function BlogsPage() {
                   <ArrowLeft size={18} />
                   <span>Back to Blogs</span>
                 </button>
-                
+
                 <div className="flex items-center gap-3 self-end sm:self-auto">
                   <select
                     name="status"
@@ -939,7 +937,7 @@ export default function BlogsPage() {
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </select>
-                  
+
                   <button
                     type="button"
                     onClick={() => handleSubmit()}
@@ -960,10 +958,10 @@ export default function BlogsPage() {
 
               {/* Main Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Left Column (Main Editor content) */}
                 <div className="lg:col-span-2 space-y-6">
-                  
+
                   {/* Title & Slug */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                     <input
@@ -995,11 +993,10 @@ export default function BlogsPage() {
                             key={tab}
                             type="button"
                             onClick={() => setActiveTab(tab)}
-                            className={`py-3 px-4 font-bold text-sm border-b-2 capitalize transition-colors ${
-                              activeTab === tab
+                            className={`py-3 px-4 font-bold text-sm border-b-2 capitalize transition-colors ${activeTab === tab
                                 ? 'border-[#f59e0b] text-[#f59e0b]'
                                 : 'border-transparent text-slate-400 hover:text-slate-600'
-                            }`}
+                              }`}
                           >
                             {tab}
                           </button>
@@ -1017,7 +1014,7 @@ export default function BlogsPage() {
                         <button type="button" onClick={(e) => executeCommand(e, 'undo')} title="Undo" className="p-1.5 hover:bg-slate-200 rounded transition-colors"><Undo size={15} /></button>
                         <button type="button" onClick={(e) => executeCommand(e, 'redo')} title="Redo" className="p-1.5 hover:bg-slate-200 rounded transition-colors"><Redo size={15} /></button>
                         <div className="h-4 w-px bg-slate-200 mx-1"></div>
-                        
+
                         <button type="button" onClick={(e) => executeCommand(e, 'formatBlock', '<h1>')} title="Heading 1" className="p-1.5 hover:bg-slate-200 rounded font-bold text-xs transition-colors">H1</button>
                         <button type="button" onClick={(e) => executeCommand(e, 'formatBlock', '<h2>')} title="Heading 2" className="p-1.5 hover:bg-slate-200 rounded font-bold text-xs transition-colors">H2</button>
                         <button type="button" onClick={(e) => executeCommand(e, 'formatBlock', '<h3>')} title="Heading 3" className="p-1.5 hover:bg-slate-200 rounded font-bold text-xs transition-colors">H3</button>
@@ -1042,24 +1039,24 @@ export default function BlogsPage() {
                         <button type="button" onClick={(e) => executeCommand(e, 'justifyFull')} title="Justify" className="p-1.5 hover:bg-slate-200 rounded transition-colors"><AlignJustify size={15} /></button>
                         <div className="h-4 w-px bg-slate-200 mx-1"></div>
 
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             const url = prompt("Enter Link URL:");
                             if (url) document.execCommand('createLink', false, url);
                             handleEditorInput();
-                          }} 
-                          title="Insert Link" 
+                          }}
+                          title="Insert Link"
                           className="p-1.5 hover:bg-slate-200 rounded transition-colors"
                         >
                           <Link2 size={15} />
                         </button>
-                        
-                        <button 
-                          type="button" 
-                          onClick={handleEditorImageClick} 
-                          title="Upload Image" 
+
+                        <button
+                          type="button"
+                          onClick={handleEditorImageClick}
+                          title="Upload Image"
                           className="p-1.5 hover:bg-slate-200 rounded transition-colors"
                         >
                           <ImageIcon size={15} />
@@ -1100,10 +1097,10 @@ export default function BlogsPage() {
                       )}
 
                       {activeTab === 'preview' && (
-                        <div 
+                        <div
                           className="w-full min-h-[400px] p-6 prose max-w-none bg-white text-slate-800 leading-relaxed overflow-y-auto [&_a]:text-orange-500 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_blockquote]:border-l-4 [&_blockquote]:border-orange-500 [&_blockquote]:pl-4 [&_blockquote]:italic"
-                          dangerouslySetInnerHTML={{ 
-                            __html: formData.content 
+                          dangerouslySetInnerHTML={{
+                            __html: formData.content
                           }}
                         />
                       )}
@@ -1195,26 +1192,24 @@ export default function BlogsPage() {
 
                 {/* Right Column (Sidebar Settings) */}
                 <div className="space-y-6">
-                  
+
                   {/* SEO Score */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                     <h3 className="font-bold text-slate-700 mb-4 text-sm">SEO Score</h3>
                     <div className="flex items-center gap-4 mb-4">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center font-extrabold text-lg border-4 ${
-                        score >= 80 ? 'text-green-600 border-green-500 bg-green-50' :
-                        score >= 50 ? 'text-orange-500 border-orange-400 bg-orange-50' :
-                        'text-red-600 border-red-500 bg-red-50'
-                      }`}>
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center font-extrabold text-lg border-4 ${score >= 80 ? 'text-green-600 border-green-500 bg-green-50' :
+                          score >= 50 ? 'text-orange-500 border-orange-400 bg-orange-50' :
+                            'text-red-600 border-red-500 bg-red-50'
+                        }`}>
                         {score}/100
                       </div>
                       <div className="flex-1">
                         <div className="w-full bg-slate-100 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              score >= 80 ? 'bg-green-500' :
-                              score >= 50 ? 'bg-orange-400' :
-                              'bg-red-500'
-                            }`}
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${score >= 80 ? 'bg-green-500' :
+                                score >= 50 ? 'bg-orange-400' :
+                                  'bg-red-500'
+                              }`}
                             style={{ width: `${score}%` }}
                           />
                         </div>
@@ -1241,7 +1236,7 @@ export default function BlogsPage() {
                   {/* Post Settings */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
                     <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">Post Settings</h3>
-                    
+
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1">Category</label>
                       <select
@@ -1311,7 +1306,7 @@ export default function BlogsPage() {
                           Add
                         </button>
                       </div>
-                      
+
                       {formData.tags && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {formData.tags.split(',').map(tag => tag.trim()).filter(Boolean).map((tag, idx) => (
@@ -1340,8 +1335,8 @@ export default function BlogsPage() {
                   {/* Featured Image */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
                     <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">Featured Image</h3>
-                    
-                    <div 
+
+                    <div
                       onClick={() => {
                         const fileInput = document.getElementById('featured-image-file') as HTMLInputElement;
                         if (fileInput) fileInput.click();
@@ -1394,7 +1389,7 @@ export default function BlogsPage() {
                   {/* SEO Settings */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
                     <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">SEO Settings</h3>
-                    
+
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1">Focus Keyword</label>
                       <input
@@ -1462,7 +1457,7 @@ export default function BlogsPage() {
                           {formData.metaTitle || formData.title || 'Blog Title'}
                         </div>
                         <div className="text-green-800 text-xs truncate">
-                          rentalmeet.com/blog/{formData.slug || 'slug'}
+                          https://www.prlthealthcare.com/blog/{formData.slug || 'slug'}
                         </div>
                         <div className="text-slate-600 text-xs line-clamp-2 leading-relaxed break-words">
                           {formData.metaDescription || formData.excerpt || 'Meta description...'}
@@ -1512,7 +1507,7 @@ export default function BlogsPage() {
                   {/* Schema Markup */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
                     <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">Schema Markup</h3>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-xs font-bold text-slate-700 block">Article Schema</span>
