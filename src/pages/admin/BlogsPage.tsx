@@ -62,6 +62,7 @@ interface Blog {
   ogTitle?: string;
   ogDescription?: string;
   noIndex?: boolean;
+  faqHeading?: string;
   faq?: { question: string; answer: string }[];
   schemaMarkup?: {
     articleSchema: boolean;
@@ -119,6 +120,7 @@ export default function BlogsPage() {
     ogDescription: "",
     noIndex: false,
     author: "Admin",
+    faqHeading: "Frequently Asked Questions",
     faq: [] as { question: string; answer: string }[],
     schemaMarkup: {
       articleSchema: true,
@@ -496,6 +498,7 @@ export default function BlogsPage() {
       ogDescription: blog.ogDescription || "",
       noIndex: blog.noIndex || false,
       author: blog.authorName || "Admin",
+      faqHeading: blog.faqHeading !== undefined ? blog.faqHeading : "Frequently Asked Questions",
       faq: blog.faq || [],
       schemaMarkup: blog.schemaMarkup || {
         articleSchema: true,
@@ -567,6 +570,7 @@ export default function BlogsPage() {
       ogDescription: "",
       noIndex: false,
       author: "Admin",
+      faqHeading: "Frequently Asked Questions",
       faq: [],
       schemaMarkup: {
         articleSchema: true,
@@ -1124,7 +1128,10 @@ export default function BlogsPage() {
                   {/* FAQ Section */}
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-slate-700 text-sm">FAQ Section</h3>
+                      <div>
+                        <h3 className="font-bold text-slate-700 text-sm">FAQ Section</h3>
+                        <p className="text-xs text-slate-400">Add customizable FAQs to your blog post</p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({
@@ -1136,6 +1143,20 @@ export default function BlogsPage() {
                         <Plus size={14} />
                         <span>Add FAQ</span>
                       </button>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
+                        FAQ Section Heading
+                      </label>
+                      <input
+                        type="text"
+                        name="faqHeading"
+                        placeholder="e.g., Frequently Asked Questions"
+                        value={formData.faqHeading}
+                        onChange={handleInputChange}
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
                     </div>
 
                     {formData.faq.length === 0 ? (

@@ -46,6 +46,7 @@ interface Blog {
   ogTitle?: string;
   ogDescription?: string;
   noIndex?: boolean;
+  faqHeading?: string;
   faq?: { question: string; answer: string }[];
   schemaMarkup?: {
     articleSchema: boolean;
@@ -533,6 +534,12 @@ export default function BlogDetailPage() {
               transition={{ delay: 0.55 }}
               className="mt-12 pt-8 border-t-2 border-gray-100"
             >
+              <div className="mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  {blog.faqHeading || "Frequently Asked Questions"}
+                </h2>
+                <div className="w-16 h-1 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full"></div>
+              </div>
               <div className="space-y-4">
                 {blog.faq.map((item, idx) => (
                   <FAQAccordionItem key={idx} question={item.question} answer={item.answer} />

@@ -102,6 +102,7 @@ export const createBlog = async (req, res) => {
       noIndex,
 
       // FAQs
+      faqHeading,
       faq,
 
       // Schema
@@ -171,6 +172,7 @@ export const createBlog = async (req, res) => {
       noIndex: noIndex || false,
 
       // FAQs
+      faqHeading: faqHeading !== undefined ? faqHeading : 'Frequently Asked Questions',
       faq: faq || [],
 
       // Schema
@@ -427,6 +429,7 @@ export const updateBlog = async (req, res) => {
       noIndex,
 
       // FAQs
+      faqHeading,
       faq,
 
       // Schema
@@ -474,6 +477,7 @@ export const updateBlog = async (req, res) => {
     if (ogDescription !== undefined) blog.ogDescription = ogDescription;
     if (noIndex !== undefined) blog.noIndex = noIndex;
 
+    if (faqHeading !== undefined) blog.faqHeading = faqHeading;
     if (faq !== undefined) blog.faq = faq;
     if (schemaMarkup !== undefined) blog.schemaMarkup = schemaMarkup;
 

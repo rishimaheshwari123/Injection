@@ -110,6 +110,11 @@ const blogSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  faqHeading: {
+    type: String,
+    trim: true,
+    default: 'Frequently Asked Questions'
+  },
   faq: [{
     question: { type: String, trim: true, default: '' },
     answer: { type: String, trim: true, default: '' }
