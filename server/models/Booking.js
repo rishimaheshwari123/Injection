@@ -158,6 +158,12 @@ const bookingSchema = new mongoose.Schema({
     }
   }],
   
+  // Single/primary prescription document URL
+  prescriptionDocument: {
+    type: String,
+    default: null
+  },
+  
   hasInsurance: {
     type: Boolean,
     default: false

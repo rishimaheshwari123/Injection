@@ -3,6 +3,7 @@ import Vendor from '../models/Vendor.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
 import Counter from '../models/Counter.js';
+import cloudinary from '../config/cloudinary.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
 
 // Helper function to generate unique booking ID
@@ -49,6 +50,25 @@ export const createUserBooking = async (req, res) => {
       // Additional Information
       additionalRequirements,
 
+      // Prescription Information (Optional)
+      prescriptions,
+      prescriptionData,
+      prescriptionType,
+      prescriptionUrl,
+      prescriptionDocument,
+      prescription,
+      doctorName,
+      doctorRegistration,
+      hospitalName,
+      patientComplaints,
+      diagnosis,
+      medications,
+      labTests,
+      specialInstructions,
+      followUpDate,
+      imageUrl,
+      supportingImageUrl,
+
       // Insurance
       hasInsurance,
       insurancePolicyNumber,
@@ -83,7 +103,16 @@ export const createUserBooking = async (req, res) => {
       });
     }
 
-    if (!selectedServices || selectedServices.length === 0) {
+    let parsedSelectedServices = selectedServices;
+    if (typeof selectedServices === 'string') {
+      try {
+        parsedSelectedServices = JSON.parse(selectedServices);
+      } catch (e) {
+        parsedSelectedServices = selectedServices;
+      }
+    }
+
+    if (!parsedSelectedServices || parsedSelectedServices.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'At least one service must be selected'
@@ -104,6 +133,156 @@ export const createUserBooking = async (req, res) => {
       });
     }
 
+    // Process optional prescription (file upload or json data)
+    let uploadedPrescriptionUrl = null;
+    if (req.files) {
+      const fileToUpload = req.files.prescription || req.files.prescriptionImage || req.files.prescriptionFile || req.files.image || req.files.file;
+      if (fileToUpload) {
+        try {
+          const uploadResult = await cloudinary.uploader.upload(fileToUpload.tempFilePath, {
+            folder: process.env.FOLDER_NAME || 'prescriptions',
+            resource_type: 'auto'
+          });
+          uploadedPrescriptionUrl = uploadResult.secure_url;
+        } catch (uploadErr) {
+          console.error('Error uploading prescription to Cloudinary:', uploadErr);
+        }
+      }
+    }
+
+    const bookingPrescriptions = [];
+    let bookingPrescriptionDocument = uploadedPrescriptionUrl || prescriptionUrl || prescriptionDocument || null;
+
+    // 1. Multiple prescriptions array provided
+    if (prescriptions) {
+      let parsedPrescriptions = prescriptions;
+      if (typeof prescriptions === 'string') {
+        try {
+          parsedPrescriptions = JSON.parse(prescriptions);
+        } catch (e) {
+          parsedPrescriptions = [];
+        }
+      }
+      if (Array.isArray(parsedPrescriptions) && parsedPrescriptions.length > 0) {
+        for (const p of parsedPrescriptions) {
+          if (p) {
+            const itemImg = p.imageUrl || null;
+            if (itemImg && !bookingPrescriptionDocument) {
+              bookingPrescriptionDocument = itemImg;
+            }
+            let itemMeds = [];
+            if (Array.isArray(p.medications)) {
+              itemMeds = p.medications;
+            } else if (typeof p.medications === 'string') {
+              try { itemMeds = JSON.parse(p.medications); } catch (e) { itemMeds = []; }
+            }
+
+            bookingPrescriptions.push({
+              type: p.type || (itemImg ? 'image' : 'form'),
+              doctorName: p.doctorName || '',
+              doctorRegistration: p.doctorRegistration || '',
+              hospitalName: p.hospitalName || '',
+              patientComplaints: p.patientComplaints || '',
+              diagnosis: p.diagnosis || '',
+              medications: itemMeds,
+              labTests: p.labTests || '',
+              specialInstructions: p.specialInstructions || '',
+              followUpDate: p.followUpDate || null,
+              imageUrl: itemImg,
+              supportingImageUrl: p.supportingImageUrl || null,
+              addedBy: req.user?.name || 'User',
+              addedAt: new Date()
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Single prescriptionData or prescription object provided
+    let pData = prescriptionData || prescription;
+    if (typeof pData === 'string') {
+      try {
+        pData = JSON.parse(pData);
+      } catch (e) {
+        pData = null;
+      }
+    }
+
+    if (pData && typeof pData === 'object') {
+      const pType = prescriptionType || pData.type || (pData.imageUrl || uploadedPrescriptionUrl ? 'image' : 'form');
+      const img = pData.imageUrl || uploadedPrescriptionUrl || null;
+      const supportingImg = pData.supportingImageUrl || (pType === 'form' ? uploadedPrescriptionUrl : null);
+
+      let meds = [];
+      if (Array.isArray(pData.medications)) {
+        meds = pData.medications;
+      } else if (typeof pData.medications === 'string') {
+        try { meds = JSON.parse(pData.medications); } catch (e) { meds = []; }
+      }
+
+      const hasContent = pData.doctorName || pData.diagnosis || pData.hospitalName ||
+        pData.patientComplaints || pData.labTests || pData.specialInstructions ||
+        (meds && meds.length > 0) || img || supportingImg;
+
+      if (hasContent) {
+        bookingPrescriptions.push({
+          type: pType,
+          doctorName: pData.doctorName || '',
+          doctorRegistration: pData.doctorRegistration || '',
+          hospitalName: pData.hospitalName || '',
+          patientComplaints: pData.patientComplaints || '',
+          diagnosis: pData.diagnosis || '',
+          medications: meds,
+          labTests: pData.labTests || '',
+          specialInstructions: pData.specialInstructions || '',
+          followUpDate: pData.followUpDate || null,
+          imageUrl: pType === 'image' ? img : null,
+          supportingImageUrl: supportingImg,
+          addedBy: req.user?.name || 'User',
+          addedAt: new Date()
+        });
+        if (img && !bookingPrescriptionDocument) {
+          bookingPrescriptionDocument = img;
+        }
+      }
+    } else if (uploadedPrescriptionUrl || prescriptionUrl || prescriptionDocument || imageUrl) {
+      // 3. Image URL or uploaded document only
+      const finalDocUrl = uploadedPrescriptionUrl || prescriptionUrl || prescriptionDocument || imageUrl;
+      bookingPrescriptionDocument = finalDocUrl;
+      bookingPrescriptions.push({
+        type: 'image',
+        imageUrl: finalDocUrl,
+        supportingImageUrl: null,
+        addedBy: req.user?.name || 'User',
+        addedAt: new Date()
+      });
+    } else if (doctorName || diagnosis || hospitalName || (medications && medications.length > 0)) {
+      // 4. Direct top-level fields
+      let meds = [];
+      if (Array.isArray(medications)) {
+        meds = medications;
+      } else if (typeof medications === 'string') {
+        try { meds = JSON.parse(medications); } catch (e) { meds = []; }
+      }
+
+      bookingPrescriptions.push({
+        type: prescriptionType || 'form',
+        doctorName: doctorName || '',
+        doctorRegistration: doctorRegistration || '',
+        hospitalName: hospitalName || '',
+        patientComplaints: patientComplaints || '',
+        diagnosis: diagnosis || '',
+        medications: meds,
+        labTests: labTests || '',
+        specialInstructions: specialInstructions || '',
+        followUpDate: followUpDate || null,
+        imageUrl: imageUrl || null,
+        supportingImageUrl: supportingImageUrl || null,
+        addedBy: req.user?.name || 'User',
+        addedAt: new Date()
+      });
+    }
+
     // Generate unique booking ID
     const bookingId = await getNextBookingId();
 
@@ -118,8 +297,10 @@ export const createUserBooking = async (req, res) => {
       currentLocation,
       alternateMobile,
       email,
-      selectedServices,
+      selectedServices: parsedSelectedServices,
       additionalRequirements,
+      prescriptions: bookingPrescriptions,
+      prescriptionDocument: bookingPrescriptionDocument,
       hasInsurance: hasInsurance || false,
       insurancePolicyNumber,
       subtotal,
@@ -175,7 +356,7 @@ export const createUserBooking = async (req, res) => {
     }
 
     // Matching Nearest Vendors based on Pincode, Staff Gender Preference, and Services Offered
-    const serviceIds = selectedServices.map(s => s.serviceId);
+    const serviceIds = (parsedSelectedServices || []).map(s => s.serviceId);
     
     const vendorQuery = {
       isActive: true,
