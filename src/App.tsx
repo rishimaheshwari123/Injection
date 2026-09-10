@@ -78,6 +78,8 @@ import AdminWithdrawalsPage from "./pages/admin/WithdrawalsPage";
 import WebsiteCounterPage from "./pages/admin/WebsiteCounterPage";
 
 
+import { syncUserCoordinates, syncVendorCoordinates } from "./services/locationService";
+
 // Layout wrapper for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-white relative">
@@ -107,6 +109,15 @@ function App() {
       }
     };
     recordVisit();
+
+    // Automatically fetch and sync GPS coordinates to DB whenever user or vendor is logged in
+    if (user) {
+      if (user.role === "vendor") {
+        syncVendorCoordinates();
+      } else if (user.role === "user") {
+        syncUserCoordinates();
+      }
+    }
   }, [user]);
 
   return (

@@ -16,6 +16,7 @@ import {
   ReportUploadModal,
   ViewPrescriptionModal,
   ViewReportsModal,
+  CancelBookingModal,
 } from "../../components/bookings";
 import { toast } from "react-toastify";
 import {
@@ -33,6 +34,10 @@ import {
   FileText,
   Upload,
   Image,
+  ShieldCheck,
+  ShieldAlert,
+  XCircle,
+  MoreVertical,
 } from "lucide-react";
 
 interface Booking {
@@ -58,7 +63,13 @@ interface Booking {
     price: number;
     quantity?: number;
   }>;
-  bookingStatus: "pending" | "accepted" | "in-progress" | "completed" | "cancelled";
+  bookingStatus: "pending" | "accepted" | "scheduled" | "in-progress" | "completed" | "cancelled";
+  isUserAgreed?: boolean;
+  userConsent?: {
+    agreed?: boolean;
+    agreedAt?: string;
+    notes?: string;
+  };
   preferredTimeSlot?: string;
   paymentStatus: string;
   grandTotal: number;
@@ -91,6 +102,7 @@ export default function UserBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Modal and Autocomplete states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -150,6 +162,42 @@ export default function UserBookingsPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [consentingBookingId, setConsentingBookingId] = useState<string | null>(null);
+
+  const handleConfirmConsent = async (bookingId: string) => {
+    setConsentingBookingId(bookingId);
+    try {
+      const res = await bookingAPI.submitUserConsent(bookingId);
+      if (res.data && res.data.success) {
+        toast.success("Thank you! You have agreed and confirmed the service start.");
+        fetchBookings();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to confirm agreement");
+    } finally {
+      setConsentingBookingId(null);
+    }
+  };
+
+  // User Cancel Booking State & Handler
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<any>(null);
+
+  const handleCancelBookingSubmit = async (reason: string) => {
+    if (!selectedBookingForCancel) return;
+    try {
+      const res = await bookingAPI.cancelBooking(selectedBookingForCancel._id, reason);
+      if (res.data && res.data.success) {
+        toast.success("Booking cancelled successfully!");
+        setShowCancelModal(false);
+        setSelectedBookingForCancel(null);
+        fetchBookings();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to cancel booking");
     }
   };
 
@@ -602,7 +650,7 @@ export default function UserBookingsPage() {
           <p className="mt-4 text-slate-500 font-semibold text-sm">Loading bookings...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
           {filteredBookings.length === 0 ? (
             <div className="py-20 text-center text-slate-400 flex flex-col items-center justify-center">
               <Calendar size={48} className="text-slate-200 mb-4" />
@@ -610,7 +658,7 @@ export default function UserBookingsPage() {
               <p className="text-xs text-slate-400 mt-1">Bookings matching the selected filters will show up here</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[460px] pb-40">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50/50">
                   <tr>
@@ -689,13 +737,29 @@ export default function UserBookingsPage() {
 
                       {/* Status */}
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2.5 py-1 text-[11px] font-bold rounded-full border uppercase ${getStatusBadgeClass(
-                            booking.bookingStatus
-                          )}`}
-                        >
-                          {booking.bookingStatus === "accepted" ? "Scheduled" : booking.bookingStatus}
-                        </span>
+                        <div className="space-y-1">
+                          <span
+                            className={`inline-flex px-2.5 py-1 text-[11px] font-bold rounded-full border uppercase ${getStatusBadgeClass(
+                              booking.bookingStatus
+                            )}`}
+                          >
+                            {booking.bookingStatus === "accepted" ? "Scheduled" : booking.bookingStatus}
+                          </span>
+
+                          {booking.bookingStatus === "in-progress" && (
+                            <div>
+                              {booking.isUserAgreed || booking.userConsent?.agreed ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                  <ShieldCheck size={11} /> Agreed ✅
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 animate-pulse">
+                                  <ShieldAlert size={11} /> Action Needed
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Payment */}
@@ -716,86 +780,180 @@ export default function UserBookingsPage() {
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          {/* Add Prescription */}
-                          <button
-                            onClick={() => {
-                              setSelectedBookingForPrescription(booking);
-                              setShowAddPrescriptionModal(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-100 transition-all text-xs font-bold rounded-xl border border-violet-200 shadow-xs"
-                            title="Add Prescription"
-                          >
-                            <Plus size={12} />
-                            <span>Prescription</span>
-                          </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Urgent Action: In-Progress User Consent Button */}
+                          {booking.bookingStatus === "in-progress" &&
+                            !booking.isUserAgreed &&
+                            !booking.userConsent?.agreed && (
+                              <button
+                                onClick={() => handleConfirmConsent(booking._id)}
+                                disabled={consentingBookingId === booking._id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white hover:shadow-md transition-all text-xs font-black rounded-xl animate-pulse disabled:opacity-50 cursor-pointer"
+                                title="Provider has started. Click to confirm your agreement"
+                              >
+                                <ShieldCheck size={13} />
+                                <span>
+                                  {consentingBookingId === booking._id
+                                    ? "Confirming..."
+                                    : "✓ Confirm Agreement"}
+                                </span>
+                              </button>
+                            )}
 
-                          {/* Upload Lab Report */}
-                          <button
-                            onClick={() => {
-                              setSelectedBookingForReport(booking);
-                              setShowReportModal(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-all text-xs font-bold rounded-xl border border-cyan-200 shadow-xs"
-                            title="Upload Lab Report"
-                          >
-                            <Upload size={12} />
-                            <span>Report</span>
-                          </button>
-
-                          {/* View Prescriptions if any exist */}
-                          {booking.prescriptions && booking.prescriptions.length > 0 && (
-                            <button
-                              onClick={() => {
-                                setSelectedBookingForViewPrescription(booking);
-                                setShowViewPrescriptionModal(true);
-                              }}
-                              className="inline-flex items-center gap-1 px-2 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all text-xs font-bold rounded-xl border border-blue-200 shadow-xs"
-                              title={`View ${booking.prescriptions.length} Prescription(s)`}
-                            >
-                              <Image size={12} />
-                              <span>({booking.prescriptions.length})</span>
-                            </button>
-                          )}
-
-                          {/* View Reports if any exist */}
-                          {((booking.reports && booking.reports.length > 0) || booking.reportUrl) && (
-                            <button
-                              onClick={() => {
-                                setSelectedBookingForViewReports(booking);
-                                setShowViewReportsModal(true);
-                              }}
-                              className="inline-flex items-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all text-xs font-bold rounded-xl border border-emerald-200 shadow-xs"
-                              title="View Reports"
-                            >
-                              <FileText size={12} />
-                              <span>({booking.reports?.length || 1})</span>
-                            </button>
-                          )}
-
-                          {/* Edit button allowed only when booking is pending and unassigned */}
-                          {booking.bookingStatus === "pending" && !booking.vendorId && (
-                            <button
-                              onClick={() => {
-                                setBookingToEdit(booking);
-                                setShowCreateModal(true);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all text-xs font-bold rounded-xl border border-amber-200 shadow-xs"
-                              title="Edit booking details"
-                            >
-                              <Edit2 size={13} />
-                              Edit
-                            </button>
-                          )}
-
+                          {/* Primary Action: View Details */}
                           <Link
                             to={`/user/bookings/${booking._id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#63D64F]/10 to-[#3DB9A6]/10 text-teal-800 hover:from-[#63D64F]/20 hover:to-[#3DB9A6]/20 transition-all text-xs font-bold rounded-xl border border-teal-200/50"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-800 hover:bg-teal-100 transition-all text-xs font-bold rounded-xl border border-teal-200/60 shadow-2xs"
                           >
                             <Eye size={13} />
-                            Details
+                            <span>Details</span>
                             <ChevronRight size={12} />
                           </Link>
+
+                          {/* Actions Dropdown Toggle */}
+                          <div className="relative inline-block text-left">
+                            <button
+                              onClick={() =>
+                                setOpenDropdownId(
+                                  openDropdownId === booking._id ? null : booking._id
+                                )
+                              }
+                              className={`p-1.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+                                openDropdownId === booking._id
+                                  ? "bg-slate-100 text-slate-800 border-slate-300 shadow-inner"
+                                  : "bg-white text-slate-600 hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-2xs"
+                              }`}
+                              title="More Options"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {openDropdownId === booking._id && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-[90] cursor-default"
+                                  onClick={() => setOpenDropdownId(null)}
+                                />
+                                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-[100] divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100 text-left origin-top-right">
+                                  {/* Prescriptions & Reports Section */}
+                                  <div className="p-1 space-y-0.5">
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForPrescription(booking);
+                                        setShowAddPrescriptionModal(true);
+                                        setOpenDropdownId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <div className="p-1 rounded-md bg-violet-100/60 text-violet-600">
+                                        <Plus size={13} />
+                                      </div>
+                                      <span>Add Prescription</span>
+                                    </button>
+
+                                    {booking.prescriptions &&
+                                      booking.prescriptions.length > 0 && (
+                                        <button
+                                          onClick={() => {
+                                            setSelectedBookingForViewPrescription(
+                                              booking
+                                            );
+                                            setShowViewPrescriptionModal(true);
+                                            setOpenDropdownId(null);
+                                          }}
+                                          className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                        >
+                                          <div className="p-1 rounded-md bg-blue-100/60 text-blue-600">
+                                            <Image size={13} />
+                                          </div>
+                                          <span>
+                                            Prescriptions (
+                                            {booking.prescriptions.length})
+                                          </span>
+                                        </button>
+                                      )}
+
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForReport(booking);
+                                        setShowReportModal(true);
+                                        setOpenDropdownId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <div className="p-1 rounded-md bg-cyan-100/60 text-cyan-600">
+                                        <Upload size={13} />
+                                      </div>
+                                      <span>Upload Lab Report</span>
+                                    </button>
+
+                                    {((booking.reports &&
+                                      booking.reports.length > 0) ||
+                                      booking.reportUrl) && (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedBookingForViewReports(
+                                            booking
+                                          );
+                                          setShowViewReportsModal(true);
+                                          setOpenDropdownId(null);
+                                        }}
+                                        className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                      >
+                                        <div className="p-1 rounded-md bg-emerald-100/60 text-emerald-600">
+                                          <FileText size={13} />
+                                        </div>
+                                        <span>
+                                          Lab Reports (
+                                          {booking.reports?.length || 1})
+                                        </span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Edit / Cancel Section */}
+                                  {booking.bookingStatus !== "completed" &&
+                                    booking.bookingStatus !== "cancelled" && (
+                                      <div className="p-1 space-y-0.5">
+                                        {booking.bookingStatus === "pending" &&
+                                          !booking.vendorId && (
+                                            <button
+                                              onClick={() => {
+                                                setBookingToEdit(booking);
+                                                setShowCreateModal(true);
+                                                setOpenDropdownId(null);
+                                              }}
+                                              className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                            >
+                                              <div className="p-1 rounded-md bg-amber-100/60 text-amber-600">
+                                                <Edit2 size={13} />
+                                              </div>
+                                              <span>Edit Booking</span>
+                                            </button>
+                                          )}
+
+                                        <button
+                                          onClick={() => {
+                                            setSelectedBookingForCancel(
+                                              booking
+                                            );
+                                            setShowCancelModal(true);
+                                            setOpenDropdownId(null);
+                                          }}
+                                          className="w-full px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
+                                        >
+                                          <div className="p-1 rounded-md bg-rose-100/60 text-rose-600">
+                                            <XCircle size={13} />
+                                          </div>
+                                          <span>Cancel Booking</span>
+                                        </button>
+                                      </div>
+                                    )}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -881,6 +1039,18 @@ export default function UserBookingsPage() {
             setSelectedBookingForViewReports(null);
           }}
           booking={selectedBookingForViewReports}
+        />
+      )}
+
+      {showCancelModal && selectedBookingForCancel && (
+        <CancelBookingModal
+          show={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false);
+            setSelectedBookingForCancel(null);
+          }}
+          onSubmit={handleCancelBookingSubmit}
+          booking={selectedBookingForCancel}
         />
       )}
     </div>

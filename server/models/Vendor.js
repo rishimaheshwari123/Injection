@@ -116,6 +116,14 @@ const vendorSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Latitude is required']
   },
+  currentLocation: {
+    type: String,
+    trim: true
+  },
+  lastLocationUpdatedAt: {
+    type: Date,
+    default: Date.now
+  },
   serviceAreas: [{
     type: String,
     trim: true

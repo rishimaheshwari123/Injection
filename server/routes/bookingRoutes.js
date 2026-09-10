@@ -23,7 +23,9 @@ import {
   addRuntimeNote,
   createRazorpayOrder,
   verifyRazorpayPayment,
-  adminCashPayment
+  adminCashPayment,
+  userConsentBooking,
+  updateVendorBookingStatus
 } from '../controllers/bookingController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -41,6 +43,9 @@ router.get('/admin/all', protect, adminOnly, getAllBookings);
 
 router.get('/:id', protect, getBookingById);
 
+
+router.put('/:id/vendor-status', protect, vendorOnly, updateVendorBookingStatus);
+router.put('/:id/user-consent', protect, userConsentBooking);
 
 router.put('/:id/start', protect, vendorOnly, startService);
 

@@ -5,6 +5,7 @@ import Coupon from '../models/Coupon.js';
 import Counter from '../models/Counter.js';
 import cloudinary from '../config/cloudinary.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
+import { findNearbyVendors, geocodeAddress } from '../utils/geo.js';
 
 // Helper function to generate unique booking ID
 const getNextBookingId = async () => {
@@ -39,10 +40,15 @@ export const createUserBooking = async (req, res) => {
       age,
       sex,
       address,
+      city,
+      state,
       pincode,
       currentLocation,
       alternateMobile,
       email,
+      latitude,
+      longitude,
+      useCurrentLocation,
 
       // Selected Services
       selectedServices,
@@ -96,11 +102,36 @@ export const createUserBooking = async (req, res) => {
     const userId = req.user._id;
 
     // Validate required fields
-    if (!patientName || !age || !sex || !address || !pincode || !currentLocation || !email) {
+    if (!patientName || !age || !sex || !address || !pincode || !email) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required patient information'
+        message: 'Missing required patient information (Name, Age, Sex, Address, Pincode, Email)'
       });
+    }
+
+    const isUseCurrentLocation = useCurrentLocation === true || useCurrentLocation === 'true';
+    let bookingLat = Number(latitude) || 0;
+    let bookingLng = Number(longitude) || 0;
+
+    if (isUseCurrentLocation) {
+      // If user chose to book at their current GPS location
+      if (!bookingLat || !bookingLng) {
+        bookingLat = req.user?.latitude || 0;
+        bookingLng = req.user?.longitude || 0;
+      }
+    } else {
+      // User is booking for someone else (e.g. mother in another city) or specific address
+      if (!bookingLat || !bookingLng) {
+        try {
+          const geoCoords = await geocodeAddress({ address, city, state, pincode });
+          if (geoCoords) {
+            bookingLat = geoCoords.latitude;
+            bookingLng = geoCoords.longitude;
+          }
+        } catch (e) {
+          console.error('Geocoding error during booking creation:', e);
+        }
+      }
     }
 
     let parsedSelectedServices = selectedServices;
@@ -293,8 +324,13 @@ export const createUserBooking = async (req, res) => {
       age,
       sex,
       address,
+      city: city || '',
+      state: state || '',
       pincode,
-      currentLocation,
+      latitude: bookingLat,
+      longitude: bookingLng,
+      useCurrentLocation: isUseCurrentLocation,
+      currentLocation: currentLocation || address,
       alternateMobile,
       email,
       selectedServices: parsedSelectedServices,
@@ -355,38 +391,24 @@ export const createUserBooking = async (req, res) => {
       console.error('Error creating auto-coupon:', couponError);
     }
 
-    // Matching Nearest Vendors based on Pincode, Staff Gender Preference, and Services Offered
+    // Matching Nearest Vendors within 5 KM Range based on destination address & services
     const serviceIds = (parsedSelectedServices || []).map(s => s.serviceId);
     
-    const vendorQuery = {
-      isActive: true,
-      verificationStatus: 'verified',
-      $or: [
-        { pincode: pincode },
-        { serviceAreas: pincode }
-      ]
-    };
+    const matchingVendors = await findNearbyVendors({
+      bookingLat,
+      bookingLng,
+      address,
+      city,
+      pincode,
+      serviceIds,
+      staffPreference,
+      maxDistanceKm: 5
+    });
 
-    if (serviceIds.length > 0) {
-      vendorQuery.services = { $in: serviceIds };
-    }
-
-    // Filter by staff gender preference if specified
-    // If 'Any Available', no gender filter is applied (both Male and Female vendors will match)
-    if (staffPreference === 'Male Staff') {
-      vendorQuery.gender = 'Male';
-    } else if (staffPreference === 'Female Staff') {
-      vendorQuery.gender = 'Female';
-    }
-    // For 'Any Available' or any other value, no gender restriction is added
-
-    const matchingVendors = await Vendor.find(vendorQuery);
-
-    // Create single notification with multiple vendor IDs
+    // Create notification for all matched vendors within range
     if (matchingVendors.length > 0) {
       const matchedVendorIds = matchingVendors.map(vendor => vendor._id);
       
-      // Create vendorStatus array for tracking individual vendor read/accept status
       const vendorStatus = matchedVendorIds.map(vendorId => ({
         vendorId: vendorId,
         isRead: false,
@@ -396,7 +418,7 @@ export const createUserBooking = async (req, res) => {
       await Notification.create({
         vendorId: matchedVendorIds,
         bookingId: booking._id,
-        message: `New booking available in your service area (${pincode}) matching your staff gender preference.`,
+        message: `New booking request near your location (${address || pincode}) for ${patientName}.`,
         type: 'new_booking',
         vendorStatus: vendorStatus
       });
@@ -406,27 +428,34 @@ export const createUserBooking = async (req, res) => {
       
       // Send FCM push notifications to all matched vendors
       for (const vendor of matchingVendors) {
+        const distText = vendor.distanceKm !== undefined ? ` (~${vendor.distanceKm} km away)` : '';
         await sendToVendor(vendor._id, {
-          title: 'New Booking Available',
-          body: `New booking request in your area (${pincode}). Patient: ${patientName}`,
+          title: 'New Booking Available Near You',
+          body: `New booking request${distText} at ${address || pincode}. Patient: ${patientName}`,
           data: { 
             bookingId: booking._id.toString(), 
             type: 'new_booking',
             pincode: pincode,
             patientName: patientName,
-            services: selectedServices.length.toString(),
+            address: address || '',
+            distanceKm: vendor.distanceKm ? vendor.distanceKm.toString() : '',
+            services: parsedSelectedServices.length.toString(),
             timeSlot: preferredTimeSlot
           }
         });
       }
       
-      console.log(`FCM push notifications sent to ${matchingVendors.length} vendors`);
+      console.log(`FCM push notifications sent to ${matchingVendors.length} vendors within range`);
     }
 
     res.status(201).json({
       success: true,
-      message: 'Booking created successfully and matched with nearest vendors',
+      message: 'Booking created successfully and matched with nearest vendors within 5 km',
       data: booking,
+      bookingCoordinates: {
+        latitude: bookingLat,
+        longitude: bookingLng
+      },
       vendorsNotified: matchingVendors.length
     });
   } catch (error) {

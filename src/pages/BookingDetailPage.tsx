@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, Calendar, Clock, User, Mail, Phone, MapPin, 
-  ShoppingBag, ShieldAlert, Receipt, 
+  ShoppingBag, ShieldAlert, ShieldCheck, Receipt, 
   MessageSquare, FileText, Plus, AlertCircle, Play, 
-  CheckCircle2, Tag, Loader2, Download, Edit2
+  CheckCircle2, Tag, Loader2, Download, Edit2, Settings2, XCircle, X
 } from 'lucide-react';
 import { bookingAPI, prescriptionAPI, reportAPI, invoiceAPI, serviceAPI, vendorAPI } from '../services/api';
 import { useAppSelector } from '../store/hooks';
@@ -47,6 +47,13 @@ const BookingDetailPage = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Vendor Status Modal & Customer Consent States
+  const [showVendorStatusModal, setShowVendorStatusModal] = useState(false);
+  const [vendorTargetStatus, setVendorTargetStatus] = useState('');
+  const [vendorCancelReason, setVendorCancelReason] = useState('');
+  const [updatingVendorStatus, setUpdatingVendorStatus] = useState(false);
+  const [submittingConsent, setSubmittingConsent] = useState(false);
 
   // Autocomplete data for edit modal
   const [services, setServices] = useState<any[]>([]);
@@ -319,6 +326,23 @@ const BookingDetailPage = () => {
     }
   };
 
+  // Customer Consent trigger
+  const handleUserConsent = async () => {
+    if (!id) return;
+    setSubmittingConsent(true);
+    try {
+      const res = await bookingAPI.submitUserConsent(id);
+      if (res.data && res.data.success) {
+        toast.success('Thank you! You have agreed and confirmed the service start.');
+        setBooking(res.data.data);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to submit service agreement');
+    } finally {
+      setSubmittingConsent(false);
+    }
+  };
+
   // Vendor Action triggers
   const handleAcceptBooking = async () => {
     if (!id) return;
@@ -338,7 +362,7 @@ const BookingDetailPage = () => {
     try {
       const res = await bookingAPI.startService(id);
       if (res.data && res.data.success) {
-        toast.success('Service started! Patient care is in progress.');
+        toast.success('Service started! Customer has been notified to confirm agreement.');
         setBooking(res.data.data);
       }
     } catch (err: any) {
@@ -348,6 +372,10 @@ const BookingDetailPage = () => {
 
   const handleCompleteService = async () => {
     if (!id) return;
+    if (!booking.isUserAgreed && !booking.userConsent?.agreed) {
+      toast.warning('Customer agreement is required before completing. Please ask customer to approve in their app.');
+      return;
+    }
     try {
       const res = await bookingAPI.completeService(id);
       if (res.data && res.data.success) {
@@ -356,6 +384,47 @@ const BookingDetailPage = () => {
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to complete service');
+    }
+  };
+
+  const openVendorStatusModal = (initialTarget?: string) => {
+    setVendorTargetStatus(initialTarget || (booking.bookingStatus === 'pending' ? 'scheduled' : booking.bookingStatus));
+    setVendorCancelReason('');
+    setShowVendorStatusModal(true);
+  };
+
+  const handleVendorStatusSubmit = async () => {
+    if (!id || !vendorTargetStatus) return;
+
+    if (
+      (vendorTargetStatus === 'completed' || vendorTargetStatus === 'complete') &&
+      !booking.isUserAgreed &&
+      !booking.userConsent?.agreed
+    ) {
+      toast.error('Cannot complete service: Customer has not confirmed agreement yet. Please ask the customer to agree in their app.');
+      return;
+    }
+
+    setUpdatingVendorStatus(true);
+    try {
+      const res = await bookingAPI.updateVendorBookingStatus(id, vendorTargetStatus, vendorCancelReason);
+      if (res.data && res.data.success) {
+        if (vendorTargetStatus === 'start' || vendorTargetStatus === 'in-progress') {
+          toast.success('Service started! Customer has been notified to confirm agreement.');
+        } else if (vendorTargetStatus === 'completed' || vendorTargetStatus === 'complete') {
+          toast.success('Service marked completed successfully!');
+        } else if (vendorTargetStatus === 'cancelled' || vendorTargetStatus === 'cancel') {
+          toast.info('Booking has been cancelled.');
+        } else {
+          toast.success('Booking status updated successfully!');
+        }
+        setBooking(res.data.data);
+        setShowVendorStatusModal(false);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update booking status');
+    } finally {
+      setUpdatingVendorStatus(false);
     }
   };
 
@@ -520,8 +589,96 @@ const BookingDetailPage = () => {
                 Update Status
               </button>
             )}
+
+            {/* Vendor status update button */}
+            {isVendor && (
+              <button 
+                onClick={() => openVendorStatusModal()}
+                className="px-5 py-2.5 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-bold transition-all shadow-xs flex items-center gap-1.5"
+              >
+                <Settings2 size={16} /> Change Status
+              </button>
+            )}
           </div>
         </div>
+
+        {/* In-Progress Customer Consent Banners */}
+        {booking.bookingStatus === 'in-progress' && (
+          <>
+            {/* For User viewing an In-Progress booking */}
+            {isUser && (
+              <>
+                {!booking.isUserAgreed && !booking.userConsent?.agreed ? (
+                  <div className="mb-6 p-5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-[#63D64F] rounded-2xl shadow-md flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-3 bg-gradient-to-br from-[#63D64F] to-[#3DB9A6] text-white rounded-xl shadow-xs shrink-0">
+                        <ShieldCheck size={28} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-extrabold text-slate-900">Service Started - Your Agreement Required</h3>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse">Action Required</span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-600 mt-1 leading-relaxed">
+                          Your healthcare service provider is on-site and has started the visit for this booking. Please confirm that you agree to proceed with the service so the provider can record care.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleUserConsent}
+                      disabled={submittingConsent}
+                      className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] hover:shadow-lg text-white font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+                    >
+                      {submittingConsent && <Loader2 size={15} className="animate-spin" />}
+                      {submittingConsent ? 'Confirming...' : '✓ Yes, I Agree & Confirm Service'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900 text-xs font-bold shadow-xs">
+                    <ShieldCheck size={22} className="text-emerald-600 shrink-0" />
+                    <div>
+                      <span>You have confirmed and agreed to this service. Provider will mark the booking completed after finishing.</span>
+                      {booking.userConsent?.agreedAt && (
+                        <span className="text-[10px] text-emerald-700 block font-semibold mt-0.5">
+                          Agreed on: {new Date(booking.userConsent.agreedAt).toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* For Vendor viewing an In-Progress booking */}
+            {isVendor && (
+              <>
+                {!booking.isUserAgreed && !booking.userConsent?.agreed ? (
+                  <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-amber-900 text-xs font-bold shadow-xs flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <ShieldAlert size={24} className="text-amber-600 shrink-0 animate-pulse" />
+                      <div>
+                        <span className="font-extrabold text-amber-900 text-sm">Service in Progress - Awaiting Customer Agreement</span>
+                        <p className="text-[11px] text-amber-700 font-medium mt-0.5">
+                          A confirmation notification has been sent to the customer. You will be able to complete this service once the customer confirms agreement in their app.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900 text-xs font-bold shadow-xs">
+                    <ShieldCheck size={24} className="text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-extrabold text-emerald-900 text-sm">Customer Has Confirmed Agreement ✅</span>
+                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                        Customer agreed on {new Date(booking.userConsent?.agreedAt || booking.updatedAt).toLocaleString('en-IN')}. You may mark this service completed when you finish.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
 
         {/* Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -1104,41 +1261,83 @@ const BookingDetailPage = () => {
 
             {/* Quick Actions (Vendor actions) */}
             {isVendor && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
-                <h3 className="text-xs uppercase font-extrabold text-slate-450 tracking-wider">Service Provider Controls</h3>
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between border-b pb-2.5 border-slate-100">
+                  <h3 className="text-xs uppercase font-extrabold text-slate-450 tracking-wider">Service Provider Controls</h3>
+                  <button
+                    onClick={() => openVendorStatusModal()}
+                    className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Settings2 size={13} /> Change Status
+                  </button>
+                </div>
+
+                {/* Consent indicator in vendor panel */}
+                {booking.bookingStatus === 'in-progress' && (
+                  <div>
+                    {booking.isUserAgreed || booking.userConsent?.agreed ? (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2">
+                        <ShieldCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-extrabold block">Customer Agreed ✅</span>
+                          <span className="text-[11px] text-emerald-700 leading-tight block mt-0.5">
+                            Customer confirmed agreement. You may complete service once finished.
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+                        <ShieldAlert size={16} className="text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+                        <div>
+                          <span className="font-extrabold block">Awaiting Customer Agreement</span>
+                          <span className="text-[11px] text-amber-700 leading-tight block mt-0.5">
+                            Customer has been notified. Completion is enabled once customer confirms agreement.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {booking.bookingStatus === 'pending' && (
                   <button
                     onClick={handleAcceptBooking}
-                    className="w-full py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <CheckCircle2 size={14} /> Accept Booking Assignment
                   </button>
                 )}
 
-                {booking.bookingStatus === 'accepted' && (
+                {(booking.bookingStatus === 'accepted' || booking.bookingStatus === 'scheduled') && (
                   <button
                     onClick={handleStartService}
-                    className="w-full py-3 bg-blue-650 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-blue-650 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Play size={14} className="fill-white" /> Start Home Visit / Service
+                    <Play size={14} className="fill-white" /> Start Service (Notify Customer)
                   </button>
                 )}
 
                 {booking.bookingStatus === 'in-progress' && (
                   <button
                     onClick={handleCompleteService}
-                    className="w-full py-3 bg-emerald-650 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    className={`w-full py-3 rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 ${
+                      booking.isUserAgreed || booking.userConsent?.agreed
+                        ? "bg-emerald-650 hover:bg-emerald-700 text-white cursor-pointer"
+                        : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed hover:bg-slate-200"
+                    }`}
+                    title={booking.isUserAgreed || booking.userConsent?.agreed ? "Complete Service" : "Customer must agree before completion"}
                   >
                     <CheckCircle2 size={14} /> Mark Service Completed
                   </button>
                 )}
 
-                {['completed', 'cancelled'].includes(booking.bookingStatus) && (
-                  <div className="text-center py-2 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-500">
-                    No actions available for this booking status.
-                  </div>
-                )}
+                {/* Status Switcher Action */}
+                <button
+                  onClick={() => openVendorStatusModal()}
+                  className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Settings2 size={14} /> Change Status (Scheduled / Start / Complete / Cancel)
+                </button>
               </div>
             )}
 
@@ -1381,6 +1580,203 @@ const BookingDetailPage = () => {
           }}
           service={selectedServiceForDetail}
         />
+      )}
+
+      {/* Vendor Status Change Modal */}
+      {showVendorStatusModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 animate-in fade-in duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <Settings2 size={18} className="text-[#63D64F]" />
+                <h3 className="font-extrabold text-base">Change Booking Status</h3>
+              </div>
+              <button
+                onClick={() => setShowVendorStatusModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              {/* Status Context */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 text-xs space-y-1">
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-500">Booking ID:</span>
+                  <span className="text-slate-800 font-mono">#{booking.bookingId || booking._id.slice(-8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-500">Patient:</span>
+                  <span className="text-slate-800">{booking.patientName || booking.userId?.name || "Customer"}</span>
+                </div>
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-500">Current Status:</span>
+                  <span className="uppercase text-blue-600 font-extrabold">{booking.bookingStatus}</span>
+                </div>
+              </div>
+
+              {/* Status Selection Cards */}
+              <div className="space-y-2.5">
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                  Select New Status:
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Scheduled */}
+                  <button
+                    type="button"
+                    onClick={() => setVendorTargetStatus("scheduled")}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                      vendorTargetStatus === "scheduled" || vendorTargetStatus === "accepted"
+                        ? "border-blue-500 bg-blue-50/70 text-blue-900 ring-2 ring-blue-400/20"
+                        : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-black text-xs">
+                      <Calendar size={14} className="text-blue-600" /> Scheduled
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                      Confirm or set as scheduled
+                    </p>
+                  </button>
+
+                  {/* Start / In Progress */}
+                  <button
+                    type="button"
+                    onClick={() => setVendorTargetStatus("in-progress")}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                      vendorTargetStatus === "in-progress" || vendorTargetStatus === "start"
+                        ? "border-indigo-500 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-400/20"
+                        : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-black text-xs">
+                      <Play size={14} className="text-indigo-600 fill-indigo-600" /> Start Service
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                      Send agreement notification to user
+                    </p>
+                  </button>
+
+                  {/* Complete */}
+                  <button
+                    type="button"
+                    onClick={() => setVendorTargetStatus("completed")}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                      vendorTargetStatus === "completed" || vendorTargetStatus === "complete"
+                        ? "border-emerald-500 bg-emerald-50/70 text-emerald-900 ring-2 ring-emerald-400/20"
+                        : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-black text-xs">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Complete Service
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                      Requires user agreement
+                    </p>
+                  </button>
+
+                  {/* Cancel */}
+                  <button
+                    type="button"
+                    onClick={() => setVendorTargetStatus("cancelled")}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                      vendorTargetStatus === "cancelled" || vendorTargetStatus === "cancel"
+                        ? "border-rose-500 bg-rose-50/70 text-rose-900 ring-2 ring-rose-400/20"
+                        : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-black text-xs">
+                      <XCircle size={14} className="text-rose-600" /> Cancel Booking
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                      Cancel this assignment
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Dynamic Info */}
+              {(vendorTargetStatus === "in-progress" || vendorTargetStatus === "start") && (
+                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900 flex items-start gap-2.5">
+                  <Play size={16} className="text-indigo-600 fill-indigo-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-extrabold block">Customer Notification Notice:</span>
+                    <span className="text-[11px] text-indigo-700 leading-tight block mt-0.5">
+                      Starting this service will immediately send an in-app & push notification to the customer asking them to confirm agreement.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {(vendorTargetStatus === "completed" || vendorTargetStatus === "complete") && (
+                <div>
+                  {booking.isUserAgreed || booking.userConsent?.agreed ? (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2.5">
+                      <ShieldCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-extrabold block">Customer Agreed ✅</span>
+                        <span className="text-[11px] text-emerald-700 leading-tight block mt-0.5">
+                          Customer has confirmed agreement. You can safely complete this booking.
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+                      <ShieldAlert size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-extrabold block">Customer Agreement Required ⚠️</span>
+                        <span className="text-[11px] text-amber-800 leading-tight block mt-0.5">
+                          The customer has not yet confirmed agreement for this service. You will not be able to mark it completed until they agree in their dashboard.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(vendorTargetStatus === "cancelled" || vendorTargetStatus === "cancel") && (
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Cancellation Reason (Optional):
+                  </label>
+                  <textarea
+                    value={vendorCancelReason}
+                    onChange={(e) => setVendorCancelReason(e.target.value)}
+                    placeholder="Enter reason for cancellation..."
+                    rows={2}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowVendorStatusModal(false)}
+                  disabled={updatingVendorStatus}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleVendorStatusSubmit}
+                  disabled={updatingVendorStatus || !vendorTargetStatus}
+                  className="px-5 py-2 bg-gradient-to-r from-[#63D64F] to-[#3DB9A6] text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {updatingVendorStatus && <Loader2 size={14} className="animate-spin" />}
+                  {updatingVendorStatus ? "Updating..." : "Update Status"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {!isDashboardLayout && <Footer />}

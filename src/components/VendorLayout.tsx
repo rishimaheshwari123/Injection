@@ -15,7 +15,8 @@ import {
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
 import { toast } from "react-toastify";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { syncVendorCoordinates } from "../services/locationService";
 
 const VendorLayout = () => {
   const location = useLocation();
@@ -23,6 +24,11 @@ const VendorLayout = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Automatically fetch and update vendor GPS coordinates in DB on arriving at vendor panel
+  useEffect(() => {
+    syncVendorCoordinates();
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());

@@ -77,6 +77,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  lastLocationUpdatedAt: {
+    type: Date,
+    default: Date.now
+  },
   
   // Insurance Information
   hasInsurance: {

@@ -17,7 +17,8 @@ import {
   getVendorIdCardDetails,
   getReferralStats,
   generateMyReferralCode,
-  adminResetVendorPassword
+  adminResetVendorPassword,
+  setVendorLocation
 } from '../controllers/vendorController.js';
 import { protect, adminOnly, vendorOnly } from '../middleware/auth.js';
 
@@ -34,6 +35,10 @@ router.post('/upload', uploadVendorFile);
 router.post('/admin/create', protect, adminOnly, createVendorByAdmin);
 
 router.post('/login', vendorLogin);
+
+// Set / Update vendor location (latitude, longitude, currentLocation)
+router.put('/location', protect, vendorOnly, setVendorLocation);
+router.post('/set-location', protect, vendorOnly, setVendorLocation);
 
 router.get('/', protect, adminOnly, getAllVendors);
 router.get('/admin/paginated', protect, adminOnly, getAllVendorsByPagination);

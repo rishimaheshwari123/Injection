@@ -123,3 +123,76 @@ export const getGooglePlaceSuggestions = (
     }
   });
 };
+
+/**
+ * Gets current GPS coordinates (latitude and longitude) from the browser.
+ */
+export const getCurrentCoordinates = (): Promise<{ latitude: number; longitude: number }> => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        reject(error);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
+};
+
+/**
+ * Automatically fetches GPS coordinates from browser and updates the logged-in User's location in MongoDB.
+ */
+export const syncUserCoordinates = async (): Promise<boolean> => {
+  try {
+    const coords = await getCurrentCoordinates();
+    if (coords && coords.latitude && coords.longitude) {
+      const { userAPI } = await import("./api");
+      const res = await userAPI.setLocation({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+      if (res.data?.success) {
+        console.log("User location synced successfully to DB:", coords);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not sync user location:", error);
+  }
+  return false;
+};
+
+/**
+ * Automatically fetches GPS coordinates from browser and updates the logged-in Vendor's location in MongoDB.
+ */
+export const syncVendorCoordinates = async (): Promise<boolean> => {
+  try {
+    const coords = await getCurrentCoordinates();
+    if (coords && coords.latitude && coords.longitude) {
+      const { vendorAPI } = await import("./api");
+      const res = await vendorAPI.setLocation({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+      if (res.data?.success) {
+        console.log("Vendor location synced successfully to DB:", coords);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not sync vendor location:", error);
+  }
+  return false;
+};
+
+

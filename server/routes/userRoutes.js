@@ -19,7 +19,8 @@ import {
   deleteFamilyMember,
   getReferralStats,
   generateMyReferralCode,
-  adminResetUserPassword
+  adminResetUserPassword,
+  setUserLocation
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -34,6 +35,10 @@ router.post('/referrals/generate', protect, generateMyReferralCode);
 router.post('/upload', protect, uploadUserFile);
 
 router.get('/me', protect, getMe);
+
+// Set / Update user location (latitude, longitude, currentLocation)
+router.put('/location', protect, setUserLocation);
+router.post('/set-location', protect, setUserLocation);
 
 router.get('/', protect, adminOnly, getAllUsers);
 router.get('/admin/paginated', protect, adminOnly, getAllUsersByPagination);

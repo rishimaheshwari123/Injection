@@ -1350,3 +1350,79 @@ export const adminResetUserPassword = async (req, res) => {
     });
   }
 };
+
+// @desc    Set/Update User Latitude, Longitude and Location
+// @route   PUT /api/users/location or POST /api/users/set-location
+// @access  Private/User
+export const setUserLocation = async (req, res) => {
+  try {
+    const { latitude, longitude, currentLocation, address, city, state, pincode } = req.body;
+
+    if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both latitude and longitude are required'
+      });
+    }
+
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+
+    if (isNaN(latNum) || latNum < -90 || latNum > 90) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude must be a valid number between -90 and 90'
+      });
+    }
+
+    if (isNaN(lngNum) || lngNum < -180 || lngNum > 180) {
+      return res.status(400).json({
+        success: false,
+        message: 'Longitude must be a valid number between -180 and 180'
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.latitude = latNum;
+    user.longitude = lngNum;
+    user.lastLocationUpdatedAt = new Date();
+
+    if (currentLocation !== undefined) user.currentLocation = currentLocation;
+    if (address !== undefined) user.address = address;
+    if (city !== undefined) user.city = city;
+    if (state !== undefined) user.state = state;
+    if (pincode !== undefined) user.pincode = pincode;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User location updated successfully',
+      data: {
+        userId: user._id,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        currentLocation: user.currentLocation,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        pincode: user.pincode,
+        lastLocationUpdatedAt: user.lastLocationUpdatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user location:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error while updating location'
+    });
+  }
+};
+

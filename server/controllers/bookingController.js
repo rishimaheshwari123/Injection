@@ -11,6 +11,7 @@ import Counter from '../models/Counter.js';
 import Notification from '../models/Notification.js';
 import cloudinary from '../config/cloudinary.js';
 import { sendToUser, sendToVendor } from './notificationController.js';
+import { findNearbyVendors, geocodeAddress } from '../utils/geo.js';
 
 // Helper function to generate unique booking ID
 const getNextBookingId = async () => {
@@ -57,14 +58,20 @@ export const createBooking = async (req, res) => {
     // Destructure and validate fields from request body
     const {
       // Patient Information
+      // Patient Information
       patientName,
       age,
       sex,
       address,
+      city,
+      state,
       pincode,
       currentLocation,
       alternateMobile,
       email,
+      latitude,
+      longitude,
+      useCurrentLocation,
 
       // Selected Services
       selectedServices,
@@ -126,11 +133,34 @@ export const createBooking = async (req, res) => {
     }
 
     // Validate required fields
-    if (!patientName || !age || !sex || !address || !pincode || !currentLocation || !email) {
+    if (!patientName || !age || !sex || !address || !pincode || !email) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required patient information'
+        message: 'Missing required patient information (Name, Age, Sex, Address, Pincode, Email)'
       });
+    }
+
+    const isUseCurrentLocation = useCurrentLocation === true || useCurrentLocation === 'true';
+    let bookingLat = Number(latitude) || 0;
+    let bookingLng = Number(longitude) || 0;
+
+    if (isUseCurrentLocation) {
+      if (!bookingLat || !bookingLng) {
+        bookingLat = req.user?.latitude || 0;
+        bookingLng = req.user?.longitude || 0;
+      }
+    } else {
+      if (!bookingLat || !bookingLng) {
+        try {
+          const geoCoords = await geocodeAddress({ address, city, state, pincode });
+          if (geoCoords) {
+            bookingLat = geoCoords.latitude;
+            bookingLng = geoCoords.longitude;
+          }
+        } catch (e) {
+          console.error('Geocoding error in createBooking:', e);
+        }
+      }
     }
 
     let parsedSelectedServices = selectedServices;
@@ -326,8 +356,13 @@ export const createBooking = async (req, res) => {
       age,
       sex,
       address,
+      city: city || '',
+      state: state || '',
       pincode,
-      currentLocation,
+      latitude: bookingLat,
+      longitude: bookingLng,
+      useCurrentLocation: isUseCurrentLocation,
+      currentLocation: currentLocation || address,
       alternateMobile,
       email,
 
@@ -549,28 +584,67 @@ export const startService = async (req, res) => {
     }
 
     // Check if vendor owns this booking
-    if (booking.vendorId.toString() !== req.vendor._id.toString()) {
+    const vendorIdStr = booking.vendorId?._id?.toString() || booking.vendorId?.toString();
+    if (!vendorIdStr || vendorIdStr !== req.vendor._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this booking'
       });
     }
 
-    // Check if booking is accepted
-    if (booking.bookingStatus !== 'accepted') {
+    // Check if booking is in valid initial state
+    if (!['accepted', 'scheduled', 'pending'].includes(booking.bookingStatus)) {
       return res.status(400).json({
         success: false,
-        message: 'Booking must be accepted before starting service'
+        message: `Cannot start service for booking with status "${booking.bookingStatus}"`
       });
     }
 
     booking.bookingStatus = 'in-progress';
     booking.startedAt = new Date();
+    booking.isUserAgreed = false;
+    booking.userConsent = {
+      agreed: false,
+      agreedAt: null,
+      notes: ''
+    };
     await booking.save();
+
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    const rawUserId = booking.userId?._id || booking.userId;
+
+    // Send in-app notification to customer
+    try {
+      await Notification.create({
+        userId: rawUserId,
+        bookingId: booking._id,
+        message: `Your service for Booking #${booking.bookingId || booking._id} has started. Please confirm your agreement to proceed.`,
+        type: 'service_started_consent_required'
+      });
+    } catch (notifErr) {
+      console.error('Error creating start service notification:', notifErr);
+    }
+
+    // Send FCM push notification to customer
+    try {
+      await sendToUser(rawUserId, {
+        title: 'Service Started - Please Confirm',
+        body: `Your service provider has started your service. Please open the app and confirm your agreement.`,
+        data: {
+          bookingId: booking._id.toString(),
+          type: 'service_start_consent',
+          action: 'user_agreement_required'
+        }
+      });
+    } catch (fcmErr) {
+      console.error('Error sending start service FCM to user:', fcmErr);
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Service started successfully',
+      message: 'Service started successfully. Customer has been notified for confirmation.',
       data: booking
     });
   } catch (error) {
@@ -596,7 +670,8 @@ export const completeService = async (req, res) => {
     }
 
     // Check if vendor owns this booking
-    if (booking.vendorId.toString() !== req.vendor._id.toString()) {
+    const vendorIdStr = booking.vendorId?._id?.toString() || booking.vendorId?.toString();
+    if (!vendorIdStr || vendorIdStr !== req.vendor._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this booking'
@@ -611,15 +686,349 @@ export const completeService = async (req, res) => {
       });
     }
 
+    // Check customer agreement requirement
+    if (!booking.isUserAgreed && !booking.userConsent?.agreed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot complete service: Customer agreement/confirmation is required before completing. Please ask the customer to confirm in their app.'
+      });
+    }
+
     booking.bookingStatus = 'completed';
     booking.completedAt = new Date();
     await booking.save();
+
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    const rawUserId = booking.userId?._id || booking.userId;
+
+    // Send in-app notification to customer
+    try {
+      await Notification.create({
+        userId: rawUserId,
+        bookingId: booking._id,
+        message: `Your healthcare service for Booking #${booking.bookingId || booking._id} has been marked completed by the provider.`,
+        type: 'service_completed'
+      });
+    } catch (notifErr) {
+      console.error('Error creating completion notification:', notifErr);
+    }
+
+    // Send FCM push notification to customer
+    try {
+      await sendToUser(rawUserId, {
+        title: 'Service Completed',
+        body: `Your healthcare service (Booking #${booking.bookingId || booking._id}) has been completed successfully. Thank you!`,
+        data: {
+          bookingId: booking._id.toString(),
+          type: 'service_completed'
+        }
+      });
+    } catch (fcmErr) {
+      console.error('Error sending completion FCM to user:', fcmErr);
+    }
 
     res.status(200).json({
       success: true,
       message: 'Service completed successfully',
       data: booking
     });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Customer agrees/confirms service start
+// @route   PUT /api/bookings/:id/user-consent
+// @access  Private/User
+export const userConsentBooking = async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if user owns this booking
+    const userIdStr = booking.userId?._id?.toString() || booking.userId?.toString();
+    if (!userIdStr || userIdStr !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to provide consent for this booking'
+      });
+    }
+
+    if (booking.bookingStatus !== 'in-progress') {
+      return res.status(400).json({
+        success: false,
+        message: `Consent can only be given when service is in-progress. Current status is ${booking.bookingStatus}.`
+      });
+    }
+
+    booking.isUserAgreed = true;
+    booking.userConsent = {
+      agreed: true,
+      agreedAt: new Date(),
+      notes: notes || 'Customer confirmed service start'
+    };
+
+    await booking.save();
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    // Notify assigned vendor
+    if (booking.vendorId) {
+      const vendorId = booking.vendorId._id || booking.vendorId;
+      try {
+        await Notification.create({
+          vendorId: [vendorId],
+          bookingId: booking._id,
+          message: `Customer ${booking.patientName || req.user.name || ''} has agreed and confirmed service start for Booking #${booking.bookingId || booking._id}.`,
+          type: 'user_agreed_service_start'
+        });
+      } catch (notifErr) {
+        console.error('Error creating user consent notification for vendor:', notifErr);
+      }
+
+      try {
+        await sendToVendor(vendorId, {
+          title: 'Customer Agreed to Service',
+          body: `Customer ${booking.patientName || req.user.name || ''} confirmed service agreement for #${booking.bookingId || booking._id}. You can complete when finished.`,
+          data: {
+            bookingId: booking._id.toString(),
+            type: 'user_consent_given'
+          }
+        });
+      } catch (fcmErr) {
+        console.error('Error sending user consent FCM to vendor:', fcmErr);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Agreement confirmed successfully! Provider can now complete the service after finishing.',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update booking status by vendor (scheduled, start/in-progress, complete/completed, cancel/cancelled)
+// @route   PUT /api/bookings/:id/vendor-status
+// @access  Private/Vendor
+export const updateVendorBookingStatus = async (req, res) => {
+  try {
+    const { status, reason } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify vendor owns this booking
+    const vendorIdStr = booking.vendorId?._id?.toString() || booking.vendorId?.toString();
+    if (!vendorIdStr || vendorIdStr !== req.vendor._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update status of this booking'
+      });
+    }
+
+    const normalizedStatus = status?.toLowerCase()?.trim();
+
+    if (!['scheduled', 'accepted', 'start', 'in-progress', 'complete', 'completed', 'cancel', 'cancelled'].includes(normalizedStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Allowed values: scheduled, in-progress (or start), completed (or complete), cancelled (or cancel)'
+      });
+    }
+
+    const rawUserId = booking.userId?._id || booking.userId;
+
+    // 1. Scheduled / Accepted
+    if (normalizedStatus === 'scheduled' || normalizedStatus === 'accepted') {
+      if (booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot change status to scheduled from ${booking.bookingStatus}`
+        });
+      }
+
+      booking.bookingStatus = 'scheduled';
+      await booking.save();
+      await booking.populate('userId', 'name email phone');
+      await booking.populate('vendorId', 'name businessName phone email');
+
+      try {
+        await Notification.create({
+          userId: rawUserId,
+          bookingId: booking._id,
+          message: `Your booking #${booking.bookingId || booking._id} has been marked as Scheduled by provider.`,
+          type: 'booking_scheduled'
+        });
+        await sendToUser(rawUserId, {
+          title: 'Booking Scheduled',
+          body: `Your booking #${booking.bookingId || booking._id} is scheduled.`,
+          data: { bookingId: booking._id.toString(), type: 'booking_scheduled' }
+        });
+      } catch (e) {
+        console.error('Error notifying booking scheduled:', e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Booking marked as scheduled',
+        data: booking
+      });
+    }
+
+    // 2. Start / In Progress
+    if (normalizedStatus === 'start' || normalizedStatus === 'in-progress') {
+      if (!['accepted', 'scheduled', 'pending'].includes(booking.bookingStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot start service for booking with status "${booking.bookingStatus}"`
+        });
+      }
+
+      booking.bookingStatus = 'in-progress';
+      booking.startedAt = new Date();
+      booking.isUserAgreed = false;
+      booking.userConsent = {
+        agreed: false,
+        agreedAt: null,
+        notes: ''
+      };
+
+      await booking.save();
+      await booking.populate('userId', 'name email phone');
+      await booking.populate('vendorId', 'name businessName phone email');
+
+      try {
+        await Notification.create({
+          userId: rawUserId,
+          bookingId: booking._id,
+          message: `Service for Booking #${booking.bookingId || booking._id} has started. Please confirm your agreement to proceed.`,
+          type: 'service_started_consent_required'
+        });
+        await sendToUser(rawUserId, {
+          title: 'Service Started - Please Confirm',
+          body: `Your service provider has started your service. Please open the app and confirm your agreement.`,
+          data: {
+            bookingId: booking._id.toString(),
+            type: 'service_start_consent',
+            action: 'user_agreement_required'
+          }
+        });
+      } catch (e) {
+        console.error('Error sending start service notification:', e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Service started successfully. Customer has been notified for confirmation.',
+        data: booking
+      });
+    }
+
+    // 3. Complete / Completed
+    if (normalizedStatus === 'complete' || normalizedStatus === 'completed') {
+      if (booking.bookingStatus !== 'in-progress') {
+        return res.status(400).json({
+          success: false,
+          message: 'Service must be in-progress before completing'
+        });
+      }
+
+      if (!booking.isUserAgreed && !booking.userConsent?.agreed) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot complete service: Customer agreement/confirmation is required before completing. Please ask the customer to confirm in their app.'
+        });
+      }
+
+      booking.bookingStatus = 'completed';
+      booking.completedAt = new Date();
+      await booking.save();
+      await booking.populate('userId', 'name email phone');
+      await booking.populate('vendorId', 'name businessName phone email');
+
+      try {
+        await Notification.create({
+          userId: rawUserId,
+          bookingId: booking._id,
+          message: `Your healthcare service for Booking #${booking.bookingId || booking._id} has been marked completed.`,
+          type: 'service_completed'
+        });
+        await sendToUser(rawUserId, {
+          title: 'Service Completed',
+          body: `Your healthcare service (Booking #${booking.bookingId || booking._id}) has been completed successfully.`,
+          data: { bookingId: booking._id.toString(), type: 'service_completed' }
+        });
+      } catch (e) {
+        console.error('Error sending completed notification:', e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Service completed successfully',
+        data: booking
+      });
+    }
+
+    // 4. Cancel / Cancelled
+    if (normalizedStatus === 'cancel' || normalizedStatus === 'cancelled') {
+      if (booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot cancel a booking that is already ${booking.bookingStatus}`
+        });
+      }
+
+      booking.bookingStatus = 'cancelled';
+      booking.cancelledAt = new Date();
+      booking.cancellationReason = reason || 'Cancelled by provider';
+      await booking.save();
+      await booking.populate('userId', 'name email phone');
+      await booking.populate('vendorId', 'name businessName phone email');
+
+      try {
+        await Notification.create({
+          userId: rawUserId,
+          bookingId: booking._id,
+          message: `Booking #${booking.bookingId || booking._id} has been cancelled by provider. Reason: ${booking.cancellationReason}`,
+          type: 'booking_cancelled'
+        });
+        await sendToUser(rawUserId, {
+          title: 'Booking Cancelled',
+          body: `Booking #${booking.bookingId || booking._id} was cancelled by provider.`,
+          data: { bookingId: booking._id.toString(), type: 'booking_cancelled' }
+        });
+      } catch (e) {
+        console.error('Error sending cancellation notification:', e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Booking cancelled successfully',
+        data: booking
+      });
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -643,8 +1052,10 @@ export const cancelBooking = async (req, res) => {
       });
     }
 
-    // Check if user owns this booking
-    if (booking.userId.toString() !== req.user._id.toString()) {
+    // Check if user owns this booking (or is admin)
+    const userIdStr = booking.userId?._id?.toString() || booking.userId?.toString();
+    const isAdmin = req.user?.role === 'admin';
+    if (!isAdmin && (!userIdStr || userIdStr !== req.user._id.toString())) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to cancel this booking'
@@ -655,14 +1066,45 @@ export const cancelBooking = async (req, res) => {
     if (booking.bookingStatus === 'completed' || booking.bookingStatus === 'cancelled') {
       return res.status(400).json({
         success: false,
-        message: 'Cannot cancel this booking'
+        message: `Cannot cancel a booking that is already ${booking.bookingStatus}`
       });
     }
 
     booking.bookingStatus = 'cancelled';
     booking.cancelledAt = new Date();
-    booking.cancellationReason = reason || 'User cancelled';
+    booking.cancellationReason = reason || (isAdmin ? 'Cancelled by admin' : 'Cancelled by customer');
     await booking.save();
+
+    await booking.populate('userId', 'name email phone');
+    await booking.populate('vendorId', 'name businessName phone email');
+
+    // If vendor is assigned, notify them of cancellation
+    if (booking.vendorId) {
+      const vendorId = booking.vendorId._id || booking.vendorId;
+      try {
+        await Notification.create({
+          vendorId: [vendorId],
+          bookingId: booking._id,
+          message: `Booking #${booking.bookingId || booking._id} was cancelled by ${booking.patientName || req.user.name || 'customer'}. Reason: ${booking.cancellationReason}`,
+          type: 'booking_cancelled_by_user'
+        });
+      } catch (notifErr) {
+        console.error('Error notifying vendor of cancellation:', notifErr);
+      }
+
+      try {
+        await sendToVendor(vendorId, {
+          title: 'Booking Cancelled',
+          body: `Booking #${booking.bookingId || booking._id} was cancelled by ${booking.patientName || 'customer'}.`,
+          data: {
+            bookingId: booking._id.toString(),
+            type: 'booking_cancelled_by_user'
+          }
+        });
+      } catch (fcmErr) {
+        console.error('Error sending cancellation FCM to vendor:', fcmErr);
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -1031,30 +1473,21 @@ export const updateBooking = async (req, res) => {
 
     await booking.save();
 
-    // If booking is pending and unassigned, update vendor notifications to match updated pincode / gender / services
+    // If booking is pending and unassigned, update vendor notifications to match updated location / gender / services
     if (booking.bookingStatus === 'pending' && !booking.vendorId) {
       try {
         const serviceIds = (booking.selectedServices || []).map(s => s.serviceId);
-        const vendorQuery = {
-          isActive: true,
-          verificationStatus: 'verified',
-          $or: [
-            { pincode: booking.pincode },
-            { serviceAreas: booking.pincode }
-          ]
-        };
+        const matchingVendors = await findNearbyVendors({
+          bookingLat: booking.latitude || 0,
+          bookingLng: booking.longitude || 0,
+          address: booking.address || '',
+          city: booking.city || '',
+          pincode: booking.pincode || '',
+          serviceIds,
+          staffPreference: booking.staffPreference,
+          maxDistanceKm: 5
+        });
 
-        if (serviceIds.length > 0) {
-          vendorQuery.services = { $in: serviceIds };
-        }
-
-        if (booking.staffPreference === 'Male Staff') {
-          vendorQuery.gender = 'Male';
-        } else if (booking.staffPreference === 'Female Staff') {
-          vendorQuery.gender = 'Female';
-        }
-
-        const matchingVendors = await Vendor.find(vendorQuery);
         const matchedVendorIds = matchingVendors.map(v => v._id);
         const vendorStatus = matchedVendorIds.map(vId => ({
           vendorId: vId,
@@ -1066,7 +1499,7 @@ export const updateBooking = async (req, res) => {
           { bookingId: booking._id },
           {
             vendorId: matchedVendorIds,
-            message: `Booking update: Available request in your service area (${booking.pincode}). Patient: ${booking.patientName}`,
+            message: `Booking update: Available request near your location (${booking.address || booking.pincode}). Patient: ${booking.patientName}`,
             type: 'new_booking',
             vendorStatus: vendorStatus
           },

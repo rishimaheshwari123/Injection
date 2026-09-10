@@ -36,7 +36,12 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
     age: '',
     sex: 'Male',
     address: '',
+    city: '',
+    state: '',
     pincode: '',
+    latitude: 0,
+    longitude: 0,
+    useCurrentLocation: false,
     currentLocation: '',
     alternateMobile: '',
     email: '',
@@ -147,7 +152,12 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
           age: bookingToEdit.age?.toString() || '',
           sex: bookingToEdit.sex || 'Male',
           address: bookingToEdit.address || '',
+          city: bookingToEdit.city || '',
+          state: bookingToEdit.state || '',
           pincode: bookingToEdit.pincode || '',
+          latitude: bookingToEdit.latitude || 0,
+          longitude: bookingToEdit.longitude || 0,
+          useCurrentLocation: !!bookingToEdit.useCurrentLocation,
           currentLocation: bookingToEdit.currentLocation || '',
           alternateMobile: bookingToEdit.alternateMobile || '',
           email: bookingToEdit.email || '',
@@ -191,7 +201,12 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
             age: u.age?.toString() || '',
             sex: u.gender || u.sex || 'Male',
             address: u.address || '',
+            city: u.city || '',
+            state: u.state || '',
             pincode: u.pincode || '',
+            latitude: u.latitude || 0,
+            longitude: u.longitude || 0,
+            useCurrentLocation: false,
             currentLocation: u.currentLocation || u.city || '',
             alternateMobile: u.alternateMobile || u.phone || '',
             email: u.email || '',
@@ -217,7 +232,12 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
             age: '',
             sex: 'Male',
             address: '',
+            city: '',
+            state: '',
             pincode: '',
+            latitude: 0,
+            longitude: 0,
+            useCurrentLocation: false,
             currentLocation: '',
             alternateMobile: '',
             email: '',
@@ -329,7 +349,12 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
         age: '',
         sex: 'Male',
         address: '',
+        city: '',
+        state: '',
         pincode: '',
+        latitude: 0,
+        longitude: 0,
+        useCurrentLocation: false,
         currentLocation: '',
         alternateMobile: '',
         email: '',
@@ -607,6 +632,32 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Indore, Bhopal"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Madhya Pradesh"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
+                />
+              </div>
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Address <span className="text-red-500">*</span>
@@ -617,12 +668,13 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   onChange={handleInputChange}
                   required
                   rows={2}
+                  placeholder="House/Flat No., Street, Area..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none resize-none"
                 />
               </div>
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Location <span className="text-red-500">*</span>
+                  Current Location / Landmark <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -630,9 +682,41 @@ const CreateBookingModal = ({ show, onClose, onSubmit, services, users, vendors,
                   value={formData.currentLocation}
                   onChange={handleInputChange}
                   required
-                  placeholder="e.g., Near City Hospital"
+                  placeholder="e.g., Near City Hospital, Vijay Nagar"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#63D64F] focus:border-transparent outline-none"
                 />
+              </div>
+
+              {/* Location Mode Toggle */}
+              <div className="col-span-2 flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div>
+                  <span className="text-sm font-semibold text-gray-800">Use My Current Live GPS Location</span>
+                  <p className="text-xs text-gray-600">Turn OFF if you are booking for a family member in another city/address</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.useCurrentLocation}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData(prev => ({ ...prev, useCurrentLocation: checked }));
+                      if (checked && navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              latitude: pos.coords.latitude,
+                              longitude: pos.coords.longitude
+                            }));
+                          },
+                          (err) => console.error("GPS error:", err)
+                        );
+                      }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#63D64F]"></div>
+                </label>
               </div>
             </div>
           </div>

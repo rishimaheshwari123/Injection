@@ -30,10 +30,32 @@ const bookingSchema = new mongoose.Schema({
     required: [true, 'Address is required'],
     trim: true
   },
+  city: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  state: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   pincode: {
     type: String,
     required: [true, 'Pincode is required'],
     match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
+  },
+  latitude: {
+    type: Number,
+    default: 0
+  },
+  longitude: {
+    type: Number,
+    default: 0
+  },
+  useCurrentLocation: {
+    type: Boolean,
+    default: false
   },
   currentLocation: {
     type: String,
@@ -280,7 +302,7 @@ const bookingSchema = new mongoose.Schema({
   // Booking Status
   bookingStatus: {
     type: String,
-    enum: ['pending', 'accepted', 'in-progress', 'completed', 'cancelled'],
+    enum: ['pending', 'accepted', 'scheduled', 'in-progress', 'completed', 'cancelled'],
     default: 'pending'
   },
   isReviewedByCustomer: {
@@ -290,6 +312,24 @@ const bookingSchema = new mongoose.Schema({
   isReviewedByVendor: {
     type: Boolean,
     default: false
+  },
+  isUserAgreed: {
+    type: Boolean,
+    default: false
+  },
+  userConsent: {
+    agreed: {
+      type: Boolean,
+      default: false
+    },
+    agreedAt: {
+      type: Date,
+      default: null
+    },
+    notes: {
+      type: String,
+      default: ''
+    }
   },
   acceptedAt: {
     type: Date

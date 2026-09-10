@@ -1295,3 +1295,79 @@ export const adminResetVendorPassword = async (req, res) => {
   }
 };
 
+// @desc    Set/Update Vendor Latitude, Longitude and Location
+// @route   PUT /api/vendors/location or POST /api/vendors/set-location
+// @access  Private/Vendor
+export const setVendorLocation = async (req, res) => {
+  try {
+    const { latitude, longitude, currentLocation, address, city, state, pincode } = req.body;
+
+    if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both latitude and longitude are required'
+      });
+    }
+
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+
+    if (isNaN(latNum) || latNum < -90 || latNum > 90) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude must be a valid number between -90 and 90'
+      });
+    }
+
+    if (isNaN(lngNum) || lngNum < -180 || lngNum > 180) {
+      return res.status(400).json({
+        success: false,
+        message: 'Longitude must be a valid number between -180 and 180'
+      });
+    }
+
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    vendor.latitude = latNum;
+    vendor.longitude = lngNum;
+    vendor.lastLocationUpdatedAt = new Date();
+
+    if (currentLocation !== undefined) vendor.currentLocation = currentLocation;
+    if (address !== undefined) vendor.address = address;
+    if (city !== undefined) vendor.city = city;
+    if (state !== undefined) vendor.state = state;
+    if (pincode !== undefined) vendor.pincode = pincode;
+
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Vendor location updated successfully',
+      data: {
+        vendorId: vendor._id,
+        latitude: vendor.latitude,
+        longitude: vendor.longitude,
+        currentLocation: vendor.currentLocation,
+        address: vendor.address,
+        city: vendor.city,
+        state: vendor.state,
+        pincode: vendor.pincode,
+        lastLocationUpdatedAt: vendor.lastLocationUpdatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating vendor location:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error while updating location'
+    });
+  }
+};
+
+

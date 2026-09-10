@@ -13,7 +13,8 @@ import {
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
 import { toast } from "react-toastify";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { syncUserCoordinates } from "../services/locationService";
 
 const UserLayout = () => {
   const location = useLocation();
@@ -21,6 +22,11 @@ const UserLayout = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Automatically fetch and update user GPS coordinates in DB on arriving at user panel
+  useEffect(() => {
+    syncUserCoordinates();
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());

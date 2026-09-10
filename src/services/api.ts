@@ -47,6 +47,15 @@ export const userAPI = {
   deleteUser: (id: string) => api.delete(API_ENDPOINTS.USERS.BY_ID(id)),
   updateProfile: (data: any) =>
     api.put(API_ENDPOINTS.USERS.UPDATE_PROFILE, data),
+  setLocation: (data: {
+    latitude: number;
+    longitude: number;
+    currentLocation?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  }) => api.put(API_ENDPOINTS.USERS.SET_LOCATION, data),
   getMe: () => api.get(API_ENDPOINTS.USERS.ME),
   uploadUserFile: (file: File, folder?: string) => {
     const formData = new FormData();
@@ -91,6 +100,15 @@ export const vendorAPI = {
   deleteVendor: (id: string) => api.delete(API_ENDPOINTS.VENDORS.BY_ID(id)),
   updateProfile: (data: any) =>
     api.put(API_ENDPOINTS.VENDORS.UPDATE_PROFILE, data),
+  setLocation: (data: {
+    latitude: number;
+    longitude: number;
+    currentLocation?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  }) => api.put(API_ENDPOINTS.VENDORS.SET_LOCATION, data),
   verifyDocument: (id: string, documentKey: string, status: string, rejectionReason?: string) =>
     api.put(`/vendors/${id}/verify-document`, { documentKey, status, rejectionReason }),
   uploadFile: (file: File) => {
@@ -203,6 +221,10 @@ export const bookingAPI = {
   ) => api.put(`/bookings/${id}/reschedule`, { newDate, newTime, reason }),
   updateBookingStatus: (id: string, status: string) =>
     api.put(API_ENDPOINTS.BOOKINGS.UPDATE_STATUS(id), { status }),
+  updateVendorBookingStatus: (id: string, status: string, reason?: string) =>
+    api.put(API_ENDPOINTS.BOOKINGS.VENDOR_STATUS(id), { status, reason }),
+  submitUserConsent: (id: string, notes?: string) =>
+    api.put(API_ENDPOINTS.BOOKINGS.USER_CONSENT(id), { notes }),
   updateBookingByUser: (id: string, bookingData: any) =>
     api.put(`/bookings/bookingUpdateByUser/${id}`, bookingData),
   updateBooking: (id: string, bookingData: any) =>

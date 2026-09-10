@@ -1,7 +1,7 @@
 export const API_CONFIG = {
-  // BASE_URL: "http://localhost:8080/api",
+  BASE_URL: "http://localhost:8080/api",
   // BASE_URL: "https://injection-hkgt.onrender.com/api",
-  BASE_URL: "https://api.prlthealthcare.com/api",
+  // BASE_URL: "https://api.prlthealthcare.com/api",
   TIMEOUT: 30000, // 30 seconds
 };
 
@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     ACTIVATE: (id: string) => `/users/${id}/activate`,
     DEACTIVATE: (id: string) => `/users/${id}/deactivate`,
     UPDATE_PROFILE: "/users/profile",
+    SET_LOCATION: "/users/location",
   },
 
   // Vendors
@@ -39,6 +40,7 @@ export const API_ENDPOINTS = {
     ACTIVATE: (id: string) => `/vendors/${id}/activate`,
     DEACTIVATE: (id: string) => `/vendors/${id}/deactivate`,
     UPDATE_PROFILE: "/vendors/profile",
+    SET_LOCATION: "/vendors/location",
   },
 
   // Ambassadors
@@ -83,6 +85,8 @@ export const API_ENDPOINTS = {
     COMPLETE: (id: string) => `/bookings/${id}/complete`,
     CANCEL: (id: string) => `/bookings/${id}/cancel`,
     UPDATE_STATUS: (id: string) => `/bookings/${id}/status`,
+    VENDOR_STATUS: (id: string) => `/bookings/${id}/vendor-status`,
+    USER_CONSENT: (id: string) => `/bookings/${id}/user-consent`,
   },
 
   // Blogs
